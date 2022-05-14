@@ -2,6 +2,10 @@
 *.mat
 *.npy
 
+# Result files
+*.png
+*.mat
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
