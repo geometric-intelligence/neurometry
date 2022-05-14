@@ -3,8 +3,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch import functional as F
 from torch import optim
+from torch.nn import functional as F
 
 from models import VAE
 
@@ -15,10 +15,12 @@ N_EPOCHS = 20
 
 LATENT_DIM = 2
 
-dataset = np.load("data/place_cells.npy")
+dataset = np.load("data/place_cells_expt34.npy")
 data_dim = dataset.shape[-1]
 
 dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+print(dataset.dtype)
+dataset = dataset.astype(np.float32)
 
 seventy_perc = int(round(len(dataset) * 0.7))
 train = dataset[:seventy_perc]
