@@ -1,0 +1,19 @@
+name: abn
+channels:
+  - conda-forge
+dependencies:
+  - matplotlib>=3.3.4
+  - numpy>=1.18.1
+  - pandas
+  - pip
+  - python=3.9
+  - scipy>=1.4.1
+  - pip:
+    - black
+    - flake8
+    - flake8-docstrings
+    - isort
+    - jupyter
+    - pre-commit
+    - pre-commit
+    - torch>=1.1.9
