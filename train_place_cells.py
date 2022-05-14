@@ -13,12 +13,12 @@ from models import VAE
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 64
 LOG_INTERVAL = 10
-N_EPOCHS = 200
+N_EPOCHS = 80
 
-LATENT_DIM = 2
+LATENT_DIM = 3
 NOW = str(datetime.now())
 
-dataset = np.load("data/place_cells_expt34.npy")
+dataset = np.load("data/place_cells_expt34_b.npy")
 data_dim = dataset.shape[-1]
 
 dataset = np.log(dataset.astype(np.float32) + 1)
@@ -110,4 +110,6 @@ if __name__ == "__main__":
     plt.plot(test_losses, label="test")
     plt.legend()
     plt.savefig(f"results/{NOW}_losses.png")
-    torch.save(model, f"results/{NOW}_model.pt")
+    torch.save(model, f"results/{NOW}_model_latent{LATENT_DIM}.pt")
+
+    print(len(dataset))
