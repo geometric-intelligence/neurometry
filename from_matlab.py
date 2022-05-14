@@ -10,6 +10,12 @@ def loadmat(filename):
     Ensures correct loading of python dictionaries from mat files.
 
     Inspired by: https://stackoverflow.com/a/29126361/572908.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file containing matlab data.
+        Example: expt34.mat
     """
 
     def _has_struct(elem):
