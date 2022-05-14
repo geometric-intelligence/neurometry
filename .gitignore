@@ -4,7 +4,7 @@
 
 # Result files
 *.png
-*.mat
+*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
