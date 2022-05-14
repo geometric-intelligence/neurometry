@@ -19,7 +19,6 @@ dataset = np.load("data/place_cells_expt34.npy")
 data_dim = dataset.shape[-1]
 
 dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-print(dataset.dtype)
 dataset = dataset.astype(np.float32)
 
 seventy_perc = int(round(len(dataset) * 0.7))
@@ -89,7 +88,7 @@ def test(epoch):
                 _, axs = plt.subplots(2)
                 axs[0].imshow(data.cpu())
                 axs[1].imshow(recon_batch.cpu())
-                plt.savefig(f"test_data_recon_epoch{epoch}.png")
+                plt.savefig(f"results/test_data_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
@@ -102,4 +101,8 @@ if __name__ == "__main__":
     for epoch in range(1, N_EPOCHS + 1):
         train_losses.append(train(epoch))
         test_losses.append(test(epoch))
-    torch.save(model, "first_run.pt")
+
+    plt.plot(train_losses)
+    plt.plot(test_losses)
+    plt.savefig("results/losses.png")
+    torch.save(model, "results/first_run.pt")
