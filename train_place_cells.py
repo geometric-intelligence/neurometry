@@ -1,5 +1,7 @@
 """Fit a VAE to place cells."""
 
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -9,17 +11,18 @@ from torch.nn import functional as F
 from models import VAE
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 8
+BATCH_SIZE = 64
 LOG_INTERVAL = 10
-N_EPOCHS = 20
+N_EPOCHS = 200
 
 LATENT_DIM = 2
+NOW = str(datetime.now())
 
 dataset = np.load("data/place_cells_expt34.npy")
 data_dim = dataset.shape[-1]
 
+dataset = np.log(dataset.astype(np.float32) + 1)
 dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-dataset = dataset.astype(np.float32)
 
 seventy_perc = int(round(len(dataset) * 0.7))
 train = dataset[:seventy_perc]
@@ -84,11 +87,11 @@ def test(epoch):
             data = data.to(DEVICE)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
-            if i == 0:
+            if i == 0 and epoch % 25 == 0:
                 _, axs = plt.subplots(2)
                 axs[0].imshow(data.cpu())
                 axs[1].imshow(recon_batch.cpu())
-                plt.savefig(f"results/test_data_recon_epoch{epoch}.png")
+                plt.savefig(f"results/{NOW}test_data_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
@@ -102,7 +105,9 @@ if __name__ == "__main__":
         train_losses.append(train(epoch))
         test_losses.append(test(epoch))
 
-    plt.plot(train_losses)
-    plt.plot(test_losses)
-    plt.savefig("results/losses.png")
-    torch.save(model, "results/first_run.pt")
+    plt.figure()
+    plt.plot(train_losses, label="train")
+    plt.plot(test_losses, label="test")
+    plt.legend()
+    plt.savefig(f"results/{NOW}_losses.png")
+    torch.save(model, f"results/{NOW}_model.pt")

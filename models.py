@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+# TODO: Investigate this:
+# proceedings.neurips.cc//paper/2020/file/510f2318f324cf07fce24c3a4b89c771-Paper.pdf
+
 
 class VAE(nn.Module):
     """VAE with Linear (fully connected) layers."""
