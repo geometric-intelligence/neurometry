@@ -5,20 +5,21 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from models import VAE
+from summary import save_latent_space
 from torch import optim
 from torch.nn import functional as F
-
-from models import VAE
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 64
 LOG_INTERVAL = 10
-N_EPOCHS = 80
+N_EPOCHS = 200
 
-LATENT_DIM = 3
+LATENT_DIM = 2
 NOW = str(datetime.now())
 
-dataset = np.load("data/place_cells_expt34_b.npy")
+dataset = np.load("data/neurons_expt34.npy")
+labels = np.load("data/angles_expt34.npy")
 data_dim = dataset.shape[-1]
 
 dataset = np.log(dataset.astype(np.float32) + 1)
@@ -35,15 +36,19 @@ model = VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
 
-# Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
-    """Compute VAE loss function."""
-    BCE = F.binary_cross_entropy(recon_x, x, reduction="sum")
+    """Compute VAE loss function.
+
+    VAE loss = reconstruction loss + Kl divergence
+    over all elements and batch
 
     # see Appendix B from VAE paper:
     # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
     # https://arxiv.org/abs/1312.6114
     # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    """
+    BCE = F.binary_cross_entropy(recon_x, x, reduction="sum")
+
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
     return BCE + KLD
@@ -92,6 +97,13 @@ def test(epoch):
                 axs[0].imshow(data.cpu())
                 axs[1].imshow(recon_batch.cpu())
                 plt.savefig(f"results/{NOW}test_data_recon_epoch{epoch}.png")
+
+                save_latent_space(
+                    f"results/{NOW}latent_space_epoch{epoch}.png",
+                    model,
+                    dataset,
+                    labels,
+                )
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
