@@ -2,12 +2,11 @@
 
 from datetime import datetime
 
+import analyze
 import matplotlib.pyplot as plt
+import models
 import numpy as np
 import torch
-from models import VAE
-from summary import save_latent_space
-from torch import optim
 from torch.nn import functional as F
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -32,20 +31,40 @@ test = dataset[seventy_perc:]
 train_loader = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE)
 test_loader = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE)
 
-model = VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+model = models.VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 
 def loss_function(recon_x, x, mu, logvar):
     """Compute VAE loss function.
 
-    VAE loss = reconstruction loss + Kl divergence
+    The VAE loss is defined as:
+    = reconstruction loss + Kl divergence
     over all elements and batch
 
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    Notes
+    -----
+    see Appendix B from VAE paper:
+    Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+    https://arxiv.org/abs/1312.6114
+    0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+
+    Parameters
+    ----------
+    recon_x : array-like, shape=[batch_size, data_dim]
+        Reconstructed data corresponding to input data x.
+    x : array-like, shape=[batch_size, data_dim]
+        Input data.
+    mu : array-like, shape=[batch_size, latent_dim]
+        Mean of multivariate Gaussian in latent space.
+    logvar : array-like, shape=[batch_size, latent_dim]
+        Vector representing the diagonal covariance of the
+        multivariate Gaussian in latent space.
+
+    Returns
+    -------
+    _ : array-like, shape=[batch_size,]
+        Loss function on each batch element.
     """
     BCE = F.binary_cross_entropy(recon_x, x, reduction="sum")
 
@@ -55,7 +74,18 @@ def loss_function(recon_x, x, mu, logvar):
 
 
 def train(epoch):
-    """Run one epoch on the train set."""
+    """Run one epoch on the train set.
+
+    Parameters
+    ----------
+    epoch : int
+        Index of current epoch.
+
+    Returns
+    -------
+    train_loss : float
+        Train loss on epoch.
+    """
     model.train()
     train_loss = 0
     for batch_idx, data in enumerate(train_loader):
@@ -84,7 +114,18 @@ def train(epoch):
 
 
 def test(epoch):
-    """Run one epoch on the test set."""
+    """Run one epoch on the test set.
+
+    Parameters
+    ----------
+    epoch : int
+        Index of current epoch.
+
+    Returns
+    -------
+    test_loss : float
+        Test loss on epoch.
+    """
     model.eval()
     test_loss = 0
     with torch.no_grad():
@@ -98,7 +139,7 @@ def test(epoch):
                 axs[1].imshow(recon_batch.cpu())
                 plt.savefig(f"results/{NOW}test_data_recon_epoch{epoch}.png")
 
-                save_latent_space(
+                analyze.save_latent_space(
                     f"results/{NOW}latent_space_epoch{epoch}.png",
                     model,
                     dataset,
@@ -123,5 +164,3 @@ if __name__ == "__main__":
     plt.legend()
     plt.savefig(f"results/{NOW}_losses.png")
     torch.save(model, f"results/{NOW}_model_latent{LATENT_DIM}.pt")
-
-    print(len(dataset))

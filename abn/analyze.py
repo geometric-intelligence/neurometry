@@ -1,4 +1,8 @@
-"""Provide summary plots with the results."""
+"""Provide summary plots with the results.
+
+This file provides plots that can be generated during training
+to evaluate the efficiency of the methods.
+"""
 
 import matplotlib.pyplot as plt
 import numpy as np
