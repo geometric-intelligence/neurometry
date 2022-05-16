@@ -6,6 +6,86 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.io
+import skimage
+
+
+def load_synthetic_images(n_scalars=10, n_thetas=100):
+    """Load a dataset of images.
+
+    The actions are:
+    - action of SO(2): rotation
+    - action of R^_+: blur
+
+    Parameters
+    ----------
+    n_scalars : int
+        Number of scalar used for action of scalings.
+    n_thetas : int
+        Number of thetas used for action of SO(2).
+
+    Returns
+    -------
+    images : array-like, shape=[n_scalars * n_thetas, 128, 128]]
+        Images with different orientations and blurs.
+    labels : array-like, shape=[n_scalars * n_thetas, 2]]
+        Labels of 2D rotation angle and blur-level sigma.
+    """
+    image = skimage.data.camera()
+    image = skimage.transform.resize(image, (128, 128), anti_aliasing=True)
+
+    images = []
+    labels = []
+    for i_theta in range(n_thetas):
+        theta = 2 * np.pi * i_theta / n_thetas
+        rot_image = skimage.transform.rotate(image, theta)
+        for i_scalar in range(n_scalars):
+            scalar = 1 + 2 * i_scalar / n_scalars
+            images.append(skimage.filters.gaussian(rot_image, sigma=scalar))
+            labels.append(np.array([theta, scalar]))
+    return np.array(images), np.array(labels)
+
+
+def load_synthetic_points(n_scalars=10, n_thetas=100):
+    """Load a dataset of points in R^3.
+
+    The actions are:
+    - action of SO(2): along z-axis
+    - action of R^_+
+
+    Parameters
+    ----------
+    n_scalars : int
+        Number of scalar used for action of scalings.
+    n_thetas : int
+        Number of thetas used for action of SO(2).
+
+    Returns
+    -------
+    points : array-like, shape=[n_scalars * n_thetas, 3]
+        Points sampled on a cone.
+    labels : array-like, shape=[n_scalars * n_thetas, 2]
+        Values of angles (thetas) and scaling (scalars)
+        corresponding to the points.
+    """
+    points = []
+    labels = []
+    point = np.array([1, 1, 1])
+    for i_theta in range(n_thetas):
+        theta = 2 * np.pi * i_theta / n_thetas
+        rotmat = np.array(
+            [
+                [np.cos(theta), -np.sin(theta), 0],
+                [np.sin(theta), np.cos(theta), 0],
+                [0, 0, 1.0],
+            ]
+        )
+        rot_point = rotmat @ point
+        for i_scalar in range(n_scalars):
+            scalar = 1 + i_scalar
+            points.append(scalar * rot_point)
+            labels.append(np.array([theta, scalar]))
+
+    return np.array(points), np.array(labels)
 
 
 def load_synthetic_place_cells(n_times=10000, n_cells=40):
