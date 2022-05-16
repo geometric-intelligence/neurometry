@@ -16,7 +16,7 @@ BATCH_SIZE = 64
 LOG_INTERVAL = 10
 CHECKPT_INTERVAL = 10
 N_EPOCHS = 100
-DATASET_TYPE = "synthetic"
+DATASET_TYPE = "projections"
 
 LATENT_DIM = 2
 NOW = str(datetime.now())
@@ -26,15 +26,26 @@ if DATASET_TYPE == "experimental":
     labels = pd.read_csv("data/place_cells_labels_expt34_timestep1000000.txt")
     dataset = dataset[labels["velocities"] > 1]
     labels = labels["angles"][labels["velocities"] > 1]
+    dataset = np.log(dataset.astype(np.float32) + 1)
+    dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif DATASET_TYPE == "synthetic":
     dataset, labels = datasets.load_synthetic_place_cells(n_times=10000)
+    dataset = np.log(dataset.astype(np.float32) + 1)
+    dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+elif DATASET_TYPE == "images":
+    dataset, labels = datasets.load_synthetic_images(img_size=64)
+    dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+    height, width = dataset.shape[1:]
+    dataset = dataset.reshape((-1, height * width))
+    labels = labels["angles"]
+elif DATASET_TYPE == "projections":
+    dataset, labels = datasets.load_synthetic_projections(img_size=128)
+    dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+    labels = labels["angles"]
 
-print(dataset.shape)
 
+print(f"Dataset shape: {dataset.shape}.")
 data_dim = dataset.shape[-1]
-
-dataset = np.log(dataset.astype(np.float32) + 1)
-dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 
 seventy_perc = int(round(len(dataset) * 0.7))
 train = dataset[:seventy_perc]
@@ -147,12 +158,18 @@ def test(epoch):
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
             if i == 0 and epoch % CHECKPT_INTERVAL == 0:
                 _, axs = plt.subplots(2)
-                axs[0].imshow(data.cpu())
-                axs[1].imshow(recon_batch.cpu())
-                plt.savefig(f"results/{NOW}test_data_recon_epoch{epoch}.png")
+                if DATASET_TYPE == "images":
+                    axs[0].imshow(data[0].reshape((height, width)).cpu())
+                    axs[1].imshow(recon_batch[0].reshape((height, width)).cpu())
+                else:
+                    axs[0].imshow(data.cpu())
+                    axs[1].imshow(recon_batch.cpu())
+                plt.savefig(
+                    f"results/{DATASET_TYPE}_{NOW}_test_data_recon_epoch{epoch}.png"
+                )
 
                 analyze.save_latent_space(
-                    f"results/{NOW}latent_space_epoch{epoch}.png",
+                    f"results/{DATASET_TYPE}_{NOW}_latent_space_epoch{epoch}.png",
                     model,
                     dataset,
                     labels,
@@ -174,6 +191,6 @@ if __name__ == "__main__":
     plt.plot(train_losses, label="train")
     plt.plot(test_losses, label="test")
     plt.legend()
-    plt.savefig(f"results/{NOW}_losses.png")
+    plt.savefig(f"results/{DATASET_TYPE}_{NOW}_losses.png")
     plt.close()
-    torch.save(model, f"results/{NOW}_model_latent{LATENT_DIM}.pt")
+    torch.save(model, f"results/{DATASET_TYPE}_{NOW}_model_latent{LATENT_DIM}.pt")

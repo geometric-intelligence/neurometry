@@ -9,7 +9,36 @@ import scipy.io
 import skimage
 
 
-def load_synthetic_images(n_scalars=10, n_thetas=100):
+def load_synthetic_projections(n_scalars=5, n_angles=1000, img_size=128):
+    """Load a dataset of 2D images projected into 1D projections.
+
+    The actions are:
+    - action of SO(2): rotation
+    - action of R^_+: blur
+
+    Parameters
+    ----------
+    n_scalars : int
+        Number of scalar used for action of scalings.
+    n_angles : int
+        Number of angles used for action of SO(2).
+
+    Returns
+    -------
+    projections : array-like, shape=[n_scalars * n_angles, img_size]]
+        Projections with different orientations and blurs.
+    labels : pd.DataFrame, shape=[n_scalars * n_angles, 2]
+        Labels organized in 2 columns: angles, and scalars.
+    """
+    images, labels = load_synthetic_images(
+        n_scalars=n_scalars, n_angles=n_angles, img_size=img_size
+    )
+
+    projections = np.sum(images, axis=-1)
+    return projections, labels
+
+
+def load_synthetic_images(n_scalars=10, n_angles=5000, img_size=128):
     """Load a dataset of images.
 
     The actions are:
@@ -20,32 +49,43 @@ def load_synthetic_images(n_scalars=10, n_thetas=100):
     ----------
     n_scalars : int
         Number of scalar used for action of scalings.
-    n_thetas : int
-        Number of thetas used for action of SO(2).
+    n_angles : int
+        Number of angles used for action of SO(2).
 
     Returns
     -------
-    images : array-like, shape=[n_scalars * n_thetas, 128, 128]]
+    images : array-like, shape=[n_scalars * n_angles, img_size, img_size]]
         Images with different orientations and blurs.
-    labels : array-like, shape=[n_scalars * n_thetas, 2]]
-        Labels of 2D rotation angle and blur-level sigma.
+    labels : pd.DataFrame, shape=[n_scalars * n_angles, 2]
+        Labels organized in 2 columns: angles, and scalars.
     """
     image = skimage.data.camera()
-    image = skimage.transform.resize(image, (128, 128), anti_aliasing=True)
+    image = skimage.transform.resize(image, (img_size, img_size), anti_aliasing=True)
 
     images = []
-    labels = []
-    for i_theta in range(n_thetas):
-        theta = 2 * np.pi * i_theta / n_thetas
-        rot_image = skimage.transform.rotate(image, theta)
+    angles = []
+    scalars = []
+    for i_angle in range(n_angles):
+        angle = 360 * i_angle / n_angles
+        rot_image = skimage.transform.rotate(image, angle)
         for i_scalar in range(n_scalars):
-            scalar = 1 + 2 * i_scalar / n_scalars
-            images.append(skimage.filters.gaussian(rot_image, sigma=scalar))
-            labels.append(np.array([theta, scalar]))
-    return np.array(images), np.array(labels)
+            scalar = 1 + 0.2 * i_scalar
+            blur_image = skimage.filters.gaussian(rot_image, sigma=scalar)
+            noise = np.random.normal(loc=0.0, scale=0.05, size=blur_image.shape)
+            images.append((blur_image + noise).astype(np.float32))
+            angles.append(angle)
+            scalars.append(scalar)
+
+    labels = pd.DataFrame(
+        {
+            "angles": angles,
+            "scalars": scalars,
+        }
+    )
+    return np.array(images), labels
 
 
-def load_synthetic_points(n_scalars=10, n_thetas=100):
+def load_synthetic_points(n_scalars=10, n_angles=100):
     """Load a dataset of points in R^3.
 
     The actions are:
@@ -56,26 +96,26 @@ def load_synthetic_points(n_scalars=10, n_thetas=100):
     ----------
     n_scalars : int
         Number of scalar used for action of scalings.
-    n_thetas : int
-        Number of thetas used for action of SO(2).
+    n_angles : int
+        Number of angles used for action of SO(2).
 
     Returns
     -------
-    points : array-like, shape=[n_scalars * n_thetas, 3]
+    points : array-like, shape=[n_scalars * n_angles, 3]
         Points sampled on a cone.
-    labels : array-like, shape=[n_scalars * n_thetas, 2]
-        Values of angles (thetas) and scaling (scalars)
-        corresponding to the points.
+    labels : pd.DataFrame, shape=[n_scalars * n_angles, 2]
+        Labels organized in 2 columns: angles, and scalars.
     """
     points = []
-    labels = []
+    angles = []
+    scalars = []
     point = np.array([1, 1, 1])
-    for i_theta in range(n_thetas):
-        theta = 2 * np.pi * i_theta / n_thetas
+    for i_angle in range(n_angles):
+        angle = 2 * np.pi * i_angle / n_angles
         rotmat = np.array(
             [
-                [np.cos(theta), -np.sin(theta), 0],
-                [np.sin(theta), np.cos(theta), 0],
+                [np.cos(angle), -np.sin(angle), 0],
+                [np.sin(angle), np.cos(angle), 0],
                 [0, 0, 1.0],
             ]
         )
@@ -83,9 +123,18 @@ def load_synthetic_points(n_scalars=10, n_thetas=100):
         for i_scalar in range(n_scalars):
             scalar = 1 + i_scalar
             points.append(scalar * rot_point)
-            labels.append(np.array([theta, scalar]))
 
-    return np.array(points), np.array(labels)
+            angles.append(angle)
+            scalars.append(scalar)
+
+    labels = pd.DataFrame(
+        {
+            "angles": angles,
+            "scalars": scalars,
+        }
+    )
+
+    return np.array(points), labels
 
 
 def load_synthetic_place_cells(n_times=10000, n_cells=40):
