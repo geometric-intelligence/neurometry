@@ -8,6 +8,73 @@ import pandas as pd
 import scipy.io
 
 
+def load_synthetic_place_cells(n_times=10000, n_cells=40):
+    """Load synthetic place cells.
+
+    This is a dataset of synthetic place cell firings, that
+    simulates a rat walking in a circle.
+
+    Each place cell activated (2 firings) also activates
+    its neighbors (1 firing each) to simulate the circular
+    relationship.
+
+    Parameters
+    ----------
+    n_times : int
+        Number of times.
+    n_cells : int
+        Number of place cells.
+
+    Returns
+    -------
+    place_cells : array-like, shape=[n_times, n_cells]
+        Number of firings per time step and per cell.
+    labels : list, length = n_times
+        Angle of the rat.
+    """
+    n_firing_per_cell = int(n_times / n_cells)
+    place_cells = []
+    labels = []
+    for _ in range(n_firing_per_cell):
+        for i_cell in range(n_cells):
+            cell_firings = np.zeros(n_cells)
+
+            if i_cell == 0:
+                cell_firings[-2] = np.random.poisson(1.0)
+                cell_firings[-1] = np.random.poisson(2.0)
+                cell_firings[0] = np.random.poisson(4.0)
+                cell_firings[1] = np.random.poisson(2.0)
+                cell_firings[2] = np.random.poisson(1.0)
+            elif i_cell == 1:
+                cell_firings[-1] = np.random.poisson(1.0)
+                cell_firings[0] = np.random.poisson(2.0)
+                cell_firings[1] = np.random.poisson(4.0)
+                cell_firings[2] = np.random.poisson(2.0)
+                cell_firings[3] = np.random.poisson(1.0)
+            elif i_cell == n_cells - 2:
+                cell_firings[-4] = np.random.poisson(1.0)
+                cell_firings[-3] = np.random.poisson(2.0)
+                cell_firings[-2] = np.random.poisson(4.0)
+                cell_firings[-1] = np.random.poisson(2.0)
+                cell_firings[0] = np.random.poisson(1.0)
+            elif i_cell == n_cells - 1:
+                cell_firings[-3] = np.random.poisson(1.0)
+                cell_firings[-2] = np.random.poisson(2.0)
+                cell_firings[-1] = np.random.poisson(4.0)
+                cell_firings[0] = np.random.poisson(2.0)
+                cell_firings[1] = np.random.poisson(1.0)
+            else:
+                cell_firings[i_cell - 2] = np.random.poisson(1.0)
+                cell_firings[i_cell - 1] = np.random.poisson(2.0)
+                cell_firings[i_cell] = np.random.poisson(4.0)
+                cell_firings[i_cell + 1] = np.random.poisson(2.0)
+                cell_firings[i_cell - 3] = np.random.poisson(1.0)
+            place_cells.append(cell_firings)
+            labels.append(i_cell / n_cells * 360)
+
+    return np.array(place_cells), labels
+
+
 def load_place_cells(expt_id=34, timestep_ns=1000000):
     """Load pre-processed experimental place cells firings.
 
@@ -59,7 +126,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
 
     if os.path.exists(labels_path):
         print(f"Found file at {labels_path}!")
-        labels = np.loadtxt(labels_path, skiprows=1)
+        labels = pd.read_csv(labels_path)
 
     else:
         expt = loadmat(f"data/expt{expt_id}.mat")
@@ -77,7 +144,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
         velocities = _average_in_timestep(vel, enc_times, times)
         gains = _average_in_timestep(gain, enc_times, times)
 
-        dataframe = pd.DataFrame(
+        labels = pd.DataFrame(
             {
                 "times": times[:-1],
                 "angles": angles,
@@ -87,7 +154,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
         )
 
         print(f"Saving to {labels_path}...")
-        dataframe.to_csv(labels_path)
+        labels.to_csv(labels_path)
 
     return place_cells, labels
 

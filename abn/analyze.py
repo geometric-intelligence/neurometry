@@ -44,3 +44,4 @@ def save_latent_space(fname, model, dataset, labels):
             latents[:, 0], latents[:, 1], latents[:, 2], s=20, c=labels, cmap="twilight"
         )
     plt.savefig(fname)
+    plt.close()

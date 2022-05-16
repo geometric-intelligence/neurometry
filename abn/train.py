@@ -3,22 +3,34 @@
 from datetime import datetime
 
 import analyze
+import datasets
 import matplotlib.pyplot as plt
 import models
 import numpy as np
+import pandas as pd
 import torch
 from torch.nn import functional as F
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 64
 LOG_INTERVAL = 10
-N_EPOCHS = 200
+CHECKPT_INTERVAL = 10
+N_EPOCHS = 100
+DATASET_TYPE = "synthetic"
 
 LATENT_DIM = 2
 NOW = str(datetime.now())
 
-dataset = np.load("data/place_cells_expt34_timestep1000000.npy")
-labels = np.load("data/place_cells_labels_expt34_timestep1000000.txt")
+if DATASET_TYPE == "experimental":
+    dataset = np.load("data/place_cells_expt34_timestep1000000.npy")
+    labels = pd.read_csv("data/place_cells_labels_expt34_timestep1000000.txt")
+    dataset = dataset[labels["velocities"] > 1]
+    labels = labels["angles"][labels["velocities"] > 1]
+elif DATASET_TYPE == "synthetic":
+    dataset, labels = datasets.load_synthetic_place_cells(n_times=10000)
+
+print(dataset.shape)
+
 data_dim = dataset.shape[-1]
 
 dataset = np.log(dataset.astype(np.float32) + 1)
@@ -133,7 +145,7 @@ def test(epoch):
             data = data.to(DEVICE)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
-            if i == 0 and epoch % 25 == 0:
+            if i == 0 and epoch % CHECKPT_INTERVAL == 0:
                 _, axs = plt.subplots(2)
                 axs[0].imshow(data.cpu())
                 axs[1].imshow(recon_batch.cpu())
@@ -163,4 +175,5 @@ if __name__ == "__main__":
     plt.plot(test_losses, label="test")
     plt.legend()
     plt.savefig(f"results/{NOW}_losses.png")
+    plt.close()
     torch.save(model, f"results/{NOW}_model_latent{LATENT_DIM}.pt")
