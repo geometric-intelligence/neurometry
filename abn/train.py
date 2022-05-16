@@ -17,8 +17,8 @@ N_EPOCHS = 200
 LATENT_DIM = 2
 NOW = str(datetime.now())
 
-dataset = np.load("data/neurons_expt34.npy")
-labels = np.load("data/angles_expt34.npy")
+dataset = np.load("data/place_cells_expt34_timestep1000000.npy")
+labels = np.load("data/place_cells_labels_expt34_timestep1000000.txt")
 data_dim = dataset.shape[-1]
 
 dataset = np.log(dataset.astype(np.float32) + 1)

@@ -4,59 +4,67 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy.io
-import utils
 
 
-def load_place_cells(expt_id=34, time_step_ns=1000000):
+def load_place_cells(expt_id=34, timestep_ns=1000000):
     """Load pre-processed experimental place cells firings.
 
     Parameters
     ----------
     expt_id : int
         Index of the experiment, as conducted by Manu Madhav in 2017.
-    time_step_ns : int
+    timestep_ns : int
         Length of time-step in nanoseconds.
         The preprocessing counts the number of firings in each time-window
-        of length time_step_ns.
+        of length timestep_ns.
 
     Returns
     -------
-    place_cells : array-like, shape=[n_time_steps, n_cells]
+    place_cells : array-like, shape=[n_timesteps, n_cells]
         Number of firings at each time-steps, for each place cell.
     """
-    data_path = f"data/place_cells_expt{expt_id}_{time_step_ns}.npy"
-    labels_path = f"data/place_cells_labels_expt{expt_id}_{time_step_ns}.txt"
+    data_path = f"data/place_cells_expt{expt_id}_timestep{timestep_ns}.npy"
+    labels_path = f"data/place_cells_labels_expt{expt_id}_timestep{timestep_ns}.txt"
 
-    if os.path.exists(data_path):
-        place_cells = np.load(data_path)
-
-    else:
-        expt = utils.loadmat(f"data/expt{expt_id}.mat")
+    if not os.path.exists(data_path) or not os.path.exists(labels_path):
+        print(f"Loading experiment {expt_id}...")
+        expt = loadmat(f"data/expt{expt_id}.mat")
         expt = expt[f"expt{expt_id}"]
 
         firing_times = _extract_firing_times(expt)
         times = np.arange(
-            start=firing_times[0], stop=firing_times[-1], step=time_step_ns
+            start=firing_times[0], stop=firing_times[-1], step=timestep_ns
         )
 
-        n_time_steps = len(times) - 1
+    if os.path.exists(data_path):
+        print(f"Found file at {data_path}!")
+        place_cells = np.load(data_path)
+
+    else:
+        n_timesteps = len(times) - 1
         n_cells = len(expt["clust"])
-        place_cells = np.zeros((n_time_steps, n_cells))
+        print(f"Number of cells: {n_cells}")
+        place_cells = np.zeros((n_timesteps, n_cells))
         for i_cell, cell in enumerate(expt["clust"]):
             print(f"Counting firings per time-step in cell {i_cell}...")
             counts, bins, _ = plt.hist(cell["ts"], bins=times)
             assert sum(bins != times) == 0
-            assert len(counts) == n_time_steps
+            assert len(counts) == n_timesteps
             place_cells[:, i_cell] = counts
 
         print(f"Saving to {data_path}...")
         np.save(data_path, place_cells)
 
     if os.path.exists(labels_path):
+        print(f"Found file at {labels_path}!")
         labels = np.loadtxt(labels_path, skiprows=1)
 
     else:
+        expt = loadmat(f"data/expt{expt_id}.mat")
+        expt = expt[f"expt{expt_id}"]
+
         enc_times = expt["rosdata"]["encTimes"]
         enc_angles = expt["rosdata"]["encAngle"]
         vel = expt["rosdata"]["vel"]
@@ -64,40 +72,71 @@ def load_place_cells(expt_id=34, time_step_ns=1000000):
 
         print("Averaging variables angle, velocity and gain per time-step...")
 
-        angles = _average_in_time_step(enc_angles, enc_times, times)
+        angles = _average_in_timestep(enc_angles, enc_times, times)
         angles = [angle % 360 for angle in angles]
-        velocities = _average_in_time_step(vel, enc_times, times)
-        gains = _average_in_time_step(gain, enc_times, times)
+        velocities = _average_in_timestep(vel, enc_times, times)
+        gains = _average_in_timestep(gain, enc_times, times)
 
-        labels = np.vstack([angles, velocities, gains]).T
-        assert len(labels) == len(times)
+        dataframe = pd.DataFrame(
+            {
+                "times": times[:-1],
+                "angles": angles,
+                "velocities": velocities,
+                "gains": gains,
+            }
+        )
 
         print(f"Saving to {labels_path}...")
-        np.savetxt(labels_path, labels, header="angles,velocities,gain")
+        dataframe.to_csv(labels_path)
 
     return place_cells, labels
 
 
 def _extract_firing_times(expt):
+    """Extract firing times for all cells in the experiment.
+
+    Parameters
+    ----------
+    expt : dict
+        Dictionnary summarizing the experiment, with:
+            key: clust
+    """
     times = []
     for cell in expt["clust"]:
         times.extend(cell["ts"])
 
     times = sorted(times)
     n_times = len(times)
-    print(f"Nb of firing times (all units) before deleting duplicates: {n_times}.")
+    print(f"Nb of firing times (all cells) before deleting duplicates: {n_times}.")
     aux = []
     for time in times:
         if time not in aux:
             aux.append(time)
     n_times = len(aux)
-    print(f"Nb of firing times  (all units) after deleting duplicates: {n_times}.")
+    print(f"Nb of firing times  (all cells) after deleting duplicates: {n_times}.")
     return aux
 
 
-def _average_in_time_step(variable_to_average, variable_times, times):
+def _average_in_timestep(variable_to_average, variable_times, times):
+    """Average values of recorded variables for each time-step.
+
+    Parameters
+    ----------
+    variable_to_average : array-like, shape=[n_times,]
+        Values of the variable to average.
+    variable_times : array-like, shape=[n_times,]
+        Times at which the variable has been recorded.
+    times : array-like, shape=[n_new_times,]
+        Times at which the variable is resampled.
+
+    Returns
+    -------
+    variable_averaged : array-like, shape=[n_new_times]
+        Values of the variable at times.
+    """
     counts, bins, _ = plt.hist(variable_times, bins=times)
-    assert len(bins) == len(times) == len(counts)
+    assert len(counts) == len(times) - 1, len(counts)
+    assert len(bins) == len(times), len(bins)
 
     variable_averaged = []
     cum_count = 0
