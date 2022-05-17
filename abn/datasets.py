@@ -38,7 +38,7 @@ def load_synthetic_projections(n_scalars=5, n_angles=1000, img_size=128):
     return projections, labels
 
 
-def load_synthetic_images(n_scalars=10, n_angles=5000, img_size=128):
+def load_synthetic_images(n_scalars=4, n_angles=2000, img_size=128):
     """Load a dataset of images.
 
     The actions are:
@@ -59,6 +59,7 @@ def load_synthetic_images(n_scalars=10, n_angles=5000, img_size=128):
     labels : pd.DataFrame, shape=[n_scalars * n_angles, 2]
         Labels organized in 2 columns: angles, and scalars.
     """
+    print("Generating dataset of synthetic images.")
     image = skimage.data.camera()
     image = skimage.transform.resize(image, (img_size, img_size), anti_aliasing=True)
 
@@ -158,8 +159,8 @@ def load_synthetic_place_cells(n_times=10000, n_cells=40):
     -------
     place_cells : array-like, shape=[n_times, n_cells]
         Number of firings per time step and per cell.
-    labels : list, length = n_times
-        Angle of the rat.
+    labels : pd.DataFrame, shape=[n_timess, 1]
+        Labels organized in 1 column: angles.
     """
     n_firing_per_cell = int(n_times / n_cells)
     place_cells = []
@@ -201,7 +202,7 @@ def load_synthetic_place_cells(n_times=10000, n_cells=40):
             place_cells.append(cell_firings)
             labels.append(i_cell / n_cells * 360)
 
-    return np.array(place_cells), labels
+    return np.array(place_cells), pd.DataFrame({"angles": labels})
 
 
 def load_place_cells(expt_id=34, timestep_ns=1000000):
@@ -227,7 +228,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
     if not os.path.exists(data_path) or not os.path.exists(labels_path):
         print(f"Loading experiment {expt_id}...")
         expt = loadmat(f"data/expt{expt_id}.mat")
-        expt = expt[f"expt{expt_id}"]
+        expt = expt["x"]
 
         firing_times = _extract_firing_times(expt)
         times = np.arange(
@@ -259,7 +260,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
 
     else:
         expt = loadmat(f"data/expt{expt_id}.mat")
-        expt = expt[f"expt{expt_id}"]
+        expt = expt["x"]
 
         enc_times = expt["rosdata"]["encTimes"]
         enc_angles = expt["rosdata"]["encAngle"]

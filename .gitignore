@@ -1,6 +1,7 @@
 # Data files
 *.mat
 *.npy
+data/*
 
 # Result files
 *.png

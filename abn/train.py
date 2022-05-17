@@ -7,7 +7,6 @@ import datasets
 import matplotlib.pyplot as plt
 import models
 import numpy as np
-import pandas as pd
 import torch
 from torch.nn import functional as F
 
@@ -16,16 +15,16 @@ BATCH_SIZE = 64
 LOG_INTERVAL = 10
 CHECKPT_INTERVAL = 10
 N_EPOCHS = 100
-DATASET_TYPE = "projections"
+DATASET_TYPE = "experimental"
 
 LATENT_DIM = 2
-NOW = str(datetime.now())
+NOW = str(datetime.now().replace(second=0, microsecond=0))
+PREFIX = f"results/{DATASET_TYPE}_{NOW}"
 
 if DATASET_TYPE == "experimental":
-    dataset = np.load("data/place_cells_expt34_timestep1000000.npy")
-    labels = pd.read_csv("data/place_cells_labels_expt34_timestep1000000.txt")
+    dataset, labels = datasets.load_place_cells(expt_id=34, timestep_ns=1000000)
     dataset = dataset[labels["velocities"] > 1]
-    labels = labels["angles"][labels["velocities"] > 1]
+    labels = labels[labels["velocities"] > 1]
     dataset = np.log(dataset.astype(np.float32) + 1)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif DATASET_TYPE == "synthetic":
@@ -37,15 +36,14 @@ elif DATASET_TYPE == "images":
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     height, width = dataset.shape[1:]
     dataset = dataset.reshape((-1, height * width))
-    labels = labels["angles"]
 elif DATASET_TYPE == "projections":
     dataset, labels = datasets.load_synthetic_projections(img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-    labels = labels["angles"]
 
 
 print(f"Dataset shape: {dataset.shape}.")
 data_dim = dataset.shape[-1]
+dataset_torch = torch.tensor(dataset)
 
 seventy_perc = int(round(len(dataset) * 0.7))
 train = dataset[:seventy_perc]
@@ -139,6 +137,8 @@ def train(epoch):
 def test(epoch):
     """Run one epoch on the test set.
 
+    The loss is computed on the whole test set.
+
     Parameters
     ----------
     epoch : int
@@ -156,6 +156,7 @@ def test(epoch):
             data = data.to(DEVICE)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
+
             if i == 0 and epoch % CHECKPT_INTERVAL == 0:
                 _, axs = plt.subplots(2)
                 if DATASET_TYPE == "images":
@@ -164,16 +165,7 @@ def test(epoch):
                 else:
                     axs[0].imshow(data.cpu())
                     axs[1].imshow(recon_batch.cpu())
-                plt.savefig(
-                    f"results/{DATASET_TYPE}_{NOW}_test_data_recon_epoch{epoch}.png"
-                )
-
-                analyze.save_latent_space(
-                    f"results/{DATASET_TYPE}_{NOW}_latent_space_epoch{epoch}.png",
-                    model,
-                    dataset,
-                    labels,
-                )
+                plt.savefig(f"{PREFIX}_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
@@ -187,10 +179,22 @@ if __name__ == "__main__":
         train_losses.append(train(epoch))
         test_losses.append(test(epoch))
 
+        if epoch % CHECKPT_INTERVAL == 0:
+            mu_torch, logvar_torch = model.encode(dataset_torch)
+            mu = mu_torch.cpu().detach().numpy()
+            logvar = logvar_torch.cpu().detach().numpy()
+            var = np.sum(np.exp(logvar), axis=-1)
+            labels["var"] = var
+            analyze.plot_save_latent_space(
+                f"{PREFIX}_latent_epoch{epoch}.png",
+                mu,
+                labels,
+            )
+
     plt.figure()
     plt.plot(train_losses, label="train")
     plt.plot(test_losses, label="test")
     plt.legend()
-    plt.savefig(f"results/{DATASET_TYPE}_{NOW}_losses.png")
+    plt.savefig(f"{PREFIX}_losses.png")
     plt.close()
-    torch.save(model, f"results/{DATASET_TYPE}_{NOW}_model_latent{LATENT_DIM}.pt")
+    torch.save(model, f"{PREFIX}_model_latent{LATENT_DIM}.pt")
