@@ -1,3 +1,12 @@
+# Data files
+*.mat
+*.npy
+data/*
+
+# Result files
+*.png
+*.pt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
