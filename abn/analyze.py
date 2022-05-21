@@ -45,7 +45,6 @@ def plot_save_latent_space(fname, points, labels):
             ncols=ncols, nrows=nrows, figsize=(5 * ncols, 4 * nrows)
         )
         for i, label_name in enumerate(label_names):
-
             sc = axs[i % 2, i // 2].scatter(
                 points[:, 0],
                 points[:, 1],

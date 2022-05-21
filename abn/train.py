@@ -5,7 +5,7 @@ from datetime import datetime
 import analyze
 import datasets
 import matplotlib.pyplot as plt
-import models
+import models.fc_vae
 import numpy as np
 import torch
 from torch.nn import functional as F
@@ -22,10 +22,11 @@ NOW = str(datetime.now().replace(second=0, microsecond=0))
 PREFIX = f"results/{DATASET_TYPE}_{NOW}"
 
 if DATASET_TYPE == "experimental":
-    dataset, labels = datasets.load_place_cells(expt_id=34, timestep_ns=1000000)
-    dataset = dataset[labels["velocities"] > 1]
-    labels = labels[labels["velocities"] > 1]
+    dataset, labels = datasets.load_place_cells(expt_id=9, timestep_ns=500000)
+    # dataset = dataset[labels["velocities"] > 1]
+    # labels = labels[labels["velocities"] > 1]
     dataset = np.log(dataset.astype(np.float32) + 1)
+    dataset = dataset[:, :-2]  # last column is weird
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif DATASET_TYPE == "synthetic":
     dataset, labels = datasets.load_synthetic_place_cells(n_times=10000)
@@ -52,7 +53,7 @@ test = dataset[seventy_perc:]
 train_loader = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE)
 test_loader = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE)
 
-model = models.VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
+model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 
@@ -185,6 +186,9 @@ if __name__ == "__main__":
             logvar = logvar_torch.cpu().detach().numpy()
             var = np.sum(np.exp(logvar), axis=-1)
             labels["var"] = var
+            mu_masked = mu[labels["var"] < 0.8]
+            labels_masked = labels[labels["var"] < 0.8]
+            assert len(mu) == len(labels)
             analyze.plot_save_latent_space(
                 f"{PREFIX}_latent_epoch{epoch}.png",
                 mu,
