@@ -14,8 +14,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 64
 LOG_INTERVAL = 10
 CHECKPT_INTERVAL = 10
-N_EPOCHS = 100
-DATASET_TYPE = "experimental"
+N_EPOCHS = 250
+DATASET_TYPE = "images"
 
 LATENT_DIM = 2
 NOW = str(datetime.now().replace(second=0, microsecond=0))
@@ -32,13 +32,16 @@ elif DATASET_TYPE == "synthetic":
     dataset = np.log(dataset.astype(np.float32) + 1)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif DATASET_TYPE == "images":
-    dataset, labels = datasets.load_synthetic_images(img_size=64)
+    dataset, labels = datasets.load_synthetic_images(n_scalars=1,n_angles=200,img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-    height, width = dataset.shape[1:]
+    height, width = dataset.shape[1:3]
     dataset = dataset.reshape((-1, height * width))
 elif DATASET_TYPE == "projections":
     dataset, labels = datasets.load_synthetic_projections(img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+elif DATASET_TYPE == "points":
+    dataset, labels = datasets.load_synthetic_points(n_scalars=30,n_angles=200)
+    dataset = dataset.astype(np.float32)
 
 
 print(f"Dataset shape: {dataset.shape}.")
@@ -158,13 +161,15 @@ def test(epoch):
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
 
             if i == 0 and epoch % CHECKPT_INTERVAL == 0:
-                _, axs = plt.subplots(2)
+                _, axs = plt.subplots(ncols=2)
                 if DATASET_TYPE == "images":
                     axs[0].imshow(data[0].reshape((height, width)).cpu())
                     axs[1].imshow(recon_batch[0].reshape((height, width)).cpu())
                 else:
                     axs[0].imshow(data.cpu())
                     axs[1].imshow(recon_batch.cpu())
+                axs[0].set_title("original",fontsize=10)
+                axs[1].set_title("reconstruction",fontsize=10)
                 plt.savefig(f"{PREFIX}_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)
@@ -185,6 +190,7 @@ if __name__ == "__main__":
             logvar = logvar_torch.cpu().detach().numpy()
             var = np.sum(np.exp(logvar), axis=-1)
             labels["var"] = var
+            #print(labels)
             analyze.plot_save_latent_space(
                 f"{PREFIX}_latent_epoch{epoch}.png",
                 mu,
