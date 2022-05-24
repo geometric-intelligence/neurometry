@@ -1,0 +1,12 @@
+matplotlib>=3.3.4
+numpy>=1.18.1
+pandas
+scikit-image>=0.19.2
+scipy>=1.4.1
+black
+flake8
+flake8-docstrings
+isort
+jupyter
+pre-commit
+torch>=1.1.9

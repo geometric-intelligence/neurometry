@@ -19,7 +19,7 @@ def load_synthetic_projections(n_scalars=5, n_angles=1000, img_size=128):
     Parameters
     ----------
     n_scalars : int
-        Number of scalar used for action of scalings.
+        Number of scalar used for action of blurring.
     n_angles : int
         Number of angles used for action of SO(2).
 
@@ -48,7 +48,7 @@ def load_synthetic_images(n_scalars=4, n_angles=2000, img_size=128):
     Parameters
     ----------
     n_scalars : int
-        Number of scalar used for action of scalings.
+        Number of scalar used for action of blurring.
     n_angles : int
         Number of angles used for action of SO(2).
 
@@ -60,8 +60,11 @@ def load_synthetic_images(n_scalars=4, n_angles=2000, img_size=128):
         Labels organized in 2 columns: angles, and scalars.
     """
     print("Generating dataset of synthetic images.")
-    image = skimage.data.camera()
+    image = skimage.data.cat()
+    image = skimage.color.rgb2gray(image)
     image = skimage.transform.resize(image, (img_size, img_size), anti_aliasing=True)
+    skimage.io.imshow(image)
+    plt.show()
 
     images = []
     angles = []
@@ -159,7 +162,7 @@ def load_synthetic_place_cells(n_times=10000, n_cells=40):
     -------
     place_cells : array-like, shape=[n_times, n_cells]
         Number of firings per time step and per cell.
-    labels : pd.DataFrame, shape=[n_timess, 1]
+    labels : pd.DataFrame, shape=[n_times, 1]
         Labels organized in 1 column: angles.
     """
     n_firing_per_cell = int(n_times / n_cells)
@@ -198,7 +201,7 @@ def load_synthetic_place_cells(n_times=10000, n_cells=40):
                 cell_firings[i_cell - 1] = np.random.poisson(2.0)
                 cell_firings[i_cell] = np.random.poisson(4.0)
                 cell_firings[i_cell + 1] = np.random.poisson(2.0)
-                cell_firings[i_cell - 3] = np.random.poisson(1.0)
+                cell_firings[i_cell + 2] = np.random.poisson(1.0)
             place_cells.append(cell_firings)
             labels.append(i_cell / n_cells * 360)
 
