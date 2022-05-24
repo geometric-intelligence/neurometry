@@ -4,29 +4,33 @@ from datetime import datetime
 
 import analyze
 import datasets
+import losses
 import matplotlib.pyplot as plt
 import models.fc_vae
+import models.regressor
 import numpy as np
 import torch
 from torch.nn import functional as F
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 LOG_INTERVAL = 10
 CHECKPT_INTERVAL = 10
 N_EPOCHS = 100
 DATASET_TYPE = "experimental"
+WITH_REGRESSOR = True
+WEIGHT_REGRESSOR = 1.0
 
 LATENT_DIM = 2
 NOW = str(datetime.now().replace(second=0, microsecond=0))
 PREFIX = f"results/{DATASET_TYPE}_{NOW}"
 
 if DATASET_TYPE == "experimental":
-    dataset, labels = datasets.load_place_cells(expt_id=9, timestep_ns=500000)
-    # dataset = dataset[labels["velocities"] > 1]
-    # labels = labels[labels["velocities"] > 1]
+    dataset, labels = datasets.load_place_cells(expt_id=34, timestep_ns=1000000)
+    dataset = dataset[labels["velocities"] > 1]
+    labels = labels[labels["velocities"] > 1]
     dataset = np.log(dataset.astype(np.float32) + 1)
-    dataset = dataset[:, :-2]  # last column is weird
+    # dataset = dataset[:, :-2]  # last column is weird
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif DATASET_TYPE == "synthetic":
     dataset, labels = datasets.load_synthetic_place_cells(n_times=10000)
@@ -47,52 +51,24 @@ data_dim = dataset.shape[-1]
 dataset_torch = torch.tensor(dataset)
 
 seventy_perc = int(round(len(dataset) * 0.7))
-train = dataset[:seventy_perc]
-test = dataset[seventy_perc:]
+train_dataset = dataset[:seventy_perc]
+train_labels = labels[:seventy_perc]
+test_dataset = dataset[seventy_perc:]
+test_labels = labels[seventy_perc:]
+
+train = []
+for d, l in zip(train_dataset, train_labels["angles"]):
+    train.append([d, float(l)])
+test = []
+for d, l in zip(test_dataset, test_labels["angles"]):
+    test.append([d, float(l)])
 
 train_loader = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE)
 test_loader = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE)
 
 model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
+regressor = models.regressor.Regressor(input_dim=2, h_dim=20, output_dim=2)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
-
-def loss_function(recon_x, x, mu, logvar):
-    """Compute VAE loss function.
-
-    The VAE loss is defined as:
-    = reconstruction loss + Kl divergence
-    over all elements and batch
-
-    Notes
-    -----
-    see Appendix B from VAE paper:
-    Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    https://arxiv.org/abs/1312.6114
-    0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-
-    Parameters
-    ----------
-    recon_x : array-like, shape=[batch_size, data_dim]
-        Reconstructed data corresponding to input data x.
-    x : array-like, shape=[batch_size, data_dim]
-        Input data.
-    mu : array-like, shape=[batch_size, latent_dim]
-        Mean of multivariate Gaussian in latent space.
-    logvar : array-like, shape=[batch_size, latent_dim]
-        Vector representing the diagonal covariance of the
-        multivariate Gaussian in latent space.
-
-    Returns
-    -------
-    _ : array-like, shape=[batch_size,]
-        Loss function on each batch element.
-    """
-    BCE = F.binary_cross_entropy(recon_x, x, reduction="sum")
-
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-    return BCE + KLD
 
 
 def train(epoch):
@@ -110,11 +86,23 @@ def train(epoch):
     """
     model.train()
     train_loss = 0
-    for batch_idx, data in enumerate(train_loader):
+    for batch_idx, batch_data in enumerate(train_loader):
+        data, lab = batch_data
+        lab = lab.float()
         data = data.to(DEVICE)
         optimizer.zero_grad()
         recon_batch, mu, logvar = model(data)
-        loss = loss_function(recon_batch, data, mu, logvar)
+        elbo_loss = losses.elbo(recon_batch, data, mu, logvar)
+
+        pred_loss = 0.0
+        if WITH_REGRESSOR:
+            norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
+            angle_latent = mu / norm
+            angle_pred = regressor(angle_latent)
+            angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
+            pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
+
+        loss = WEIGHT_REGRESSOR * pred_loss + elbo_loss
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -128,6 +116,7 @@ def train(epoch):
                     loss.item() / len(data),
                 )
             )
+            print(f"Regression loss: {pred_loss}")
 
     train_loss = train_loss / len(train_loader.dataset)
 
@@ -153,10 +142,22 @@ def test(epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, data in enumerate(test_loader):
+        for i, batch_data in enumerate(test_loader):
+            data, lab = batch_data
             data = data.to(DEVICE)
+            lab = lab.float()
             recon_batch, mu, logvar = model(data)
-            test_loss += loss_function(recon_batch, data, mu, logvar).item()
+
+            pred_loss = 0.0
+            if WITH_REGRESSOR:
+                norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
+                angle_latent = mu / norm
+                angle_pred = regressor(angle_latent)
+                angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
+                pred_loss = F.mse_loss(angle_pred, angle_true)
+
+            test_loss += WEIGHT_REGRESSOR * pred_loss
+            test_loss += losses.elbo(recon_batch, data, mu, logvar).item()
 
             if i == 0 and epoch % CHECKPT_INTERVAL == 0:
                 _, axs = plt.subplots(2)
@@ -170,6 +171,7 @@ def test(epoch):
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
+    print("====> Test regression loss: {:.4f}".format(pred_loss))
     return test_loss
 
 
