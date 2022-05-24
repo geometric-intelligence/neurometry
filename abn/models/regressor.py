@@ -3,10 +3,6 @@
 import torch
 import torch.nn.functional as F
 
-# TODO:
-# iput: normalized vector
-# output cos, sin
-
 
 class Regressor(torch.nn.Module):
     """Regressor."""

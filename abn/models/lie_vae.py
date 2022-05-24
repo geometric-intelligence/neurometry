@@ -6,8 +6,7 @@ This file gathers deep learning models related to G-manifold learning.
 import torch
 from torch.nn import functional as F
 
-# TODO: Investigate this:
-# proceedings.neurips.cc//paper/2020/file/510f2318f324cf07fce24c3a4b89c771-Paper.pdf
+# TODO: Adapt this code from the actual Lie VAE.
 
 
 class LieVAE(torch.nn.Module):
@@ -76,7 +75,7 @@ class LieVAE(torch.nn.Module):
         -------
         _ : array-like, shape=[batch_size, latent_dim]
             Sample of the multivariate Gaussian of parameters
-            mu and logvar.
+            mu and logvar, projected on S1 by normalization.
         """
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
@@ -100,7 +99,7 @@ class LieVAE(torch.nn.Module):
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
-        """Run VAE: Encode, sample and decode.
+        """Run Lie VAE: Encode, sample and decode.
 
         Parameters
         ----------
