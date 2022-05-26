@@ -18,7 +18,7 @@ LOG_INTERVAL = 10
 CHECKPT_INTERVAL = 10
 N_EPOCHS = 100
 DATASET_TYPE = "experimental"
-WITH_REGRESSOR = True
+WITH_REGRESSOR = False
 WEIGHT_REGRESSOR = 1.0
 
 LATENT_DIM = 2
@@ -26,7 +26,8 @@ NOW = str(datetime.now().replace(second=0, microsecond=0))
 PREFIX = f"results/{DATASET_TYPE}_{NOW}"
 
 if DATASET_TYPE == "experimental":
-    dataset, labels = datasets.load_place_cells(expt_id=34, timestep_ns=1000000)
+    dataset, labels = datasets.load_place_cells(expt_id="7_hd", timestep_ns=1000000)
+    print(labels)
     dataset = dataset[labels["velocities"] > 1]
     labels = labels[labels["velocities"] > 1]
     dataset = np.log(dataset.astype(np.float32) + 1)

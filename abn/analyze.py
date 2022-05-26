@@ -12,6 +12,10 @@ CMAP = {
     "velocities": "viridis",
     "times": "winter",
     "gains": "cool",
+    "radius2": "viridis",
+    "qz": "twilight",
+    "angle_tracked": "twilight",
+    "angle_head": "twilight",
 }
 plt.rcParams.update({"figure.max_open_warning": 0})
 
@@ -56,11 +60,10 @@ def plot_save_latent_space(fname, points, labels):
             fig.colorbar(sc, ax=axs[i % 2, i // 2])
 
     elif latent_dim == 3:
-        fig, axs = plt.subplots(
-            ncols=ncols, nrows=nrows, projection="3d", figsize=(4 * ncols, 4 * nrows)
-        )
+        fig = plt.figure(figsize=(4 * ncols, 4 * nrows))
         for i, label_name in enumerate(label_names):
-            sc = axs[i % 2, i // 2].scatter(
+            ax = fig.add_subplot(ncols, nrows, i + 1, projection="3d")
+            sc = ax.scatter(
                 points[:, 0],
                 points[:, 1],
                 points[:, 2],
@@ -68,8 +71,8 @@ def plot_save_latent_space(fname, points, labels):
                 c=labels[label_name],
                 cmap=CMAP[label_name],
             )
-            axs[i % 2, i // 2].set_title(label_name, fontsize=14)
-            fig.colorbar(sc, ax=axs[i % 2, i // 2])
+            ax.set_title(label_name, fontsize=14)
+            fig.colorbar(sc, ax=ax)
 
     plt.tight_layout()
     plt.savefig(fname)

@@ -2,11 +2,13 @@
 
 import os
 
+import mat73
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.io
 import skimage
+from scipy.spatial.transform import Rotation as R
 
 
 def load_synthetic_projections(n_scalars=5, n_angles=1000, img_size=128):
@@ -257,6 +259,8 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
     if os.path.exists(labels_path):
         print(f"Found file at {labels_path}!")
         labels = pd.read_csv(labels_path)
+        print("HERE ARA LABELS")
+        print(labels)
 
     else:
         expt = loadmat(f"data/expt{expt_id}.mat")
@@ -267,6 +271,57 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
         vel = expt["rosdata"]["vel"]
         gain = expt["rosdata"]["gain"]
 
+        rat = expt["rat"]
+        day = expt["day"]
+
+        tracking_path = f"data/{rat}-{day}_trackingResults.mat"
+        if os.path.exists(tracking_path):
+            print(f"Found file at {data_path}!")
+            tracking = loadmat(tracking_path)
+            tracking = tracking["tracked_results"]
+            # t = tracking["t"]
+            # x =
+            # y = tracking["y"]
+            # z = tracking["z"]
+            qx = tracking["qx"]
+            qy = tracking["qy"]
+            qz = tracking["qz"]
+            qw = tracking["qw"]
+            print("here is qz")
+            print(qz)
+            print("Nan percentage")
+            print(np.sum(np.isnan(qz)) / len(qz))
+            success = tracking["success"]
+            print("success")
+            print(success)
+            quat = np.array([qx, qy, qz, qw]).T
+            print(quat.shape)
+            print("minmax")
+            print(np.max(quat))
+            print(np.min(quat))
+            rotvec_head = R.from_quat(quat).as_rotvec()
+            print(rotvec_head.shape)
+            print("here is rotvec_head 111")
+            print(rotvec_head)
+            angle_head = np.linalg.norm(rotvec_head, axis=-1)  # scalar-last format
+            print(angle_head.shape)
+            print("here is angle_head 111")
+            print(angle_head)
+            print("Averaging tracking variables per time-step...")
+            radius2 = _average_in_timestep(
+                tracking["x"] ** 2 + tracking["y"] ** 2, tracking["t"], times
+            )
+            angle_tracked = _average_in_timestep(
+                np.arctan2(tracking["y"], tracking["x"]), tracking["t"], times
+            )
+            qz = _average_in_timestep(tracking["qz"], tracking["t"], times)
+            print("POST Nan percentage")
+            print(np.sum(np.isnan(qz)) / len(qz))
+            angle_head = _average_in_timestep(angle_head, tracking["t"], times)
+            angle_head = [angle % 360 for angle in angle_head]
+            print("here is angle_head")
+            print(angle_head)
+
         print("Averaging variables angle, velocity and gain per time-step...")
 
         angles = _average_in_timestep(enc_angles, enc_times, times)
@@ -274,14 +329,31 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
         velocities = _average_in_timestep(vel, enc_times, times)
         gains = _average_in_timestep(gain, enc_times, times)
 
-        labels = pd.DataFrame(
-            {
-                "times": times[:-1],
-                "angles": angles,
-                "velocities": velocities,
-                "gains": gains,
-            }
-        )
+        # x = _average_in_timestep(tracking["x"], tracking["t"], times)
+        # y = _average_in_timestep(tracking["y"], tracking["t"], times)
+
+        if os.path.exists(tracking_path):
+            labels = pd.DataFrame(
+                {
+                    "times": times[:-1],
+                    "angles": angles,
+                    "velocities": velocities,
+                    "gains": gains,
+                    "radius2": radius2,
+                    "qz": qz,
+                    "angle_tracked": angle_tracked,
+                    "angle_head": angle_head,
+                }
+            )
+        else:
+            labels = pd.DataFrame(
+                {
+                    "times": times[:-1],
+                    "angles": angles,
+                    "velocities": velocities,
+                    "gains": gains,
+                }
+            )
 
         print(f"Saving to {labels_path}...")
         labels.to_csv(labels_path)
@@ -415,5 +487,8 @@ def loadmat(filename):
                 elem_list.append(sub_elem)
         return elem_list
 
-    data = scipy.io.loadmat(filename, struct_as_record=False, squeeze_me=True)
+    try:
+        data = scipy.io.loadmat(filename, struct_as_record=False, squeeze_me=True)
+    except Exception:
+        data = mat73.loadmat(filename)
     return _check_keys(data)
