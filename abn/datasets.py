@@ -312,28 +312,28 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
             qx = _average_in_timestep(qx, tracked_times, times)
             qy = _average_in_timestep(qy, tracked_times, times)
             qz = _average_in_timestep(qz, tracked_times, times)
+            qw = _average_in_timestep(qw, tracked_times, times)
             success = _average_in_timestep(success, tracked_times, times)
 
-            radius2 = x**2 + y**2
+            radius2 = [xx**2 + yy**2 for xx, yy in zip(x, y)]
             angles_tracked = np.arctan2(y, x)
-            quat_head = np.array([qx, qy, qz, qw]).T  # scalar-last format
+
+            quat_head = np.stack([qx, qy, qz, qw], axis=1)  # scalar-last format
+            assert quat_head == (len(times) - 1, 4), quat_head.shape
             rotvec_head = R.from_quat(quat_head).as_rotvec()
+            assert rotvec_head.shape == (len(times) - 1, 2), rotvec_head.shape
             angles_head = np.linalg.norm(rotvec_head, axis=-1)
             angles_head = [angle % 360 for angle in angles_head]
-            print("SHAPE")
-            print(rotvec_head.shape)
             rx_head, ry_head, rz_head = (
                 rotvec_head[:, 0],
                 rotvec_head[:, 1],
-                rx_head,
-            ) = rotvec_head[:, 2]
+                rotvec_head[:, 2],
+            )
 
-            logging.warning("(Min, Max) of tracked_times:")
-            logging.warning(f"{np.min(tracked_times):.3e}, {np.max(tracked_times):.3e}")
-            logging.warning("(Min, Max) of enc_times:")
-            logging.warning(f"{np.min(enc_times):.3e}, {np.max(enc_times):.3e}")
-            logging.warning("(Min, Max) of (firing) times:")
-            logging.warning(f"{np.min(times):.3e}, {np.max(times):.3e}")
+            if np.min(tracked_times) > np.max(times) or np.min(times) > np.max(
+                tracked_times
+            ):
+                raise ValueError("Tracking times and firing times do not match.")
 
         else:
             logging.info(f"No file at {data_path}! Skipping...")
@@ -440,7 +440,7 @@ def _average_in_timestep(variable_to_average, variable_times, times):
         variable_averaged.append(averaged)
         cum_count += int(count)
     assert len(variable_averaged) == len(times) - 1
-    return variable_averaged
+    return np.array(variable_averaged)
 
 
 def loadmat(filename):
