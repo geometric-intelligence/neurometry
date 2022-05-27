@@ -15,7 +15,7 @@ from torch.nn import functional as F
 
 if default_config.dataset == "experimental":
     dataset, labels = datasets.experimental.load_place_cells(
-        expt_id="15_hd", timestep_ns=1000000
+        expt_id=default_config.expt_id, timestep_ns=1000000
     )
     print(labels)
     dataset = dataset[labels["velocities"] > 1]
@@ -32,11 +32,11 @@ elif default_config.dataset == "images":
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     height, width = dataset.shape[1:3]
     dataset = dataset.reshape((-1, height * width))
-elif default_config.dataset == "projections":
-    dataset, labels = datasets.synthetic.load_projections(img_size=128)
+elif default_config.dataset == "projected_images":
+    dataset, labels = datasets.synthetic.load_projected_images(img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif default_config.dataset == "points":
-    dataset, labels = datasets.load_synthetic_points(n_scalars=30, n_angles=200)
+    dataset, labels = datasets.synthetic.load_points(n_scalars=30, n_angles=200)
     dataset = dataset.astype(np.float32)
 
 

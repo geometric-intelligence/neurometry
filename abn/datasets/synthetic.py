@@ -6,7 +6,7 @@ import pandas as pd
 import skimage
 
 
-def load_projections(n_scalars=5, n_angles=1000, img_size=128):
+def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
     """Load a dataset of 2D images projected into 1D projections.
 
     The actions are:

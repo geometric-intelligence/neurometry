@@ -59,9 +59,7 @@ def plot_save_latent_space(fname, points, labels):
     ncols = n_labels // 2 + 1
 
     if latent_dim == 1:
-        fig, axs = plt.subplots(
-            ncols=ncols, nrows=nrows, figsize=(5 * ncols, 4 * nrows)
-        )
+        fig = plt.figure(figsize=(5 * ncols, 4 * nrows))
         for i, label_name in enumerate(label_names):
             ax = fig.add_subplot(nrows, ncols, i + 1)
             sc = ax.scatter(
@@ -75,12 +73,11 @@ def plot_save_latent_space(fname, points, labels):
             fig.colorbar(sc, ax=ax)
 
     if latent_dim == 2:
-        fig, axs = plt.subplots(
-            ncols=ncols, nrows=nrows, figsize=(5 * ncols, 4 * nrows)
-        )
+        fig = plt.figure(figsize=(5 * ncols, 4 * nrows))
         for i, label_name in enumerate(label_names):
+            ax = fig.add_subplot(nrows, ncols, i + 1)
 
-            sc = axs[i % 2, i // 2].scatter(
+            sc = ax.scatter(
                 points[:, 0],
                 points[:, 1],
                 s=5,

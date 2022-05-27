@@ -18,7 +18,9 @@ checkpt_interval = 10
 n_epochs = 100
 
 # Dataset
-dataset = "experimental"
+dataset = "projected_images"
+if dataset == "experimental":
+    expt_id = "16_hd"  # hd: with head direction
 
 # Models
 with_regressor = False
