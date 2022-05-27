@@ -291,7 +291,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
             logging.info(f"Found file at {data_path}! Loading...")
             tracking = loadmat(tracking_path)
             tracking = tracking["tracked_results"]
-            tracking_times, x, y, z = (
+            tracked_times, x, y, z = (
                 tracking["t"],
                 tracking["x"],
                 tracking["y"],
@@ -304,30 +304,36 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
                 tracking["qw"],
             )
             success = tracking["success"]
-            quat = np.array([qx, qy, qz, qw]).T  # scalar-last format
 
-            rotvec_head = R.from_quat(quat).as_rotvec()
-            angle_head = np.linalg.norm(rotvec_head, axis=-1)
+            logging.info("Averaging tracking variables per time-step...")
+            x = _average_in_timestep(x, tracked_times, times)
+            y = _average_in_timestep(y, tracked_times, times)
+            z = _average_in_timestep(z, tracked_times, times)
+            qx = _average_in_timestep(qx, tracked_times, times)
+            qy = _average_in_timestep(qy, tracked_times, times)
+            qz = _average_in_timestep(qz, tracked_times, times)
+            success = _average_in_timestep(success, tracked_times, times)
 
-            logging.warning("(Min, Max) of tracking_times:")
-            logging.warning(
-                f"{np.min(tracking_times):.3e}, {np.max(tracking_times):.3e}"
-            )
+            radius2 = x**2 + y**2
+            angles_tracked = np.arctan2(y, x)
+            quat_head = np.array([qx, qy, qz, qw]).T  # scalar-last format
+            rotvec_head = R.from_quat(quat_head).as_rotvec()
+            angles_head = np.linalg.norm(rotvec_head, axis=-1)
+            angles_head = [angle % 360 for angle in angles_head]
+            print("SHAPE")
+            print(rotvec_head.shape)
+            rx_head, ry_head, rz_head = (
+                rotvec_head[:, 0],
+                rotvec_head[:, 1],
+                rx_head,
+            ) = rotvec_head[:, 2]
+
+            logging.warning("(Min, Max) of tracked_times:")
+            logging.warning(f"{np.min(tracked_times):.3e}, {np.max(tracked_times):.3e}")
             logging.warning("(Min, Max) of enc_times:")
             logging.warning(f"{np.min(enc_times):.3e}, {np.max(enc_times):.3e}")
             logging.warning("(Min, Max) of (firing) times:")
             logging.warning(f"{np.min(times):.3e}, {np.max(times):.3e}")
-
-            logging.info("Averaging tracking variables per time-step...")
-            radius2 = _average_in_timestep(x**2 + y**2, tracking_times, times)
-            z = _average_in_timestep(z, tracking_times, times)
-            angle_tracked = _average_in_timestep(
-                np.arctan2(y, x), tracking_times, times
-            )
-            success = _average_in_timestep(success, tracking_times, times)
-            qz = _average_in_timestep(qz, tracking_times, times)
-            angle_head = _average_in_timestep(angle_head, tracking_times, times)
-            angle_head = [angle % 360 for angle in angle_head]
 
         else:
             logging.info(f"No file at {data_path}! Skipping...")
@@ -339,9 +345,6 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
         velocities = _average_in_timestep(vel, enc_times, times)
         gains = _average_in_timestep(gain, enc_times, times)
 
-        # x = _average_in_timestep(tracking["x"], tracking["t"], times)
-        # y = _average_in_timestep(tracking["y"], tracking["t"], times)
-
         if os.path.exists(tracking_path):
             labels = pd.DataFrame(
                 {
@@ -350,10 +353,14 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
                     "velocities": velocities,
                     "gains": gains,
                     "radius2": radius2,
+                    "x": x,
+                    "y": y,
                     "z": z,
-                    "qz": qz,
-                    "angle_tracked": angle_tracked,
-                    "angle_head": angle_head,
+                    "rx_head": rx_head,
+                    "ry_head": ry_head,
+                    "rz_head": rz_head,
+                    "angles_tracked": angles_tracked,
+                    "angles_head": angles_head,
                     "success": success,
                 }
             )

@@ -7,17 +7,26 @@ to evaluate the efficiency of the methods.
 import matplotlib.pyplot as plt
 
 CMAP = {
+    # Color maps for angles related to position
     "angles": "twilight",
-    "var": "magma",
-    "velocities": "viridis",
+    "angles_tracked": "twilight",
+    # Color maps for angles related to head direction
+    "angles_head": "hsv",
+    "rx_head": "hsv",
+    "ry_head": "hsv",
+    "rz_head": "hsv",
+    # Experiments
     "times": "winter",
     "gains": "cool",
+    # Position color maps
+    "velocities": "viridis",
     "radius2": "viridis",
+    "x": "viridis",
+    "y": "viridis",
     "z": "viridis",
-    "qz": "twilight",
-    "angle_tracked": "twilight",
-    "angle_head": "twilight",
-    "success": "cool",
+    # Uncertainty / Success colormaps
+    "var": "magma",
+    "success": "afmhot",
 }
 plt.rcParams.update({"figure.max_open_warning": 0})
 
