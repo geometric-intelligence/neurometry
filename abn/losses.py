@@ -35,8 +35,8 @@ def elbo(recon_x, x, mu, logvar):
     _ : array-like, shape=[batch_size,]
         Loss function on each batch element.
     """
-    BCE = F.binary_cross_entropy(recon_x, x, reduction="sum")
+    recon_loss = F.binary_cross_entropy(recon_x, x, reduction="sum")
 
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return BCE + KLD
+    return recon_loss + kld

@@ -391,7 +391,6 @@ def _extract_firing_times(expt):
         Dictionnary summarizing the experiment, with:
             key: clust
     """
-    # TODO: Speed this up (joblib - parallelism?)
     times = []
     for cell in expt["clust"]:
         times.extend(cell["ts"])
