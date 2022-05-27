@@ -13,9 +13,11 @@ CMAP = {
     "times": "winter",
     "gains": "cool",
     "radius2": "viridis",
+    "z": "viridis",
     "qz": "twilight",
     "angle_tracked": "twilight",
     "angle_head": "twilight",
+    "success": "cool",
 }
 plt.rcParams.update({"figure.max_open_warning": 0})
 
