@@ -2,6 +2,8 @@
 
 import analyze
 import datasets
+import datasets.experimental
+import datasets.synthetic
 import default_config
 import losses
 import matplotlib.pyplot as plt
@@ -12,7 +14,9 @@ import torch
 from torch.nn import functional as F
 
 if default_config.dataset == "experimental":
-    dataset, labels = datasets.load_place_cells(expt_id="15_hd", timestep_ns=1000000)
+    dataset, labels = datasets.experimental.load_place_cells(
+        expt_id="15_hd", timestep_ns=1000000
+    )
     print(labels)
     dataset = dataset[labels["velocities"] > 1]
     labels = labels[labels["velocities"] > 1]
@@ -20,16 +24,16 @@ if default_config.dataset == "experimental":
     # dataset = dataset[:, :-2]  # last column is weird
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif default_config.dataset == "synthetic":
-    dataset, labels = datasets.load_synthetic_place_cells(n_times=10000)
+    dataset, labels = datasets.synthetic.load_place_cells(n_times=10000)
     dataset = np.log(dataset.astype(np.float32) + 1)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 elif default_config.dataset == "images":
-    dataset, labels = datasets.load_synthetic_images(img_size=64)
+    dataset, labels = datasets.synthetic.load_images(img_size=64)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     height, width = dataset.shape[1:]
     dataset = dataset.reshape((-1, height * width))
 elif default_config.dataset == "projections":
-    dataset, labels = datasets.load_synthetic_projections(img_size=128)
+    dataset, labels = datasets.synthetic.load_projections(img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 
 
