@@ -1,5 +1,6 @@
 """Load synthetic or real datasets."""
 
+import logging
 import os
 
 import mat73
@@ -61,7 +62,7 @@ def load_synthetic_images(n_scalars=4, n_angles=2000, img_size=128):
     labels : pd.DataFrame, shape=[n_scalars * n_angles, 2]
         Labels organized in 2 columns: angles, and scalars.
     """
-    print("Generating dataset of synthetic images.")
+    logging.info("Generating dataset of synthetic images.")
     image = skimage.data.camera()
     image = skimage.transform.resize(image, (img_size, img_size), anti_aliasing=True)
 
@@ -224,11 +225,16 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
     place_cells : array-like, shape=[n_timesteps, n_cells]
         Number of firings at each time-steps, for each place cell.
     """
-    data_path = f"data/place_cells_expt{expt_id}_timestep{timestep_ns}.npy"
-    labels_path = f"data/place_cells_labels_expt{expt_id}_timestep{timestep_ns}.txt"
+    data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_ns}.npy"
+    labels_path = f"data/expt{expt_id}_labels_timestep{timestep_ns}.txt"
+    times_path = f"data/expt{expt_id}_times_timestep{timestep_ns}.txt"
 
-    if not os.path.exists(data_path) or not os.path.exists(labels_path):
-        print(f"Loading experiment {expt_id}...")
+    if os.path.exists(times_path):
+        logging.info(f"# - Found file at {times_path}! Loading...")
+        times = np.loadtxt(times_path)
+    else:
+        logging.info(f"# - No file at {times_path}. Preprocessing needed:")
+        logging.info(f"Loading experiment {expt_id} to bin firing times into times...")
         expt = loadmat(f"data/expt{expt_id}.mat")
         expt = expt["x"]
 
@@ -237,32 +243,38 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
             start=firing_times[0], stop=firing_times[-1], step=timestep_ns
         )
 
+        logging.info(f"# - Saving times of shape {times.shape} to {times_path}...")
+        np.savetxt(fname=times_path, X=times)
+
     if os.path.exists(data_path):
-        print(f"Found file at {data_path}!")
+        logging.info(f"# - Found file at {data_path}! Loading...")
         place_cells = np.load(data_path)
 
     else:
+        logging.info(f"# - No file at {data_path}. Preprocessing needed:")
         n_timesteps = len(times) - 1
         n_cells = len(expt["clust"])
-        print(f"Number of cells: {n_cells}")
+        logging.info(f"Number of cells: {n_cells}")
         place_cells = np.zeros((n_timesteps, n_cells))
         for i_cell, cell in enumerate(expt["clust"]):
-            print(f"Counting firings per time-step in cell {i_cell}...")
+            logging.info(f"Counting firings per time-step in cell {i_cell}...")
             counts, bins, _ = plt.hist(cell["ts"], bins=times)
             assert sum(bins != times) == 0
             assert len(counts) == n_timesteps
             place_cells[:, i_cell] = counts
 
-        print(f"Saving to {data_path}...")
+        logging.info(
+            f"# - Saving place_cells of shape {place_cells.shape} to {data_path}..."
+        )
         np.save(data_path, place_cells)
 
     if os.path.exists(labels_path):
-        print(f"Found file at {labels_path}!")
+        logging.info(f"# - Found file at {labels_path}! Loading...")
         labels = pd.read_csv(labels_path)
-        print("HERE ARA LABELS")
-        print(labels)
+        logging.debug(f"Labels:\n {labels}")
 
     else:
+        logging.info(f"# - No file at {labels_path}. Preprocessing needed:")
         expt = loadmat(f"data/expt{expt_id}.mat")
         expt = expt["x"]
 
@@ -276,53 +288,51 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
 
         tracking_path = f"data/{rat}-{day}_trackingResults.mat"
         if os.path.exists(tracking_path):
-            print(f"Found file at {data_path}!")
+            logging.info(f"Found file at {data_path}! Loading...")
             tracking = loadmat(tracking_path)
             tracking = tracking["tracked_results"]
-            # t = tracking["t"]
-            # x =
-            # y = tracking["y"]
-            # z = tracking["z"]
-            qx = tracking["qx"]
-            qy = tracking["qy"]
-            qz = tracking["qz"]
-            qw = tracking["qw"]
-            print("here is qz")
-            print(qz)
-            print("Nan percentage")
-            print(np.sum(np.isnan(qz)) / len(qz))
+            tracking_times, x, y, z = (
+                tracking["t"],
+                tracking["x"],
+                tracking["y"],
+                tracking["z"],
+            )
+            qx, qy, qz, qw = (
+                tracking["qx"],
+                tracking["qy"],
+                tracking["qz"],
+                tracking["qw"],
+            )
             success = tracking["success"]
-            print("success")
-            print(success)
-            quat = np.array([qx, qy, qz, qw]).T
-            print(quat.shape)
-            print("minmax")
-            print(np.max(quat))
-            print(np.min(quat))
-            rotvec_head = R.from_quat(quat).as_rotvec()
-            print(rotvec_head.shape)
-            print("here is rotvec_head 111")
-            print(rotvec_head)
-            angle_head = np.linalg.norm(rotvec_head, axis=-1)  # scalar-last format
-            print(angle_head.shape)
-            print("here is angle_head 111")
-            print(angle_head)
-            print("Averaging tracking variables per time-step...")
-            radius2 = _average_in_timestep(
-                tracking["x"] ** 2 + tracking["y"] ** 2, tracking["t"], times
-            )
-            angle_tracked = _average_in_timestep(
-                np.arctan2(tracking["y"], tracking["x"]), tracking["t"], times
-            )
-            qz = _average_in_timestep(tracking["qz"], tracking["t"], times)
-            print("POST Nan percentage")
-            print(np.sum(np.isnan(qz)) / len(qz))
-            angle_head = _average_in_timestep(angle_head, tracking["t"], times)
-            angle_head = [angle % 360 for angle in angle_head]
-            print("here is angle_head")
-            print(angle_head)
+            quat = np.array([qx, qy, qz, qw]).T  # scalar-last format
 
-        print("Averaging variables angle, velocity and gain per time-step...")
+            rotvec_head = R.from_quat(quat).as_rotvec()
+            angle_head = np.linalg.norm(rotvec_head, axis=-1)
+
+            logging.warning("(Min, Max) of tracking_times:")
+            logging.warning(
+                f"{np.min(tracking_times):.3e}, {np.max(tracking_times):.3e}"
+            )
+            logging.warning("(Min, Max) of enc_times:")
+            logging.warning(f"{np.min(enc_times):.3e}, {np.max(enc_times):.3e}")
+            logging.warning("(Min, Max) of (firing) times:")
+            logging.warning(f"{np.min(times):.3e}, {np.max(times):.3e}")
+
+            logging.info("Averaging tracking variables per time-step...")
+            radius2 = _average_in_timestep(x**2 + y**2, tracking_times, times)
+            z = _average_in_timestep(z, tracking_times, times)
+            angle_tracked = _average_in_timestep(
+                np.arctan2(y, x), tracking_times, times
+            )
+            success = _average_in_timestep(success, tracking_times, times)
+            qz = _average_in_timestep(qz, tracking_times, times)
+            angle_head = _average_in_timestep(angle_head, tracking_times, times)
+            angle_head = [angle % 360 for angle in angle_head]
+
+        else:
+            logging.info(f"No file at {data_path}! Skipping...")
+
+        logging.info("Averaging variables angle, velocity and gain per time-step...")
 
         angles = _average_in_timestep(enc_angles, enc_times, times)
         angles = [angle % 360 for angle in angles]
@@ -340,9 +350,11 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
                     "velocities": velocities,
                     "gains": gains,
                     "radius2": radius2,
+                    "z": z,
                     "qz": qz,
                     "angle_tracked": angle_tracked,
                     "angle_head": angle_head,
+                    "success": success,
                 }
             )
         else:
@@ -355,7 +367,9 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
                 }
             )
 
-        print(f"Saving to {labels_path}...")
+        logging.info(
+            f"# - Saving DataFrame with labels {labels.columns} to {labels_path}..."
+        )
         labels.to_csv(labels_path)
 
     return place_cells, labels
@@ -370,19 +384,24 @@ def _extract_firing_times(expt):
         Dictionnary summarizing the experiment, with:
             key: clust
     """
+    # TODO: Speed this up (joblib - parallelism?)
     times = []
     for cell in expt["clust"]:
         times.extend(cell["ts"])
 
     times = sorted(times)
     n_times = len(times)
-    print(f"Nb of firing times (all cells) before deleting duplicates: {n_times}.")
+    logging.info(
+        f"Nb of firing times (all cells) before deleting duplicates: {n_times}."
+    )
     aux = []
     for time in times:
         if time not in aux:
             aux.append(time)
     n_times = len(aux)
-    print(f"Nb of firing times  (all cells) after deleting duplicates: {n_times}.")
+    logging.info(
+        f"Nb of firing times  (all cells) after deleting duplicates: {n_times}."
+    )
     return aux
 
 
