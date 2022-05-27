@@ -30,11 +30,14 @@ elif default_config.dataset == "synthetic":
 elif default_config.dataset == "images":
     dataset, labels = datasets.synthetic.load_images(img_size=64)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-    height, width = dataset.shape[1:]
+    height, width = dataset.shape[1:3]
     dataset = dataset.reshape((-1, height * width))
 elif default_config.dataset == "projections":
     dataset, labels = datasets.synthetic.load_projections(img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+elif default_config.dataset == "points":
+    dataset, labels = datasets.load_synthetic_points(n_scalars=30, n_angles=200)
+    dataset = dataset.astype(np.float32)
 
 
 print(f"Dataset shape: {dataset.shape}.")
@@ -160,6 +163,8 @@ def test(epoch):
                 else:
                     axs[0].imshow(data.cpu())
                     axs[1].imshow(recon_batch.cpu())
+                axs[0].set_title("original", fontsize=10)
+                axs[1].set_title("reconstruction", fontsize=10)
                 plt.savefig(f"{default_config.results_prefix}_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)

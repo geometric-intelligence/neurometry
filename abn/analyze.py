@@ -5,6 +5,8 @@ to evaluate the efficiency of the methods.
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D  # NOQA
 
 CMAP = {
     # Color maps for angles related to position
@@ -56,11 +58,28 @@ def plot_save_latent_space(fname, points, labels):
     nrows = 2
     ncols = n_labels // 2 + 1
 
+    if latent_dim == 1:
+        fig, axs = plt.subplots(
+            ncols=ncols, nrows=nrows, figsize=(5 * ncols, 4 * nrows)
+        )
+        for i, label_name in enumerate(label_names):
+            ax = fig.add_subplot(nrows, ncols, i + 1)
+            sc = ax.scatter(
+                points[:, 0],
+                np.ones(len(points[:, 0])),
+                s=10,
+                c=labels[label_name],
+                cmap=CMAP[label_name],
+            )
+            ax.set_title(label_name, fontsize=30)
+            fig.colorbar(sc, ax=ax)
+
     if latent_dim == 2:
         fig, axs = plt.subplots(
             ncols=ncols, nrows=nrows, figsize=(5 * ncols, 4 * nrows)
         )
         for i, label_name in enumerate(label_names):
+
             sc = axs[i % 2, i // 2].scatter(
                 points[:, 0],
                 points[:, 1],
@@ -68,22 +87,22 @@ def plot_save_latent_space(fname, points, labels):
                 c=labels[label_name],
                 cmap=CMAP[label_name],
             )
-            axs[i % 2, i // 2].set_title(label_name, fontsize=14)
-            fig.colorbar(sc, ax=axs[i % 2, i // 2])
+            ax.set_title(label_name, fontsize=14)
+            fig.colorbar(sc, ax=ax)
 
     elif latent_dim == 3:
-        fig = plt.figure(figsize=(4 * ncols, 4 * nrows))
+        fig = plt.figure(figsize=(10 * ncols, 8 * nrows))
         for i, label_name in enumerate(label_names):
-            ax = fig.add_subplot(ncols, nrows, i + 1, projection="3d")
+            ax = fig.add_subplot(nrows, ncols, i + 1, projection="3d")
             sc = ax.scatter(
                 points[:, 0],
                 points[:, 1],
                 points[:, 2],
-                s=5,
+                s=10,
                 c=labels[label_name],
                 cmap=CMAP[label_name],
             )
-            ax.set_title(label_name, fontsize=14)
+            ax.set_title(label_name, fontsize=30)
             fig.colorbar(sc, ax=ax)
 
     plt.tight_layout()
