@@ -18,7 +18,7 @@ checkpt_interval = 10
 n_epochs = 100
 
 # Dataset
-dataset = "experimental"
+dataset = "projections"
 
 # Models
 with_regressor = False

@@ -24,6 +24,7 @@ CMAP = {
     "x": "viridis",
     "y": "viridis",
     "z": "viridis",
+    "scalars": "viridis",
     # Uncertainty / Success colormaps
     "var": "magma",
     "success": "afmhot",

@@ -319,9 +319,9 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
             angles_tracked = np.arctan2(y, x)
 
             quat_head = np.stack([qx, qy, qz, qw], axis=1)  # scalar-last format
-            assert quat_head == (len(times) - 1, 4), quat_head.shape
+            assert quat_head.shape == (len(times) - 1, 4), quat_head.shape
             rotvec_head = R.from_quat(quat_head).as_rotvec()
-            assert rotvec_head.shape == (len(times) - 1, 2), rotvec_head.shape
+            assert rotvec_head.shape == (len(times) - 1, 3), rotvec_head.shape
             angles_head = np.linalg.norm(rotvec_head, axis=-1)
             angles_head = [angle % 360 for angle in angles_head]
             rx_head, ry_head, rz_head = (
