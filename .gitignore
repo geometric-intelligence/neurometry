@@ -1,7 +1,8 @@
 # Data files
 *.mat
 *.npy
-data/*
+abn/data/*.txt
+abn/data/*.npy
 
 # Result files
 *.png

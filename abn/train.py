@@ -1,46 +1,42 @@
 """Fit a VAE to place cells."""
 
-from datetime import datetime
-
 import analyze
 import datasets
+import datasets.experimental
+import datasets.synthetic
+import default_config
+import losses
 import matplotlib.pyplot as plt
-import models
+import models.fc_vae
+import models.regressor
 import numpy as np
 import torch
 from torch.nn import functional as F
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 64
-LOG_INTERVAL = 10
-CHECKPT_INTERVAL = 10
-N_EPOCHS = 250
-DATASET_TYPE = "images"
-
-LATENT_DIM = 2
-NOW = str(datetime.now().replace(second=0, microsecond=0))
-PREFIX = f"results/{DATASET_TYPE}_{NOW}"
-
-if DATASET_TYPE == "experimental":
-    dataset, labels = datasets.load_place_cells(expt_id=34, timestep_ns=1000000)
+if default_config.dataset == "experimental":
+    dataset, labels = datasets.experimental.load_place_cells(
+        expt_id=default_config.expt_id, timestep_ns=1000000
+    )
+    print(labels)
     dataset = dataset[labels["velocities"] > 1]
     labels = labels[labels["velocities"] > 1]
     dataset = np.log(dataset.astype(np.float32) + 1)
+    # dataset = dataset[:, :-2]  # last column is weird
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-elif DATASET_TYPE == "synthetic":
-    dataset, labels = datasets.load_synthetic_place_cells(n_times=10000)
+elif default_config.dataset == "synthetic":
+    dataset, labels = datasets.synthetic.load_place_cells(n_times=10000)
     dataset = np.log(dataset.astype(np.float32) + 1)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-elif DATASET_TYPE == "images":
-    dataset, labels = datasets.load_synthetic_images(n_scalars=1,n_angles=200,img_size=128)
+elif default_config.dataset == "images":
+    dataset, labels = datasets.synthetic.load_images(img_size=64)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     height, width = dataset.shape[1:3]
     dataset = dataset.reshape((-1, height * width))
-elif DATASET_TYPE == "projections":
-    dataset, labels = datasets.load_synthetic_projections(img_size=128)
+elif default_config.dataset == "projected_images":
+    dataset, labels = datasets.synthetic.load_projected_images(img_size=128)
     dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
-elif DATASET_TYPE == "points":
-    dataset, labels = datasets.load_synthetic_points(n_scalars=30,n_angles=200)
+elif default_config.dataset == "points":
+    dataset, labels = datasets.synthetic.load_points(n_scalars=30, n_angles=200)
     dataset = dataset.astype(np.float32)
 
 
@@ -49,52 +45,26 @@ data_dim = dataset.shape[-1]
 dataset_torch = torch.tensor(dataset)
 
 seventy_perc = int(round(len(dataset) * 0.7))
-train = dataset[:seventy_perc]
-test = dataset[seventy_perc:]
+train_dataset = dataset[:seventy_perc]
+train_labels = labels[:seventy_perc]
+test_dataset = dataset[seventy_perc:]
+test_labels = labels[seventy_perc:]
 
-train_loader = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE)
-test_loader = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE)
+train = []
+for d, l in zip(train_dataset, train_labels["angles"]):
+    train.append([d, float(l)])
+test = []
+for d, l in zip(test_dataset, test_labels["angles"]):
+    test.append([d, float(l)])
 
-model = models.VAE(data_dim=data_dim, latent_dim=LATENT_DIM).to(DEVICE)
+train_loader = torch.utils.data.DataLoader(train, batch_size=default_config.batch_size)
+test_loader = torch.utils.data.DataLoader(test, batch_size=default_config.batch_size)
+
+model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=default_config.latent_dim).to(
+    default_config.device
+)
+regressor = models.regressor.Regressor(input_dim=2, h_dim=20, output_dim=2)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
-
-def loss_function(recon_x, x, mu, logvar):
-    """Compute VAE loss function.
-
-    The VAE loss is defined as:
-    = reconstruction loss + Kl divergence
-    over all elements and batch
-
-    Notes
-    -----
-    see Appendix B from VAE paper:
-    Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    https://arxiv.org/abs/1312.6114
-    0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-
-    Parameters
-    ----------
-    recon_x : array-like, shape=[batch_size, data_dim]
-        Reconstructed data corresponding to input data x.
-    x : array-like, shape=[batch_size, data_dim]
-        Input data.
-    mu : array-like, shape=[batch_size, latent_dim]
-        Mean of multivariate Gaussian in latent space.
-    logvar : array-like, shape=[batch_size, latent_dim]
-        Vector representing the diagonal covariance of the
-        multivariate Gaussian in latent space.
-
-    Returns
-    -------
-    _ : array-like, shape=[batch_size,]
-        Loss function on each batch element.
-    """
-    BCE = F.binary_cross_entropy(recon_x, x, reduction="sum")
-
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-    return BCE + KLD
 
 
 def train(epoch):
@@ -112,15 +82,27 @@ def train(epoch):
     """
     model.train()
     train_loss = 0
-    for batch_idx, data in enumerate(train_loader):
-        data = data.to(DEVICE)
+    for batch_idx, batch_data in enumerate(train_loader):
+        data, lab = batch_data
+        lab = lab.float()
+        data = data.to(default_config.device)
         optimizer.zero_grad()
         recon_batch, mu, logvar = model(data)
-        loss = loss_function(recon_batch, data, mu, logvar)
+        elbo_loss = losses.elbo(recon_batch, data, mu, logvar)
+
+        pred_loss = 0.0
+        if default_config.with_regressor:
+            norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
+            angle_latent = mu / norm
+            angle_pred = regressor(angle_latent)
+            angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
+            pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
+
+        loss = default_config.weight_regressor * pred_loss + elbo_loss
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
-        if batch_idx % LOG_INTERVAL == 0:
+        if batch_idx % default_config.log_interval == 0:
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
@@ -130,6 +112,7 @@ def train(epoch):
                     loss.item() / len(data),
                 )
             )
+            print(f"Regression loss: {pred_loss}")
 
     train_loss = train_loss / len(train_loader.dataset)
 
@@ -155,44 +138,59 @@ def test(epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, data in enumerate(test_loader):
-            data = data.to(DEVICE)
+        for i, batch_data in enumerate(test_loader):
+            data, lab = batch_data
+            data = data.to(default_config.device)
+            lab = lab.float()
             recon_batch, mu, logvar = model(data)
-            test_loss += loss_function(recon_batch, data, mu, logvar).item()
 
-            if i == 0 and epoch % CHECKPT_INTERVAL == 0:
-                _, axs = plt.subplots(ncols=2)
-                if DATASET_TYPE == "images":
+            pred_loss = 0.0
+            if default_config.with_regressor:
+                norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
+                angle_latent = mu / norm
+                angle_pred = regressor(angle_latent)
+                angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
+                pred_loss = F.mse_loss(angle_pred, angle_true)
+
+            test_loss += default_config.weight_regressor * pred_loss
+            test_loss += losses.elbo(recon_batch, data, mu, logvar).item()
+
+            if i == 0 and epoch % default_config.checkpt_interval == 0:
+                _, axs = plt.subplots(2)
+                if default_config.dataset == "images":
                     axs[0].imshow(data[0].reshape((height, width)).cpu())
                     axs[1].imshow(recon_batch[0].reshape((height, width)).cpu())
                 else:
                     axs[0].imshow(data.cpu())
                     axs[1].imshow(recon_batch.cpu())
-                axs[0].set_title("original",fontsize=10)
-                axs[1].set_title("reconstruction",fontsize=10)
-                plt.savefig(f"{PREFIX}_recon_epoch{epoch}.png")
+                axs[0].set_title("original", fontsize=10)
+                axs[1].set_title("reconstruction", fontsize=10)
+                plt.savefig(f"{default_config.results_prefix}_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
+    print("====> Test regression loss: {:.4f}".format(pred_loss))
     return test_loss
 
 
 if __name__ == "__main__":
     train_losses = []
     test_losses = []
-    for epoch in range(1, N_EPOCHS + 1):
+    for epoch in range(1, default_config.n_epochs + 1):
         train_losses.append(train(epoch))
         test_losses.append(test(epoch))
 
-        if epoch % CHECKPT_INTERVAL == 0:
+        if epoch % default_config.checkpt_interval == 0:
             mu_torch, logvar_torch = model.encode(dataset_torch)
             mu = mu_torch.cpu().detach().numpy()
             logvar = logvar_torch.cpu().detach().numpy()
             var = np.sum(np.exp(logvar), axis=-1)
             labels["var"] = var
-            #print(labels)
+            mu_masked = mu[labels["var"] < 0.8]
+            labels_masked = labels[labels["var"] < 0.8]
+            assert len(mu) == len(labels)
             analyze.plot_save_latent_space(
-                f"{PREFIX}_latent_epoch{epoch}.png",
+                f"{default_config.results_prefix}_latent_epoch{epoch}.png",
                 mu,
                 labels,
             )
@@ -201,6 +199,9 @@ if __name__ == "__main__":
     plt.plot(train_losses, label="train")
     plt.plot(test_losses, label="test")
     plt.legend()
-    plt.savefig(f"{PREFIX}_losses.png")
+    plt.savefig(f"{default_config.results_prefix}_losses.png")
     plt.close()
-    torch.save(model, f"{PREFIX}_model_latent{LATENT_DIM}.pt")
+    torch.save(
+        model,
+        f"{default_config.results_prefix}_model_latent{default_config.latent_dim}.pt",
+    )

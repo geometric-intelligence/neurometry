@@ -15,6 +15,7 @@ dependencies:
     - flake8-docstrings
     - isort
     - jupyter
+    - mat73
     - pre-commit
     - pre-commit
     - torch>=1.1.9

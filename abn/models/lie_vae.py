@@ -6,11 +6,10 @@ This file gathers deep learning models related to G-manifold learning.
 import torch
 from torch.nn import functional as F
 
-# TODO: Investigate this:
-# proceedings.neurips.cc//paper/2020/file/510f2318f324cf07fce24c3a4b89c771-Paper.pdf
+# TODO: Adapt this code from the actual Lie VAE.
 
 
-class VAE(torch.nn.Module):
+class LieVAE(torch.nn.Module):
     """VAE with Linear (fully connected) layers.
 
     Parameters
@@ -23,13 +22,13 @@ class VAE(torch.nn.Module):
         Example: 2.
     """
 
-    def __init__(self, data_dim, latent_dim):
-        super(VAE, self).__init__()
+    def __init__(self, data_dim, group_dim=2, latent_dim=2):
+        super(LieVAE, self).__init__()
         self.latent_dim = latent_dim
 
         self.fc1 = torch.nn.Linear(data_dim, 400)
-        self.fc21 = torch.nn.Linear(400, latent_dim)
-        self.fc22 = torch.nn.Linear(400, latent_dim)
+        self.fc21 = torch.nn.Linear(400, group_dim)
+        self.fc22 = torch.nn.Linear(400, group_dim)
         self.fc3 = torch.nn.Linear(latent_dim, 400)
         self.fc4 = torch.nn.Linear(400, data_dim)
 
@@ -56,6 +55,8 @@ class VAE(torch.nn.Module):
         """
         h1 = F.relu(self.fc1(x))
         mu = self.fc21(h1)
+
+        mu = mu / torch.linalg.norm(mu, axis=1).reshape((-1, 1))
         logvar = self.fc22(h1)
         return mu, logvar
 
@@ -74,11 +75,12 @@ class VAE(torch.nn.Module):
         -------
         _ : array-like, shape=[batch_size, latent_dim]
             Sample of the multivariate Gaussian of parameters
-            mu and logvar.
+            mu and logvar, projected on S1 by normalization.
         """
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
-        return mu + eps * std
+        z_sample = mu + eps * std
+        return z_sample / torch.linalg.norm(z_sample, axis=1).reshape((-1, 1))
 
     def decode(self, z):
         """Decode latent variable z into data.
@@ -97,7 +99,7 @@ class VAE(torch.nn.Module):
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
-        """Run VAE: Encode, sample and decode.
+        """Run Lie VAE: Encode, sample and decode.
 
         Parameters
         ----------
