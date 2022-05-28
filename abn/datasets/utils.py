@@ -1,8 +1,81 @@
 """Utils to import data from matlab."""
 
+import datasets
 import mat73
 import numpy as np
 import scipy.io
+import torch
+
+
+def load(config):
+    """Load dataset according to configuration in config.
+
+    Parameters
+    ----------
+    config
+
+    Returns
+    -------
+    dataset_torch : torch.Tensor
+        Dataset (without labels) as a torch tensor.
+        Each row represents one data point.
+    labels : pd.DataFrame
+        Dataframe of labels corresponding to dataset_torch
+    train_loader : torch.DataLoader
+        Loader that yields minibatches (data and labels) from the
+        train dataset.
+    test_loader : torch.DataLoader
+        Loader that yields minibatches (data and labels) from the
+        test dataset.
+    """
+    if config.dataset_name == "experimental":
+        dataset, labels = datasets.experimental.load_place_cells(
+            expt_id=config.expt_id, timestep_ns=1000000
+        )
+        print(labels)
+        dataset = dataset[labels["velocities"] > 1]
+        labels = labels[labels["velocities"] > 1]
+        dataset = np.log(dataset.astype(np.float32) + 1)
+        # dataset = dataset[:, :-2]  # last column is weird
+        dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+    elif config.dataset_name == "synthetic":
+        dataset, labels = datasets.synthetic.load_place_cells(n_times=10000)
+        dataset = np.log(dataset.astype(np.float32) + 1)
+        dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+    elif config.dataset_name == "images":
+        dataset, labels = datasets.synthetic.load_images(img_size=config.img_size)
+        dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+        height, width = dataset.shape[1:3]
+        dataset = dataset.reshape((-1, height * width))
+    elif config.dataset_name == "projected_images":
+        dataset, labels = datasets.synthetic.load_projected_images(
+            img_size=config.img_size
+        )
+        dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+    elif config.dataset_name == "points":
+        dataset, labels = datasets.synthetic.load_points(n_scalars=30, n_angles=200)
+        dataset = dataset.astype(np.float32)
+
+    print(f"Dataset shape: {dataset.shape}.")
+    assert config.data_dim == dataset.shape[-1]
+    dataset_torch = torch.tensor(dataset)
+
+    seventy_perc = int(round(len(dataset) * 0.7))
+    train_dataset = dataset[:seventy_perc]
+    train_labels = labels[:seventy_perc]
+    test_dataset = dataset[seventy_perc:]
+    test_labels = labels[seventy_perc:]
+
+    train = []
+    for d, l in zip(train_dataset, train_labels["angles"]):
+        train.append([d, float(l)])
+    test = []
+    for d, l in zip(test_dataset, test_labels["angles"]):
+        test.append([d, float(l)])
+
+    train_loader = torch.utils.data.DataLoader(train, batch_size=config.batch_size)
+    test_loader = torch.utils.data.DataLoader(test, batch_size=config.batch_size)
+    return dataset_torch, labels, train_loader, test_loader
 
 
 def loadmat(filename):
