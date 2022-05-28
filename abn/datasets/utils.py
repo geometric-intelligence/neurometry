@@ -1,6 +1,7 @@
 """Utils to import data from matlab."""
 
-import datasets
+import datasets.experimental
+import datasets.synthetic
 import mat73
 import numpy as np
 import scipy.io
@@ -57,7 +58,6 @@ def load(config):
         dataset = dataset.astype(np.float32)
 
     print(f"Dataset shape: {dataset.shape}.")
-    assert config.data_dim == dataset.shape[-1]
     dataset_torch = torch.tensor(dataset)
 
     seventy_perc = int(round(len(dataset) * 0.7))

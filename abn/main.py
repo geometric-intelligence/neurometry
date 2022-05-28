@@ -1,22 +1,28 @@
 """Main script."""
 
-import datasets
+import datasets.utils
 import default_config
 import evaluate.latent
 import matplotlib.pyplot as plt
-import models
+import models.fc_vae
+import models.regressor
 import numpy as np
 import torch
 import train
 
 dataset_torch, labels, train_loader, test_loader = datasets.utils.load(default_config)
 
-model = models.fc_vae.VAE(
-    data_dim=default_config.data_dim, latent_dim=default_config.latent_dim
-).to(default_config.device)
-regressor = models.regressor.Regressor(
-    input_dim=2, h_dim=default_config.h_dim_regressor, output_dim=2
+_, data_dim = dataset_torch.shape
+
+model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=default_config.latent_dim).to(
+    default_config.device
 )
+
+regressor = None
+if default_config.with_regressor:
+    regressor = models.regressor.Regressor(
+        input_dim=2, h_dim=default_config.h_dim_regressor, output_dim=2
+    )
 optimizer = torch.optim.Adam(model.parameters(), lr=default_config.learning_rate)
 
 train_losses = []
@@ -38,7 +44,7 @@ for epoch in range(1, default_config.n_epochs + 1):
             model=model,
             test_loader=test_loader,
             config=default_config,
-            regressor=None,
+            regressor=regressor,
         )
     )
 

@@ -37,8 +37,9 @@ def train(epoch, model, train_loader, optimizer, config, regressor=None):
             angle_pred = regressor(angle_latent)
             angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
             pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
+            pred_loss = config.weight_regressor * pred_loss
 
-        loss = config.weight_regressor * pred_loss + elbo_loss
+        loss = pred_loss + elbo_loss
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -91,13 +92,14 @@ def test(epoch, model, test_loader, config, regressor=None):
                 angle_pred = regressor(angle_latent)
                 angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
                 pred_loss = F.mse_loss(angle_pred, angle_true)
+                pred_loss = config.weight_regressor * pred_loss
 
-            test_loss += config.weight_regressor * pred_loss
+            test_loss += pred_loss
             test_loss += losses.elbo(recon_batch, data, mu, logvar).item()
 
             if i == 0 and epoch % config.checkpt_interval == 0:
                 _, axs = plt.subplots(2)
-                if config.dataset == "images":
+                if config.dataset_name == "images":
                     axs[0].imshow(
                         data[0].reshape((config.img_size, config.img_size)).cpu()
                     )

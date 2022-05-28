@@ -19,9 +19,9 @@ n_epochs = 100
 learning_rate = 1e-3
 
 # Dataset
-dataset_name = "projected_images"
+dataset_name = "points"
 if dataset_name == "experimental":
-    expt_id = "16_hd"  # hd: with head direction
+    expt_id = "15_hd"  # hd: with head direction
 
 if dataset_name in ["images", "projected_images"]:
     img_size = 64
@@ -31,7 +31,7 @@ latent_dim = 2
 with_regressor = False
 if with_regressor:
     weight_regressor = 1.0
-    h_dim_regressorr = 20
+    h_dim_regressor = 20
 
 # Results
 now = str(datetime.now().replace(second=0, microsecond=0))
