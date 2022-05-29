@@ -17,6 +17,7 @@ log_interval = 10
 checkpt_interval = 10
 n_epochs = 100
 learning_rate = 1e-3
+beta = 1.0
 
 # Dataset
 dataset_name = "points"
