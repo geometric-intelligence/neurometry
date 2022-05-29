@@ -28,7 +28,7 @@ def train(epoch, model, train_loader, optimizer, config, regressor=None):
         data = data.to(config.device)
         optimizer.zero_grad()
         recon_batch, mu, logvar = model(data)
-        elbo_loss = losses.elbo(recon_batch, data, mu, logvar)
+        elbo_loss = losses.elbo(recon_batch, data, mu, logvar, beta=config.beta)
 
         pred_loss = 0.0
         if config.with_regressor:
@@ -95,7 +95,9 @@ def test(epoch, model, test_loader, config, regressor=None):
                 pred_loss = config.weight_regressor * pred_loss
 
             test_loss += pred_loss
-            test_loss += losses.elbo(recon_batch, data, mu, logvar).item()
+            test_loss += losses.elbo(
+                recon_batch, data, mu, logvar, beta=config.beta
+            ).item()
 
             if i == 0 and epoch % config.checkpt_interval == 0:
                 _, axs = plt.subplots(2)
