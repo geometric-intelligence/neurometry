@@ -34,7 +34,7 @@ def train(epoch, model, train_loader, optimizer, config, regressor=None):
         if config.with_regressor:
             norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
             angle_latent = mu / norm
-            angle_pred = regressor(angle_latent)
+            angle_pred = regressor(angle_latent)  # call to forward method of regressor
             angle_true = torch.stack([torch.cos(lab), torch.sin(lab)], axis=1)
             pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
             pred_loss = config.weight_regressor * pred_loss
