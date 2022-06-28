@@ -31,7 +31,7 @@ def load(config):
     """
     if config.dataset_name == "experimental":
         dataset, labels = datasets.experimental.load_place_cells(
-            expt_id=config.expt_id, timestep_ns=1000000
+            expt_id=config.expt_id, timestep_ns=config.timestep_ns
         )
         print(labels)
         dataset = dataset[labels["velocities"] > 1]
@@ -40,7 +40,7 @@ def load(config):
         # dataset = dataset[:, :-2]  # last column is weird
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "synthetic":
-        dataset, labels = datasets.synthetic.load_place_cells(n_times=10000)
+        dataset, labels = datasets.synthetic.load_place_cells()
         dataset = np.log(dataset.astype(np.float32) + 1)
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "images":
@@ -54,20 +54,25 @@ def load(config):
         )
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "points":
-        dataset, labels = datasets.synthetic.load_points(n_scalars=30, n_angles=200)
+        dataset, labels = datasets.synthetic.load_points()
         dataset = dataset.astype(np.float32)
 
     print(f"Dataset shape: {dataset.shape}.")
     dataset_torch = torch.tensor(dataset)
 
-    seventy_perc = int(round(len(dataset) * 0.7))
-    train_dataset = dataset[:seventy_perc]
-    train_labels = labels[:seventy_perc]
-    test_dataset = dataset[seventy_perc:]
-    test_labels = labels[seventy_perc:]
+    train_num = int(round(0.7*len(dataset))) #70% training
+    indeces = np.arange(len(dataset))
+    train_indeces = np.random.choice(indeces,train_num,replace=False)
+    test_indeces = np.delete(indeces,train_indeces)
+    
+    train_dataset = dataset[train_indeces]
+    train_labels = labels.iloc[train_indeces]
+    
+    test_dataset = dataset[test_indeces]
+    test_labels = labels.iloc[test_indeces]
 
     train = []
-    for d, l in zip(train_dataset, train_labels["angles"]):
+    for d, l in zip(train_dataset, train_labels["angles"]):  # angles : positional angles
         train.append([d, float(l)])
     test = []
     for d, l in zip(test_dataset, test_labels["angles"]):

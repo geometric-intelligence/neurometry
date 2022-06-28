@@ -17,7 +17,7 @@ class Regressor(torch.nn.Module):
     output_dim : int
         Dimension of output data. 
         Example: If we are estimating an angle phi, 
-        we would need to estimate sin(phi), cos(phi) 
+        we would need to estimate cos(phi), sin(phi) 
         => output_dim = 2
     """
 
