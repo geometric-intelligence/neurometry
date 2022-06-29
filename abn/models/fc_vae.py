@@ -36,7 +36,7 @@ class VAE(torch.nn.Module):
         if posterior_type == "Gaussian":
             self.fc_z_mu = torch.nn.Linear(400, self.latent_dim)
             self.fc_z_logvar = torch.nn.Linear(400, self.latent_dim)
-        
+        #hello
         
         self.fc3 = torch.nn.Linear(self.latent_dim, 400)
         self.fc4 = torch.nn.Linear(400,400)
