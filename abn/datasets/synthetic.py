@@ -35,7 +35,7 @@ def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
     return projections, labels
 
 
-def load_images(n_scalars=4, n_angles=2000, img_size=128):
+def load_images(n_scalars=10, n_angles=1000, img_size=256):
     """Load a dataset of images.
 
     The actions are:
@@ -83,7 +83,7 @@ def load_images(n_scalars=4, n_angles=2000, img_size=128):
     return np.array(images), labels
 
 
-def load_points(n_scalars=10, n_angles=100):
+def load_points(n_scalars=1, n_angles=1000):
     """Load a dataset of points in R^3.
 
     The actions are:
@@ -107,7 +107,7 @@ def load_points(n_scalars=10, n_angles=100):
     points = []
     angles = []
     scalars = []
-    point = np.array([1, 1, 1])
+    point = np.array([1, 0, 1])
     for i_angle in range(n_angles):
         angle = 2 * np.pi * i_angle / n_angles
         rotmat = np.array(

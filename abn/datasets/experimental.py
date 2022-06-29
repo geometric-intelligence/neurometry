@@ -19,7 +19,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
     expt_id : int
         Index of the experiment, as conducted by Manu Madhav in 2017.
     timestep_ns : int
-        Length of time-step in nanoseconds.
+        Length of time-step in microseconds.
         The preprocessing counts the number of firings in each time-window
         of length timestep_ns.
 
@@ -27,6 +27,9 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
     -------
     place_cells : array-like, shape=[n_timesteps, n_cells]
         Number of firings at each time-steps, for each place cell.
+    labels : pandas.DataFrame, shape= [n_timesteps, n_labels]
+        Ground truth variables.
+        Example: positional angle.
     """
     data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_ns}.npy"
     labels_path = f"data/expt{expt_id}_labels_timestep{timestep_ns}.txt"
