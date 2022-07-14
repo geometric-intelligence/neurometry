@@ -29,7 +29,8 @@ wandb.init(
         "gen_likelihood_type": default_config.gen_likelihood_type,
         "with_regressor": default_config.with_regressor,
         "results_prefix": default_config.results_prefix,
-        "alpha": default_config.alpha
+        "alpha": default_config.alpha,
+        "gamma": default_config.gamma
     }
 )
 

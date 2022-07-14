@@ -99,9 +99,6 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
         from scipy import special
         #TODO: check why there are "nan"'s coming up 
         recon_loss = torch.sum(-x*torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x)))
-
-    print("z_mu shape is: " + str(z_mu.shape))
-    print("x_mu shape is: " +str(x_mu.shape))
     
     return recon_loss + config.beta * kld
 

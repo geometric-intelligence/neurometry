@@ -18,10 +18,9 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128 #128
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 40
+n_epochs = 300
 learning_rate = 1e-3
 beta = 1.0
-
 alpha = 1.0
 gamma = 1.0
 
