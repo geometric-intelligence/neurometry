@@ -5,13 +5,10 @@ from pyparsing import null_debug_action
 import losses
 import matplotlib.pyplot as plt
 import torch
-from torch.nn import functional as F
 import torch.distributions as distributions
 import numpy as np
 import evaluate.latent
 import wandb
-
-
 
 
 def sample(params, distribution):
@@ -76,7 +73,7 @@ def train_model(model, dataset_torch, labels, train_loader, test_loader, optimiz
             assert len(z_mu) == len(labels)
             default_config_str = config.results_prefix
             evaluate.latent.plot_save_latent_space(
-            f"{default_config_str}_latent_epoch{epoch}.png",
+            f"results/figures/{default_config_str}_latent_epoch{epoch}.png",
             z_mu,
             labels,
         )
@@ -105,15 +102,9 @@ def train(epoch, model, train_loader, optimizer, config):
         data = data.to(config.device)
         optimizer.zero_grad()
         gen_likelihood_params_batch, posterior_params = model(data)
-        gen_likelihood_type = model.gen_likelihood_type
-        posterior_type = model.posterior_type
-        #elbo_loss = losses.elbo(data, gen_likelihood_type, posterior_type,
-        #gen_likelihood_params_batch, posterior_params, beta=config.beta, alpha=config.alpha)
-
+    
         loss = losses.compute_loss(data, labels, gen_likelihood_params_batch, posterior_params, config)
         
-
-
         pred_loss = 0.0
         #TODO: replace mu with gen_likelihood_params
         # if config.with_regressor:
@@ -124,7 +115,7 @@ def train(epoch, model, train_loader, optimizer, config):
         #     pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
         #     pred_loss = config.weight_regressor * pred_loss
 
-        #loss = pred_loss + elbo_loss
+        loss += pred_loss
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -144,10 +135,6 @@ def train(epoch, model, train_loader, optimizer, config):
 
     print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss))
     return train_loss
-
-
-
-
 
 
 def test(epoch, model, test_loader, config):
@@ -188,8 +175,6 @@ def test(epoch, model, test_loader, config):
 
             test_loss += pred_loss
             test_loss += losses.compute_loss(data, labels, gen_likelihood_params_batch, posterior_params, config).item()
-            #test_loss += losses.elbo(data, gen_likelihood_type, posterior_type, 
-            #gen_likelihood_params_batch,posterior_params, beta=config.beta, alpha=config.alpha).item()
             batch_size = data.shape[0]
             data_dim = data.shape[1]
             recon_batch = torch.empty([batch_size,data_dim])
@@ -250,7 +235,7 @@ def test(epoch, model, test_loader, config):
                     axs[1].imshow(recon_batch.cpu())
                 #axs[0].set_title("original", fontsize=10)
                 #axs[1].set_title("reconstruction", fontsize=10)
-                plt.savefig(f"{config.results_prefix}_recon_epoch{epoch}.png")
+                plt.savefig(f"results/figures/{config.results_prefix}_recon_epoch{epoch}.png")
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
