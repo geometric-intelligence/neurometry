@@ -4,6 +4,8 @@
 abn/data/*.txt
 abn/data/*.npy
 abn/data.zip
+# Wandb files
+abn/wandb/*
 
 # Result files
 *.png
