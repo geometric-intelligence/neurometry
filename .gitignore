@@ -3,6 +3,7 @@
 *.npy
 abn/data/*.txt
 abn/data/*.npy
+abn/data.zip
 
 # Result files
 *.png
