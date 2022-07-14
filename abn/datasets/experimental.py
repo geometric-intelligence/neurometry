@@ -11,17 +11,17 @@ import pandas as pd
 from scipy.spatial.transform import Rotation as R
 
 
-def load_place_cells(expt_id=34, timestep_ns=1000000):
+def load_place_cells(expt_id=34, timestep_microsec=1000000):
     """Load pre-processed experimental place cells firings.
 
     Parameters
     ----------
     expt_id : int
         Index of the experiment, as conducted by Manu Madhav in 2017.
-    timestep_ns : int
+    timestep_microsec : int
         Length of time-step in microseconds.
         The preprocessing counts the number of firings in each time-window
-        of length timestep_ns.
+        of length timestep_microsec.
 
     Returns
     -------
@@ -31,9 +31,9 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
         Ground truth variables.
         Example: positional angle.
     """
-    data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_ns}.npy"
-    labels_path = f"data/expt{expt_id}_labels_timestep{timestep_ns}.txt"
-    times_path = f"data/expt{expt_id}_times_timestep{timestep_ns}.txt"
+    data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
+    labels_path = f"data/expt{expt_id}_labels_timestep{timestep_microsec}.txt"
+    times_path = f"data/expt{expt_id}_times_timestep{timestep_microsec}.txt"
 
     if os.path.exists(times_path):
         logging.info(f"# - Found file at {times_path}! Loading...")
@@ -46,7 +46,7 @@ def load_place_cells(expt_id=34, timestep_ns=1000000):
 
         firing_times = _extract_firing_times(expt)
         times = np.arange(
-            start=firing_times[0], stop=firing_times[-1], step=timestep_ns
+            start=firing_times[0], stop=firing_times[-1], step=timestep_microsec
         )
 
         logging.info(f"# - Saving times of shape {times.shape} to {times_path}...")

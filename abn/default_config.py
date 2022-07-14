@@ -6,6 +6,8 @@ from platform import architecture
 
 import torch
 
+run_name = "trial run"
+
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
 
@@ -16,15 +18,18 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128 #128
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 500
+n_epochs = 40
 learning_rate = 1e-3
-beta = 1
+beta = 1.0
+
+alpha = 1.0
+gamma = 1.0
 
 # Dataset
-dataset_name = "points"
+dataset_name = "experimental"
 if dataset_name == "experimental":
-    expt_id = "15_hd"  # hd: with head direction
-    timestep_ns = 1000000
+    expt_id = "34"  # hd: with head direction
+    timestep_microsec = 1000000
 
 if dataset_name in ["images", "projected_images"]:
     img_size = 64
@@ -32,8 +37,8 @@ if dataset_name in ["images", "projected_images"]:
 # Models
 model_type = "fc_vae"
 latent_dim = 2
-posterior_type = "Gaussian"
-gen_likelihood_type = "Gaussian"
+posterior_type = "gaussian"
+gen_likelihood_type = "gaussian"
 with_regressor = False
 if with_regressor:
     weight_regressor = 1.0

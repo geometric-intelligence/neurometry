@@ -31,7 +31,7 @@ def load(config):
     """
     if config.dataset_name == "experimental":
         dataset, labels = datasets.experimental.load_place_cells(
-            expt_id=config.expt_id, timestep_ns=config.timestep_ns
+            expt_id=config.expt_id, timestep_microsec=config.timestep_microsec
         )
         print(labels)
         dataset = dataset[labels["velocities"] > 1]
