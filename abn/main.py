@@ -77,19 +77,16 @@ train_losses, test_losses = losses
 for data, labs in test_loader:
     data, labs = data.to(config.device), labs.to(config.device)
 
-torch.onnx.export(model,data,"model.onnx")
-wandb.save("model.onnx")
+torch.onnx.export(model,data,f"results/trained_models/{config.results_prefix}_model.onnx")
+wandb.save("/results/trained_models")
 
 
 plt.figure()
 plt.plot(train_losses, label="train")
 plt.plot(test_losses, label="test")
 plt.legend()
-plt.savefig(f"{default_config.results_prefix}_losses.png")
+plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
 plt.close()
-torch.save(
-    model.state_dict(),
-    f"{default_config.results_prefix}_model_latent{config.latent_dim}.pt",
-)
+torch.save(model.state_dict(),f"results/trained_models/{config.results_prefix}_model.pt")
 
 wandb.finish()
