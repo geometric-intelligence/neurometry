@@ -38,7 +38,7 @@ config = wandb.config
 
 wandb.run.name = config.run_name
 
-
+results_prefix = config.results_prefix
 
 dataset_torch, labels, train_loader, test_loader= datasets.utils.load(default_config)
 
@@ -87,6 +87,7 @@ plt.plot(test_losses, label="test")
 plt.legend()
 plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
 plt.close()
-torch.save(model.state_dict(),f"results/trained_models/{config.results_prefix}_model.pt")
+torch.save(model.state_dict(),f"results/trained_models/{config.results_prefix}_model_state_dict.pt")
 
+torch.save(model,f"results/trained_models/{config.results_prefix}_model.pt")
 wandb.finish()

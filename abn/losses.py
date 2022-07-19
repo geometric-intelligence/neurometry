@@ -130,7 +130,9 @@ def latent_regularization_loss(labels,posterior_params, config):
     
     circle_loss = torch.sum((1-torch.linalg.norm(z_mu,dim=1))**2)
 
-    latent_angles = ((torch.atan2(z_mu[:,1],z_mu[:,0]) + 2*torch.pi)%(2*torch.pi))*(180/torch.pi)
+    latent_angles = ((torch.atan2(z_mu[:,1],z_mu[:,0]) + 2*torch.pi)%(2*torch.pi))
+
+    labels = labels * (torch.pi/180)
 
     angle_loss = torch.sum((latent_angles-labels)**2)
 
