@@ -18,11 +18,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128 #128
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 50
+n_epochs = 800
 learning_rate = 1e-3
 beta = 1.0
-alpha = 1.0
-gamma = 1.0
+alpha = 1000.0
+gamma = 1000.0
 
 # Dataset
 dataset_name = "experimental"
@@ -46,4 +46,7 @@ if with_regressor:
 # Results
 now = str(datetime.now().replace(second=0, microsecond=0))
 results_prefix = f"{dataset_name}_{now}"
+trained_model_path = None
+
+
 

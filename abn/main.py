@@ -10,6 +10,7 @@ import train
 
 import wandb
 
+
 wandb.init(
     project="neural_shapes",
     config={

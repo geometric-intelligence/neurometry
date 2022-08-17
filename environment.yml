@@ -12,6 +12,7 @@ dependencies:
     - git+https://github.com/geomstats/geomstats.git
     - isort
     - jupyter
+    - jupyterlab-code-formatter
     - mat73
     - pre-commit
     - torch>=1.1.9
