@@ -6,6 +6,7 @@ abn/data/*.npy
 abn/data.zip
 # Wandb files
 abn/wandb/*
+abn/results/*
 
 # Result files
 *.png
