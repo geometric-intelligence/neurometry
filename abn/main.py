@@ -2,74 +2,93 @@
 
 import datasets.utils
 import default_config
-import evaluate.latent
 import matplotlib.pyplot as plt
 import models.fc_vae
 import models.regressor
-import numpy as np
 import torch
 import train
 
-dataset_torch, labels, train_loader, test_loader = datasets.utils.load(default_config)
+import wandb
+
+
+wandb.init(
+    project="neural_shapes",
+    config={
+        "run_name": default_config.run_name,
+        "device": default_config.device,
+        "log_interval": default_config.log_interval,
+        "checkpt_interval": default_config.checkpt_interval,
+        "dataset_name": default_config.dataset_name,
+        "expt_id": default_config.expt_id,
+        "timestep_microsec": default_config.timestep_microsec,
+        "batch_size": default_config.batch_size,
+        "n_epochs": default_config.n_epochs,
+        "learning_rate": default_config.learning_rate,
+        "beta": default_config.beta,
+        "latent_dim": default_config.latent_dim,
+        "posterior_type": default_config.posterior_type,
+        "gen_likelihood_type": default_config.gen_likelihood_type,
+        "with_regressor": default_config.with_regressor,
+        "results_prefix": default_config.results_prefix,
+        "alpha": default_config.alpha,
+        "gamma": default_config.gamma
+    }
+)
+
+config = wandb.config
+
+wandb.run.name = config.run_name
+
+results_prefix = config.results_prefix
+
+dataset_torch, labels, train_loader, test_loader= datasets.utils.load(default_config)
 
 _, data_dim = dataset_torch.shape
 
-model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=default_config.latent_dim).to(
-    default_config.device
-)
+if default_config.model_type == "fc_vae":
+    model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=config.latent_dim, 
+    posterior_type=config.posterior_type,gen_likelihood_type=config.gen_likelihood_type).to(
+    config.device)
 
 regressor = None
-if default_config.with_regressor:
+if config.with_regressor:
     regressor = models.regressor.Regressor(
         input_dim=2, h_dim=default_config.h_dim_regressor, output_dim=2
     )
-optimizer = torch.optim.Adam(model.parameters(), lr=default_config.learning_rate)
 
-train_losses = []
-test_losses = []
-for epoch in range(1, default_config.n_epochs + 1):
-    train_losses.append(
-        train.train(
-            epoch=epoch,
-            model=model,
-            train_loader=train_loader,
-            optimizer=optimizer,
-            config=default_config,
-            regressor=regressor,
-        )
-    )
-    test_losses.append(
-        train.test(
-            epoch=epoch,
-            model=model,
-            test_loader=test_loader,
-            config=default_config,
-            regressor=regressor,
-        )
-    )
+#wandb.watch(models = model, criterion = None, log="all", log_freq = 100)
 
-    if epoch % default_config.checkpt_interval == 0:
-        mu_torch, logvar_torch = model.encode(dataset_torch)
-        mu = mu_torch.cpu().detach().numpy()
-        logvar = logvar_torch.cpu().detach().numpy()
-        var = np.sum(np.exp(logvar), axis=-1)
-        labels["var"] = var
-        mu_masked = mu[labels["var"] < 0.8]
-        labels_masked = labels[labels["var"] < 0.8]
-        assert len(mu) == len(labels)
-        evaluate.latent.plot_save_latent_space(
-            f"{default_config.results_prefix}_latent_epoch{epoch}.png",
-            mu,
-            labels,
+optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+
+
+losses = train.train_model(
+            model = model,
+            dataset_torch = dataset_torch,
+            labels = labels,
+            train_loader = train_loader,
+            test_loader = test_loader,
+            optimizer = optimizer,
+            config = config
         )
+
+train_losses, test_losses = losses
+
+
+
+for data, labs in test_loader:
+    data, labs = data.to(config.device), labs.to(config.device)
+
+torch.onnx.export(model,data,f"results/trained_models/{config.results_prefix}_model.onnx")
+wandb.save("/results/trained_models")
+
 
 plt.figure()
 plt.plot(train_losses, label="train")
 plt.plot(test_losses, label="test")
 plt.legend()
-plt.savefig(f"{default_config.results_prefix}_losses.png")
+plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
 plt.close()
-torch.save(
-    model,
-    f"{default_config.results_prefix}_model_latent{default_config.latent_dim}.pt",
-)
+torch.save(model.state_dict(),f"results/trained_models/{config.results_prefix}_model_state_dict.pt")
+
+torch.save(model,f"results/trained_models/{config.results_prefix}_model.pt")
+wandb.finish()
