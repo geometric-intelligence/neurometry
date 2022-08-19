@@ -1,6 +1,4 @@
 # Neural Geometry #
 
 
-
-e this
-![Overview of PirouNet's LSTM+VAE architecture.](/images/arch_overview.jpeg)
+![Overview of method to extract geometric features from neural activation manifolds. ](/figures/method_overview.jpg)
