@@ -1,9 +1,12 @@
 """Generate and load synthetic datasets."""
 import logging
 
+import geomstats.backend as gs
 import numpy as np
 import pandas as pd
 import skimage
+import torch
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
@@ -200,3 +203,48 @@ def load_place_cells(n_times=10000, n_cells=40):
             labels.append(i_cell / n_cells * 360)
 
     return np.array(place_cells), pd.DataFrame({"angles": labels})
+
+
+def load_wiggly_points(
+    n_times=1000, circle_radius=1, n_wiggles=6, amp_wiggles=1, embedding_dim=10
+):
+    """Create "wiggly" circles.
+
+    Parameters
+    ----------
+    circle_radius : float
+        Primary circle radius.
+    n_wiggles : int
+        Number of "wiggles".
+    amp_wiggles : float, < 1
+        Amplitude of "wiggles".
+
+    Returns
+    -------
+    synth_immersion : function
+        Synthetic immersion from S1 to R^N.
+    """
+
+    def polar(theta):
+        return gs.stack([gs.cos(theta), gs.sin(theta)], axis=-1)
+
+    def synth_immersion(theta):
+        # look at einsum
+        n_thetas = len(theta)
+        wiggly_circle = torch.matmul(
+            torch.diag(amp_wiggles * (1 + circle_radius * gs.cos(n_wiggles * theta))),
+            polar(theta),
+        )
+        padded_wiggly_circle = gs.hstack(
+            [wiggly_circle, gs.zeros((n_thetas, embedding_dim - 2))]
+        )
+
+        so = SpecialOrthogonal(n=embedding_dim)
+
+        rot = so.random_point()
+
+        return gs.matmul(rot, padded_wiggly_circle)
+
+    thetas = gs.linspace(0, 2 * gs.pi, n_times)
+
+    return synth_immersion(thetas)
