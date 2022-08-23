@@ -31,8 +31,8 @@ wandb.init(
         "with_regressor": default_config.with_regressor,
         "results_prefix": default_config.results_prefix,
         "alpha": default_config.alpha,
-        "gamma": default_config.gamma
-    }
+        "gamma": default_config.gamma,
+    },
 )
 
 config = wandb.config
@@ -41,14 +41,17 @@ wandb.run.name = config.run_name
 
 results_prefix = config.results_prefix
 
-dataset_torch, labels, train_loader, test_loader= datasets.utils.load(default_config)
+dataset_torch, labels, train_loader, test_loader = datasets.utils.load(default_config)
 
 _, data_dim = dataset_torch.shape
 
 if default_config.model_type == "fc_vae":
-    model = models.fc_vae.VAE(data_dim=data_dim, latent_dim=config.latent_dim, 
-    posterior_type=config.posterior_type,gen_likelihood_type=config.gen_likelihood_type).to(
-    config.device)
+    model = models.fc_vae.VAE(
+        data_dim=data_dim,
+        latent_dim=config.latent_dim,
+        posterior_type=config.posterior_type,
+        gen_likelihood_type=config.gen_likelihood_type,
+    ).to(config.device)
 
 regressor = None
 if config.with_regressor:
@@ -56,29 +59,30 @@ if config.with_regressor:
         input_dim=2, h_dim=default_config.h_dim_regressor, output_dim=2
     )
 
-#wandb.watch(models = model, criterion = None, log="all", log_freq = 100)
+# wandb.watch(models = model, criterion = None, log="all", log_freq = 100)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
 
 
 losses = train.train_model(
-            model = model,
-            dataset_torch = dataset_torch,
-            labels = labels,
-            train_loader = train_loader,
-            test_loader = test_loader,
-            optimizer = optimizer,
-            config = config
-        )
+    model=model,
+    dataset_torch=dataset_torch,
+    labels=labels,
+    train_loader=train_loader,
+    test_loader=test_loader,
+    optimizer=optimizer,
+    config=config,
+)
 
 train_losses, test_losses = losses
-
 
 
 for data, labs in test_loader:
     data, labs = data.to(config.device), labs.to(config.device)
 
-torch.onnx.export(model,data,f"results/trained_models/{config.results_prefix}_model.onnx")
+torch.onnx.export(
+    model, data, f"results/trained_models/{config.results_prefix}_model.onnx"
+)
 wandb.save("/results/trained_models")
 
 
@@ -88,7 +92,10 @@ plt.plot(test_losses, label="test")
 plt.legend()
 plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
 plt.close()
-torch.save(model.state_dict(),f"results/trained_models/{config.results_prefix}_model_state_dict.pt")
+torch.save(
+    model.state_dict(),
+    f"results/trained_models/{config.results_prefix}_model_state_dict.pt",
+)
 
-torch.save(model,f"results/trained_models/{config.results_prefix}_model.pt")
+torch.save(model, f"results/trained_models/{config.results_prefix}_model.pt")
 wandb.finish()

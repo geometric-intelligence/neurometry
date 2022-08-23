@@ -6,18 +6,18 @@ import torch.nn.functional as F
 
 class Regressor(torch.nn.Module):
     """Regressor.
-    
+
     Parameters
     ----------
-    input_dim : int 
+    input_dim : int
         Dimension of input data.
         Example: Dimension of the latent space of VAE.
     h_dim : int
         Width of hidden layers.
     output_dim : int
-        Dimension of output data. 
-        Example: If we are estimating an angle phi, 
-        we would need to estimate cos(phi), sin(phi) 
+        Dimension of output data.
+        Example: If we are estimating an angle phi,
+        we would need to estimate cos(phi), sin(phi)
         => output_dim = 2
     """
 
@@ -36,7 +36,7 @@ class Regressor(torch.nn.Module):
         x : array-like, shape=[batch_size, input_dim]
             Input data (independent variable).
             Example: latent variables of VAE.
-        
+
         Returns
         -------
         x : array-like shape= [batch_size, output_dim]

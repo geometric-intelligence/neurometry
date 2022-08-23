@@ -205,8 +205,8 @@ def load_place_cells(n_times=10000, n_cells=40):
     return np.array(place_cells), pd.DataFrame({"angles": labels})
 
 
-def load_wiggly_points(
-    n_times=1000, circle_radius=1, n_wiggles=6, amp_wiggles=1, embedding_dim=10
+def load_wiggles(
+    n_times=1000, circle_radius=1, n_wiggles=6, amp_wiggles=0.4, embedding_dim=10
 ):
     """Create "wiggly" circles.
 
@@ -225,15 +225,15 @@ def load_wiggly_points(
         Synthetic immersion from S1 to R^N.
     """
 
-    def polar(theta):
-        return gs.stack([gs.cos(theta), gs.sin(theta)], axis=-1)
+    def polar(angle):
+        return gs.stack([gs.cos(angle), gs.sin(angle)], axis=-1)
 
-    def synth_immersion(theta):
+    def synth_immersion(angle):
         # look at einsum
-        n_thetas = len(theta)
+        n_thetas = len(angle)
         wiggly_circle = torch.matmul(
-            torch.diag(amp_wiggles * (1 + circle_radius * gs.cos(n_wiggles * theta))),
-            polar(theta),
+            torch.diag(amp_wiggles * (1 + circle_radius * gs.cos(n_wiggles * angle))),
+            polar(angle),
         )
         padded_wiggly_circle = gs.hstack(
             [wiggly_circle, gs.zeros((n_thetas, embedding_dim - 2))]
@@ -245,6 +245,12 @@ def load_wiggly_points(
 
         return gs.matmul(rot, padded_wiggly_circle)
 
-    thetas = gs.linspace(0, 2 * gs.pi, n_times)
+    angles = gs.linspace(0, 2 * gs.pi, n_times)
 
-    return synth_immersion(thetas)
+    labels = pd.DataFrame(
+        {
+            "angles": angles,
+        }
+    )
+
+    return synth_immersion(angles), labels

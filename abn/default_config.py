@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Training
-batch_size = 128 #128
+batch_size = 128  # 128
 log_interval = 10
 checkpt_interval = 10
 n_epochs = 800
@@ -25,7 +25,7 @@ alpha = 1000.0
 gamma = 1000.0
 
 # Dataset
-dataset_name = "experimental"
+dataset_name = "wiggles"
 if dataset_name == "experimental":
     expt_id = "34"  # hd: with head direction
     timestep_microsec = 1000000
@@ -47,6 +47,3 @@ if with_regressor:
 now = str(datetime.now().replace(second=0, microsecond=0))
 results_prefix = f"{dataset_name}_{now}"
 trained_model_path = None
-
-
-
