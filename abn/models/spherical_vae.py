@@ -1,8 +1,12 @@
 import torch
 import torch.nn.functional as F
 from collections import OrderedDict
-from hyperspherical_vae.distributions import VonMisesFisher
-from hyperspherical_vae.distributions import HypersphericalUniform
+
+import sys
+sys.path.append("../")
+
+from hyperspherical_vae.distributions.von_mises_fisher import VonMisesFisher
+from hyperspherical_vae.distributions.hyperspherical_uniform import HypersphericalUniform
 
 
 class SphericalVAE(torch.nn.Module):

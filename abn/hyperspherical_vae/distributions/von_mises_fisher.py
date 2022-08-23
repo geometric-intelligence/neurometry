@@ -1,7 +1,3 @@
-"""
-Copied from https://github.com/nicola-decao/s-vae-pytorch/blob/master/hyperspherical_vae/distributions/von_mises_fisher.py
-"""
-
 import math
 import torch
 from torch.distributions.kl import register_kl

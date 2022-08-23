@@ -1,8 +1,3 @@
-"""
-Copied from https://github.com/nicola-decao/s-vae-pytorch/blob/master/hyperspherical_vae/distributions/hyperspherical_uniform.py
-"""
-
-
 import math
 import torch
 
