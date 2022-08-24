@@ -18,12 +18,14 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128  # 128
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 800
+n_epochs = 100
 learning_rate = 1e-3
 beta = 1.0
-alpha = 1000.0
-gamma = 1000.0
+alpha = 100.0
+gamma = 100.0
 
+timestep_microsec = -1
+expt_id = -1
 # Dataset
 dataset_name = "wiggles"
 if dataset_name == "experimental":
@@ -33,8 +35,16 @@ if dataset_name == "experimental":
 if dataset_name in ["images", "projected_images"]:
     img_size = 64
 
+amp_wiggles = -1
+if dataset_name == "wiggles":
+    amp_wiggles = 0
+
 # Models
 model_type = "fc_vae"
+encoder_width = 400
+decoder_width = 400
+encoder_depth = 3
+decoder_depth = 3
 latent_dim = 2
 posterior_type = "gaussian"
 gen_likelihood_type = "gaussian"

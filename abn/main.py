@@ -1,5 +1,7 @@
 """Main script."""
+import os
 
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import datasets.utils
 import default_config
 import matplotlib.pyplot as plt
@@ -21,10 +23,15 @@ wandb.init(
         "dataset_name": default_config.dataset_name,
         "expt_id": default_config.expt_id,
         "timestep_microsec": default_config.timestep_microsec,
+        "amp_wiggles": default_config.amp_wiggles,
         "batch_size": default_config.batch_size,
         "n_epochs": default_config.n_epochs,
         "learning_rate": default_config.learning_rate,
         "beta": default_config.beta,
+        "encoder_width": default_config.encoder_width,
+        "encoder_depth": default_config.encoder_depth,
+        "decoder_depth": default_config.decoder_depth,
+        "decoder_width": default_config.decoder_width,
         "latent_dim": default_config.latent_dim,
         "posterior_type": default_config.posterior_type,
         "gen_likelihood_type": default_config.gen_likelihood_type,
@@ -48,6 +55,10 @@ _, data_dim = dataset_torch.shape
 if default_config.model_type == "fc_vae":
     model = models.fc_vae.VAE(
         data_dim=data_dim,
+        encoder_width=config.encoder_width,
+        decoder_width=config.decoder_width,
+        encoder_depth=config.encoder_depth,
+        decoder_depth=config.decoder_depth,
         latent_dim=config.latent_dim,
         posterior_type=config.posterior_type,
         gen_likelihood_type=config.gen_likelihood_type,
@@ -92,6 +103,7 @@ plt.plot(test_losses, label="test")
 plt.legend()
 plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
 plt.close()
+
 torch.save(
     model.state_dict(),
     f"results/trained_models/{config.results_prefix}_model_state_dict.pt",

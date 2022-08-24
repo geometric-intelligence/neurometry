@@ -206,7 +206,7 @@ def load_place_cells(n_times=10000, n_cells=40):
 
 
 def load_wiggles(
-    n_times=1000, circle_radius=1, n_wiggles=6, amp_wiggles=0.4, embedding_dim=10
+    n_times=1000, circle_radius=5, n_wiggles=6, amp_wiggles=0.4, embedding_dim=10, noise_var=1.
 ):
     """Create "wiggly" circles.
 
@@ -218,6 +218,8 @@ def load_wiggles(
         Number of "wiggles".
     amp_wiggles : float, < 1
         Amplitude of "wiggles".
+    noise_var : float
+        Variance (sigma2) of the Gaussian noise.
 
     Returns
     -------
@@ -243,7 +245,7 @@ def load_wiggles(
 
         rot = so.random_point()
 
-        return gs.matmul(rot, padded_wiggly_circle)
+        return gs.einsum("ij,nj->ni", rot, padded_wiggly_circle)
 
     angles = gs.linspace(0, 2 * gs.pi, n_times)
 
@@ -253,4 +255,5 @@ def load_wiggles(
         }
     )
 
-    return synth_immersion(angles), labels
+    noisy_data = synth_immersion(angles) + gs.random.norm((n_times, embedding_dim), size=noise_var)
+    return noisy_data, labels

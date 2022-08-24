@@ -57,7 +57,7 @@ def load(config):
         dataset, labels = datasets.synthetic.load_points()
         dataset = dataset.astype(np.float32)
     elif config.dataset_name == "wiggles":
-        dataset, labels = datasets.synthetic.load_wiggles()
+        dataset, labels = datasets.synthetic.load_wiggles(amp_wiggles=config.amp_wiggles)
 
     print(f"Dataset shape: {dataset.shape}.")
     dataset_torch = torch.tensor(dataset)
