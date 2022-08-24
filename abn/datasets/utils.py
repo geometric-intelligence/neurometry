@@ -56,23 +56,27 @@ def load(config):
     elif config.dataset_name == "points":
         dataset, labels = datasets.synthetic.load_points()
         dataset = dataset.astype(np.float32)
+    elif config.dataset_name == "wiggles":
+        dataset, labels = datasets.synthetic.load_wiggles(amp_wiggles=config.amp_wiggles)
 
     print(f"Dataset shape: {dataset.shape}.")
     dataset_torch = torch.tensor(dataset)
 
-    train_num = int(round(0.7*len(dataset))) #70% training
+    train_num = int(round(0.7 * len(dataset)))  # 70% training
     indeces = np.arange(len(dataset))
-    train_indeces = np.random.choice(indeces,train_num,replace=False)
-    test_indeces = np.delete(indeces,train_indeces)
-    
+    train_indeces = np.random.choice(indeces, train_num, replace=False)
+    test_indeces = np.delete(indeces, train_indeces)
+
     train_dataset = dataset[train_indeces]
     train_labels = labels.iloc[train_indeces]
-    
+
     test_dataset = dataset[test_indeces]
     test_labels = labels.iloc[test_indeces]
 
     train = []
-    for d, l in zip(train_dataset, train_labels["angles"]):  # angles : positional angles
+    for d, l in zip(
+        train_dataset, train_labels["angles"]
+    ):  # angles : positional angles
         train.append([d, float(l)])
     test = []
     for d, l in zip(test_dataset, test_labels["angles"]):
