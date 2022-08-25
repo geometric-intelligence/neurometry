@@ -1,6 +1,8 @@
 """Generate and load synthetic datasets."""
 import logging
 
+import os
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 import numpy as np
 import pandas as pd
