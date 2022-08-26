@@ -3,7 +3,8 @@ import os
 import pickle
 import torch
 from torch.nn import ParameterDict
-import torch_tools.utils as utils
+
+# import torch_tools.utils as utils
 from inspect import signature
 import copy
 
@@ -70,10 +71,9 @@ class Trainer(torch.nn.Module):
 
             # Compute regularization penalty terms (e.g. sparsity, l2 norm, etc.)
             if self.regularizer:
-                reg_variable_dict = {
-                    "x": x,
-                    "out": out,
-                } | dict(self.model.named_parameters()) # Must use named parameters rather than state_dict to preserve grads
+                reg_variable_dict = {"x": x, "out": out,} | dict(
+                    self.model.named_parameters()
+                )  # Must use named parameters rather than state_dict to preserve grads
 
                 reg_loss += self.regularizer(reg_variable_dict)
                 log_dict["reg_loss"] += reg_loss
@@ -82,7 +82,7 @@ class Trainer(torch.nn.Module):
             if grad:
                 total_loss.backward()
                 self.optimizer.step()
-                
+
             if self.normalizer is not None:
                 self.normalizer(dict(self.model.named_parameters()))
 
@@ -112,16 +112,13 @@ class Trainer(torch.nn.Module):
             for i in range(start_epoch, start_epoch + epochs + 1):
                 self.epoch = i
                 log_dict, plot_variable_dict = self.step(data_loader.train, grad=True)
-                
 
                 if data_loader.val is not None:
                     # By default, plots are only generated on train steps
-                    val_log_dict, _ = self.evaluate(
-                        data_loader.val
-                    ) 
+                    val_log_dict, _ = self.evaluate(data_loader.val)
                 else:
                     val_log_dict = None
-                    
+
                 if self.scheduler is not None:
                     if val_log_dict is not None:
                         self.scheduler.step(val_log_dict["total_loss"])
@@ -153,7 +150,7 @@ class Trainer(torch.nn.Module):
             self.logger.end(self, end_dict, self.epoch)
 
     def resume(self, data_loader, epochs):
-        self.train(data_loader, epochs, start_epoch=self.epoch+1)
+        self.train(data_loader, epochs, start_epoch=self.epoch + 1)
 
     @torch.no_grad()
     def evaluate(self, data_loader):
