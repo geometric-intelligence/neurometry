@@ -23,7 +23,11 @@ wandb.init(
         "dataset_name": default_config.dataset_name,
         "expt_id": default_config.expt_id,
         "timestep_microsec": default_config.timestep_microsec,
+        "n_times": default_config.n_times,
+        "synth_radius": default_config.synth_radius,
         "amp_wiggles": default_config.amp_wiggles,
+        "embedding_dim": default_config.embedding_dim,
+        "noise_var": default_config.noise_var,
         "batch_size": default_config.batch_size,
         "n_epochs": default_config.n_epochs,
         "learning_rate": default_config.learning_rate,
@@ -55,11 +59,11 @@ _, data_dim = dataset_torch.shape
 if default_config.model_type == "fc_vae":
     model = models.fc_vae.VAE(
         data_dim=data_dim,
-        encoder_width=config.encoder_width,
-        decoder_width=config.decoder_width,
-        encoder_depth=config.encoder_depth,
-        decoder_depth=config.decoder_depth,
         latent_dim=config.latent_dim,
+        encoder_width=config.encoder_width,
+        encoder_depth=config.encoder_depth,
+        decoder_width=config.decoder_width,
+        decoder_depth=config.decoder_depth,
         posterior_type=config.posterior_type,
         gen_likelihood_type=config.gen_likelihood_type,
     ).to(config.device)

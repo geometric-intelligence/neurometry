@@ -1,12 +1,17 @@
 """Generate and load synthetic datasets."""
 import logging
 
+import os
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 import numpy as np
 import pandas as pd
 import skimage
 import torch
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
+import torch.nn.functional as F
+from torch.distributions.multivariate_normal import MultivariateNormal
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
@@ -159,7 +164,7 @@ def load_place_cells(n_times=10000, n_cells=40):
     -------
     place_cells : array-like, shape=[n_times, n_cells]
         Number of firings per time step and per cell.
-    labels : pd.DataFrame, shape=[n_timess, 1]
+    labels : pd.DataFrame, shape=[n_times, 1]
         Labels organized in 1 column: angles.
     """
     n_firing_per_cell = int(n_times / n_cells)
@@ -206,46 +211,60 @@ def load_place_cells(n_times=10000, n_cells=40):
 
 
 def load_wiggles(
-    n_times=1000, circle_radius=5, n_wiggles=6, amp_wiggles=0.4, embedding_dim=10, noise_var=1.
+    n_times=1500,
+    synth_radius=1,
+    n_wiggles=6,
+    amp_wiggles=0.4,
+    embedding_dim=10,
+    noise_var=0.01,
 ):
-    """Create "wiggly" circles.
+    """Create "wiggly" circles with noise.
 
     Parameters
     ----------
+    n_times : int
+
     circle_radius : float
         Primary circle radius.
     n_wiggles : int
         Number of "wiggles".
     amp_wiggles : float, < 1
         Amplitude of "wiggles".
+    embedding_dim : int
+        Dimension of embedding dimension.
     noise_var : float
         Variance (sigma2) of the Gaussian noise.
 
     Returns
     -------
-    synth_immersion : function
-        Synthetic immersion from S1 to R^N.
+    noisy_data : array-like, shape=[embedding_dim, n_times]
+        Number of firings per time step and per cell.
+    labels : pd.DataFrame, shape=[n_times, 1]
+        Labels organized in 1 column: angles.
     """
 
     def polar(angle):
-        return gs.stack([gs.cos(angle), gs.sin(angle)], axis=-1)
+        return torch.tensor(gs.stack([gs.cos(angle), gs.sin(angle)], axis=0))
 
-    def synth_immersion(angle):
-        # look at einsum
-        n_thetas = len(angle)
-        wiggly_circle = torch.matmul(
-            torch.diag(amp_wiggles * (1 + circle_radius * gs.cos(n_wiggles * angle))),
-            polar(angle),
+    def synth_immersion(angles):
+        amplitudes = synth_radius * (1 + amp_wiggles * gs.cos(n_wiggles * angles))
+        wiggly_circle = gs.einsum(
+            "ik,jk->ij", polar(angles), torch.diag(torch.tensor(amplitudes))
         )
-        padded_wiggly_circle = gs.hstack(
-            [wiggly_circle, gs.zeros((n_thetas, embedding_dim - 2))]
+        wiggly_circle = torch.tensor(wiggly_circle)
+
+        padded_wiggly_circle = F.pad(
+            input=wiggly_circle,
+            pad=(0, 0, 0, embedding_dim - 2),
+            mode="constant",
+            value=0.0,
         )
 
         so = SpecialOrthogonal(n=embedding_dim)
 
         rot = so.random_point()
 
-        return gs.einsum("ij,nj->ni", rot, padded_wiggly_circle)
+        return gs.einsum("ik,kj->ij", rot, padded_wiggly_circle)
 
     angles = gs.linspace(0, 2 * gs.pi, n_times)
 
@@ -255,5 +274,13 @@ def load_wiggles(
         }
     )
 
-    noisy_data = synth_immersion(angles) + gs.random.norm((n_times, embedding_dim), size=noise_var)
+    data = synth_immersion(angles).T
+
+    noise_dist = MultivariateNormal(
+        loc=torch.zeros(embedding_dim),
+        covariance_matrix=noise_var * torch.eye(embedding_dim),
+    )
+
+    noisy_data = data + noise_dist.sample((n_times,))
+
     return noisy_data, labels
