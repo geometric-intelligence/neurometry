@@ -18,7 +18,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128  # 128
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 100
+n_epochs = 30
 learning_rate = 1e-3
 beta = 1.0
 alpha = 100.0
@@ -41,6 +41,7 @@ if dataset_name in ["images", "projected_images"]:
 
 
 if dataset_name == "wiggles":
+    n_times = 1000
     amp_wiggles = 0.3
     synth_radius = 1
     n_wiggles = 5
@@ -48,6 +49,7 @@ if dataset_name == "wiggles":
     noise_var = 0.01
 
 else: 
+    n_times = -1
     amp_wiggles = -1
     synth_radius = -1
     n_wiggles = -1

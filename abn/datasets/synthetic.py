@@ -2,6 +2,7 @@
 import logging
 
 import os
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 import numpy as np
@@ -10,6 +11,7 @@ import skimage
 import torch
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 import torch.nn.functional as F
+from torch.distributions.multivariate_normal import MultivariateNormal
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
@@ -209,7 +211,7 @@ def load_place_cells(n_times=10000, n_cells=40):
 
 
 def load_wiggles(
-    n_times=1000,
+    n_times=1500,
     synth_radius=1,
     n_wiggles=6,
     amp_wiggles=0.4,
@@ -242,16 +244,21 @@ def load_wiggles(
     """
 
     def polar(angle):
-        return gs.stack([gs.cos(angle), gs.sin(angle)], axis=0)
+        return torch.tensor(gs.stack([gs.cos(angle), gs.sin(angle)], axis=0))
 
     def synth_immersion(angles):
         amplitudes = synth_radius * (1 + amp_wiggles * gs.cos(n_wiggles * angles))
-        wiggly_circle = gs.einsum("ik,jk->ij", polar(angles), np.diag(amplitudes))
+        wiggly_circle = gs.einsum(
+            "ik,jk->ij", polar(angles), torch.diag(torch.tensor(amplitudes))
+        )
+        wiggly_circle = torch.tensor(wiggly_circle)
 
-        # padded_wiggly_circle = gs.vstack(
-        #     [wiggly_circle, gs.zeros((embedding_dim - 2, len(angle)))]
-        # )
-        padded_wiggly_circle = F.pad(input = wiggly_circle, pad = (0,0,0,embedding_dim-2),mode="constant", value=0.0 )
+        padded_wiggly_circle = F.pad(
+            input=wiggly_circle,
+            pad=(0, 0, 0, embedding_dim - 2),
+            mode="constant",
+            value=0.0,
+        )
 
         so = SpecialOrthogonal(n=embedding_dim)
 
@@ -267,13 +274,13 @@ def load_wiggles(
         }
     )
 
-    noise_cov = np.diag(noise_var * gs.ones(embedding_dim))
+    data = synth_immersion(angles).T
 
-    noisy_data = (
-        synth_immersion(angles)
-        + gs.random.multivariate_normal(
-            mean=gs.zeros(embedding_dim), cov=noise_cov, size=len(angles)
-        ).T
+    noise_dist = MultivariateNormal(
+        loc=torch.zeros(embedding_dim),
+        covariance_matrix=noise_var * torch.eye(embedding_dim),
     )
+
+    noisy_data = data + noise_dist.sample((n_times,))
 
     return noisy_data, labels

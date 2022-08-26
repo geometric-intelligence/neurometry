@@ -23,6 +23,7 @@ wandb.init(
         "dataset_name": default_config.dataset_name,
         "expt_id": default_config.expt_id,
         "timestep_microsec": default_config.timestep_microsec,
+        "n_times": default_config.n_times,
         "synth_radius": default_config.synth_radius,
         "amp_wiggles": default_config.amp_wiggles,
         "embedding_dim": default_config.embedding_dim,
