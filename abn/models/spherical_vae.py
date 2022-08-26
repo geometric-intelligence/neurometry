@@ -60,6 +60,7 @@ class SphericalVAE(torch.nn.Module):
                 layer_dims[i], layer_dims[i + 1], bias=True
             )
             self.weight_init(layers["fullyconnected_{}".format(i)].weight)
+            torch.nn.init.zeros_(layers["fullyconnected_{}".format(i)].bias)
             if i < len(layer_dims) - 2:
                 layers["activation_{}".format(i)] = torch.nn.ReLU()
             if i == len(layer_dims) - 2 and out_fn is not None:
@@ -73,16 +74,22 @@ class SphericalVAE(torch.nn.Module):
     def generate_encoder(self):
         encoder_dims = [self.input_dim] + self.encoder_dims
         self.encoder = self.generate_module(encoder_dims, out_fn=torch.nn.ReLU())
+        
+        # TODO: Initialize weights and biases
         if self.distribution == 'normal':
             # compute mean and std of the normal distribution
-            self.mu = torch.nn.Linear(self.encoder_dims[-1], self.latent_dim)
-            self.var = torch.nn.Linear(self.encoder_dims[-1], self.latent_dim)
+            self.mu = torch.nn.Linear(self.encoder_dims[-1], self.latent_dim, bias=True)
+            self.var = torch.nn.Linear(self.encoder_dims[-1], self.latent_dim, bias=True)
         elif self.distribution == 'vmf':
             # compute mean and concentration of the von Mises-Fisher
-            self.mu = torch.nn.Linear(self.encoder_dims[-1], self.latent_dim)
-            self.var = torch.nn.Linear(self.encoder_dims[-1], 1)
+            self.mu = torch.nn.Linear(self.encoder_dims[-1], self.latent_dim, bias=True)
+            self.var = torch.nn.Linear(self.encoder_dims[-1], 1, bias=True)
         else:
             raise NotImplemented
+        self.weight_init(self.mu.weight)
+        self.weight_init(self.var.weight)
+        torch.nn.init.zeros_(self.mu.bias)
+        torch.nn.init.zeros_(self.var.bias)
         
     def generate_decoder(self):
         decoder_dims = [self.latent_dim] + self.decoder_dims + [self.input_dim]
