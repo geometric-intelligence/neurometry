@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
 from collections import OrderedDict
-from hyperspherical_vae.distributions import VonMisesFisher
-from hyperspherical_vae.distributions import HypersphericalUniform
+from abn.hyperspherical_vae.distributions import VonMisesFisher
+from abn.hyperspherical_vae.distributions import HypersphericalUniform
 
 
 class SphericalVAE(torch.nn.Module):

@@ -2,8 +2,8 @@ import math
 import torch
 from torch.distributions.kl import register_kl
 
-from hyperspherical_vae.ops.ive import ive, ive_fraction_approx, ive_fraction_approx2
-from hyperspherical_vae.distributions.hyperspherical_uniform import (
+from abn.hyperspherical_vae.ops.ive import ive, ive_fraction_approx, ive_fraction_approx2
+from abn.hyperspherical_vae.distributions.hyperspherical_uniform import (
     HypersphericalUniform,
 )
 
