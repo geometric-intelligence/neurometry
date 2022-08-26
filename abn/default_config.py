@@ -16,18 +16,17 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Training
 batch_size = 128  # 128
-log_interval = 10
-checkpt_interval = 10
-n_epochs = 30
+log_interval = 20
+checkpt_interval = 20
+n_epochs = 4000
 learning_rate = 1e-3
-beta = 1.0
-alpha = 100.0
-gamma = 100.0
+beta = 0.2
+alpha = 500.0
+gamma = 500.0
 
 
 # Dataset
 dataset_name = "wiggles"
-
 
 if dataset_name == "experimental":
     expt_id = "34"  # hd: with head direction

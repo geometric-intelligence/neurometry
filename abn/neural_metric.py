@@ -21,7 +21,7 @@ class NeuralMetric(PullbackMetric):
 
     def mean_curvature(self, base_point):
 
-        H = gs.zeros((self.embedding_dim,))
+        H = gs.zeros(self.embedding_dim)
         for i in range(self.embedding_dim):
             H[i] = torch.autograd.functional.hessian(
                 func=lambda x: self.immersion(x)[i], inputs=base_point
