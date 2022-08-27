@@ -39,7 +39,7 @@ class SphericalVAETrainer(Trainer):
 
         # Dataset passes pairs of neural state vectors and the ground truth positional angle
         # between the corresponding timepoints. However, we are not using this info in this model
-        for i, (x, x1, angle) in enumerate(data_loader):
+        for i, (x, y) in enumerate(data_loader):
 
             x = x.to(self.model.device)
 
