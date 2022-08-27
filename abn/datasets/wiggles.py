@@ -83,15 +83,9 @@ class Wiggles(Dataset):
 
             return torch.einsum("ik,kj->ij", rot, padded_wiggly_circle)
 
-        angles = torch.linspace(0, 2 * np.pi, self.n_times)
+        labels = torch.linspace(0, 2 * np.pi, self.n_times)
 
-        labels = pd.DataFrame(
-            {
-                "angles": angles,
-            }
-        )
-
-        data = synth_immersion(angles).T
+        data = synth_immersion(labels).T
 
         noise_dist = MultivariateNormal(
             loc=torch.zeros(self.embedding_dim),

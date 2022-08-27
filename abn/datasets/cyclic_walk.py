@@ -6,8 +6,103 @@ from abn.datasets import utils
 import matplotlib.pyplot as plt
 import copy
 
-
 class CyclicWalk(Dataset):
+
+    def __init__(self, path, time_bin=1000000, velocity_threshold=0.1):
+
+        super().__init__()
+        self.name = "cyclic-walk"
+        self.velocity_threshold = velocity_threshold
+        
+        mat = utils.loadmat(path)
+        rosdata = mat["x"]["rosdata"]
+        enctimes = rosdata["encTimes"]
+        velocity = mat["x"]["rosdata"]["vel"]
+        encangle = rosdata["encAngle"]
+        n_cells = len(mat["x"]["clust"])
+                
+        times = self.get_times(mat)
+        
+        # Bin times
+        regular_times = np.arange(start=times[0], stop=times[-1], step=time_bin)
+        n_times = len(regular_times) - 1
+        place_cells = np.zeros((n_times, n_cells))
+
+        for i_cell, cell in tqdm(enumerate(mat["x"]["clust"])):
+            # print(f"Processing cell {i_cell}...")
+            counts, bins, _ = plt.hist(cell["ts"], bins=regular_times)
+            assert sum(bins != regular_times) == 0
+            assert len(counts) == n_times
+            place_cells[:, i_cell] = counts
+            
+        # Standardize the Data
+        place_cells = place_cells - place_cells.mean(axis=-1, keepdims=True)
+        place_cells = place_cells / (np.linalg.norm(place_cells, axis=-1, keepdims=True) + 1e-10)
+                
+        enc_counts, enc_bins = np.histogram(enctimes, bins=regular_times)
+        
+        # Bin Position Angles
+        angles = []
+        cum_count = 0
+        for count in enc_counts:
+            angles.append(np.mean(encangle[cum_count:cum_count+int(count)]))
+            cum_count += int(count)
+        assert len(angles) == len(regular_times) -1
+        angles = [x % 360 for x in angles]
+        angles = torch.tensor([np.deg2rad(x) for x in angles])
+        
+        # Bin Velocity
+        velocities = []
+        cum_count = 0
+        for count in enc_counts:
+            velocities.append(np.mean(velocity[cum_count:cum_count+int(count)]))
+            cum_count += int(count)
+        assert len(velocities) == len(regular_times) -1
+        velocities = torch.tensor(velocities)
+        
+        vel_idx = abs(velocities) >= velocity_threshold
+        place_cells = place_cells[vel_idx]
+        angles = angles[vel_idx]
+        
+        good_idx = np.where(place_cells.max(axis=-1) != 0.0)
+        place_cells = place_cells[good_idx]
+        angles = angles[good_idx]
+        velocities = velocities[good_idx]
+        
+        self.velocity = velocities
+        self.dim = place_cells.shape[1]
+        self.data = torch.tensor(place_cells, dtype=torch.float32)
+        self.labels = torch.tensor(angles, dtype=torch.float32)
+        
+    def get_times(self, mat):
+        times = []
+        for clust in mat["x"]["clust"]:
+            times.extend(clust["ts"])
+
+        times = sorted(times)
+        n_times = len(times)
+        # print(f"Number of times before deleting duplicates: {n_times}.")
+        aux = []
+        for time in times:
+            if time not in aux:
+                aux.append(time)
+        n_times = len(aux)
+        # print(f"Number of times after deleting duplicates: {n_times}.")
+        times = aux
+        times = np.array(times)
+        return times
+
+    def __getitem__(self, idx):
+        x = self.data[idx]
+        y = self.labels[idx]
+        return x, y
+
+    def __len__(self):
+        return len(self.data)
+    
+    
+
+class CyclicWalkAngle(Dataset):
 
     def __init__(self, path, randomize_pairs=True, time_bin=1000000, velocity_threshold=0.1):
 
@@ -137,7 +232,7 @@ class CyclicWalk(Dataset):
         return len(self.data)
     
     
-class CyclicWalkLoader:
+class CyclicWalkAngleLoader:
     def __init__(self, 
                  batch_size, 
                  fraction_val=0.2,
