@@ -1,7 +1,7 @@
 """Utils to import data from matlab."""
 
-import abn.datasets.experimental
-import abn.datasets.synthetic
+import datasets.experimental
+import datasets.synthetic
 import mat73
 import numpy as np
 import scipy.io
