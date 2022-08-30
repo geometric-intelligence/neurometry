@@ -14,7 +14,7 @@ import numpy as np
 import torch.nn.functional as F
 
 
-def get_synth_immersion(radius, n_wiggles, amp_wiggles, embedding_dim):
+def get_synth_immersion(radius, n_wiggles, amp_wiggles, embedding_dim, rot):
     """Creates function whose image is "wiggly" circles in high-dim space.
 
     Parameters
@@ -65,10 +65,6 @@ def get_synth_immersion(radius, n_wiggles, amp_wiggles, embedding_dim):
             input=point, pad=(0, embedding_dim - 2), mode="constant", value=0.0
         )
 
-        so = SpecialOrthogonal(n=embedding_dim)
-
-        rot = so.random_point()
-
         return gs.einsum("ij,j->i", rot, padded_point)
 
     return synth_immersion
@@ -87,7 +83,7 @@ def mean_curv_vector(base_points, params):
             dim=1, embedding_dim=params["embedding_dim"], immersion=immersion
         )
     elif params["immersion_type"] == "VAE":
-        model = torch.load(params["model_filename"])
+        model = params["model"]
         model.eval()
         immersion = neural_metric.get_neural_immersion(model)
         metric = neural_metric.NeuralMetric(

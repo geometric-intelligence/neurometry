@@ -1,5 +1,5 @@
 import torch
-from abn.trainer.core import Trainer
+from trainer.core import Trainer
 
 
 class SphericalVAETrainer(Trainer):
