@@ -1,1 +1,1 @@
-from abn.hyperspherical_vae.ops.ive import ive
+from hyperspherical_vae.ops.ive import ive

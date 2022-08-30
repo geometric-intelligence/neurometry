@@ -1,2 +1,2 @@
-import abn.hyperspherical_vae.ops
-import abn.hyperspherical_vae.distributions
+import hyperspherical_vae.ops
+import hyperspherical_vae.distributions

@@ -1,9 +1,9 @@
 import torch
 import torch.nn.functional as F
 from collections import OrderedDict
-from abn.hyperspherical_vae.distributions import VonMisesFisher
-from abn.hyperspherical_vae.distributions import HypersphericalUniform
-
+from hyperspherical_vae.distributions import VonMisesFisher
+from hyperspherical_vae.distributions import HypersphericalUniform
+ 
 
 class SphericalVAE(torch.nn.Module):
     def __init__(
@@ -62,7 +62,7 @@ class SphericalVAE(torch.nn.Module):
             self.weight_init(layers["fullyconnected_{}".format(i)].weight)
             torch.nn.init.zeros_(layers["fullyconnected_{}".format(i)].bias)
             if i < len(layer_dims) - 2:
-                layers["activation_{}".format(i)] = torch.nn.ReLU()
+                layers["activation_{}".format(i)] = torch.nn.LeakyReLU(negative_slope=0.1)
             if i == len(layer_dims) - 2 and out_fn is not None:
                 layers["out_{}".format(i)] = out_fn
             else:
