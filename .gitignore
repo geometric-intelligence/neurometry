@@ -8,6 +8,10 @@ abn/data.zip
 abn/wandb/*
 abn/results/*
 
+abn/new_vae/results/*
+
+abn/new_vae/wandb/*
+
 # Result files
 *.png
 *.pt
