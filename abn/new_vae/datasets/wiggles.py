@@ -6,9 +6,9 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 import torch.nn.functional as F
 from torch.distributions.multivariate_normal import MultivariateNormal
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 
 class Wiggles(Dataset):
@@ -20,6 +20,7 @@ class Wiggles(Dataset):
         amp_wiggles=0.4,
         embedding_dim=10,
         noise_var=0.01,
+        rotation=True,
     ):
 
         """
@@ -54,24 +55,31 @@ class Wiggles(Dataset):
         self.n_wiggles = n_wiggles
         self.amp_wiggles = amp_wiggles
         self.embedding_dim = embedding_dim
+        self.rotation = rotation
         self.noise_var = noise_var
 
         self.data, self.labels = self.generate_wiggles()
 
+
     def generate_wiggles(self):
+        
+        if self.rotation == True:
+            self.rot = SpecialOrthogonal(n=self.embedding_dim).random_point()
+        else:
+            self.rot = torch.eye(self.embedding_dim)
+        
         def polar(angle):
-            return torch.tensor(
-                torch.stack([torch.cos(angle), torch.sin(angle)], axis=0)
-            )
+            return torch.stack([torch.cos(angle), torch.sin(angle)], axis=0)
+            
 
         def synth_immersion(angles):
             amplitudes = self.synth_radius * (
                 1 + self.amp_wiggles * torch.cos(self.n_wiggles * angles)
             )
             wiggly_circle = torch.einsum(
-                "ik,jk->ij", polar(angles), torch.diag(torch.tensor(amplitudes))
+                "ik,jk->ij", polar(angles), torch.diag(amplitudes)
             )
-            wiggly_circle = torch.tensor(wiggly_circle)
+            wiggly_circle = wiggly_circle
 
             padded_wiggly_circle = F.pad(
                 input=wiggly_circle,
@@ -79,16 +87,14 @@ class Wiggles(Dataset):
                 mode="constant",
                 value=0.0,
             )
+            
+            points = torch.einsum("ik,kj->ij", self.rot, padded_wiggly_circle)
 
-            so = SpecialOrthogonal(n=self.embedding_dim)
+            return points
 
-            rot = so.random_point()
+        angles = torch.linspace(0, 2 * np.pi, self.n_times)
 
-            return torch.einsum("ik,kj->ij", rot, padded_wiggly_circle)
-
-        labels = torch.linspace(0, 2 * np.pi, self.n_times)
-
-        data = synth_immersion(labels).T
+        data = synth_immersion(angles).T
 
         noise_dist = MultivariateNormal(
             loc=torch.zeros(self.embedding_dim),
@@ -97,7 +103,7 @@ class Wiggles(Dataset):
 
         noisy_data = data + noise_dist.sample((self.n_times,))
 
-        return noisy_data, labels
+        return noisy_data, angles
 
     def __getitem__(self, idx):
         return self.data[idx], self.labels[idx]
