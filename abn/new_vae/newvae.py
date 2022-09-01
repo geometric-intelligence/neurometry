@@ -113,7 +113,7 @@ class VAE(torch.nn.Module):
 
         if self.latent_geometry == "normal":
             z_mu = self.distribution_param_layers["mu"](h)
-            z_var = F.softplus(self.distribution_params["var"](h))
+            z_var = F.softplus(self.distribution_param_layers["var"](h))
             posterior_params["mu"] = z_mu
             posterior_params["var"] = z_var
         elif self.latent_geometry == "hyperspherical":

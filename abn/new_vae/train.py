@@ -53,12 +53,12 @@ def train_model(
             else:
                 raise NotImplementedError
 
-            default_config_str = config.results_prefix
-            evaluate.latent.plot_save_latent_space(
-                f"results/figures/{default_config_str}_latent_epoch{epoch}.png",
-                z,
-                labels,
-            )
+            # default_config_str = config.results_prefix
+            # evaluate.latent.plot_save_latent_space(
+            #     f"results/figures/{default_config_str}_latent_epoch{epoch}.png",
+            #     z,
+            #     labels,
+            # )
 
     return train_losses, test_losses
 
@@ -133,59 +133,59 @@ def test(epoch, model, test_loader, config):
 
             test_loss += losses.elbo(x, model, config)
 
-            recon_batch = model(x)[-1]
+            #recon_batch = model(x)[-1]
 
-            if i == 0 and epoch % config.checkpt_interval == 0:
-                fig = plt.figure()
-                if config.dataset_name == "experimental":
-                    ax1 = fig.add_subplot(1, 2, 1)
+            # if i == 0 and epoch % config.checkpt_interval == 0:
+            #     fig = plt.figure()
+            #     if config.dataset_name == "experimental":
+            #         ax1 = fig.add_subplot(1, 2, 1)
 
-                    ax2 = fig.add_subplot(1, 2, 1)
+            #         ax2 = fig.add_subplot(1, 2, 1)
 
-                if config.dataset_name == "points":
-                    ax = fig.add_subplot(1, 2, 1, projection="3d")
-                    sc = ax.scatter(
-                        x[:, 0],
-                        x[:, 1],
-                        x[:, 2],
-                        s=10,
-                        # c=lab[label_name],
-                        # cmap=CMAP[label_name],
-                    )
-                    plt.xlim(-1.5, 1.5)
-                    plt.ylim(-1.5, 1.5)
-                    ax.set_zlim(0, 1.5)
-                    ax.set_title("original")
-                    ax2 = fig.add_subplot(1, 2, 2, projection="3d")
-                    sc2 = ax2.scatter(
-                        recon_batch[:, 0],
-                        recon_batch[:, 1],
-                        recon_batch[:, 2],
-                        s=10,
-                        # c=lab[label_name],
-                        # cmap=CMAP[label_name],
-                    )
-                    plt.xlim(-1.5, 1.5)
-                    plt.ylim(-1.5, 1.5)
-                    ax2.set_zlim(0, 1.5)
-                    ax2.set_title("reconstruction")
-                elif config.dataset_name == "images":
-                    _, axs = plt.subplots(2)
-                    axs[0].imshow(
-                        x[0].reshape((config.img_size, config.img_size)).cpu()
-                    )
-                    axs[1].imshow(
-                        recon_batch[0].reshape((config.img_size, config.img_size)).cpu()
-                    )
-                else:
-                    _, axs = plt.subplots(2)
-                    axs[0].imshow(x.cpu())
-                    axs[1].imshow(recon_batch.cpu())
-                # axs[0].set_title("original", fontsize=10)
-                # axs[1].set_title("reconstruction", fontsize=10)
-                plt.savefig(
-                    f"results/figures/{config.results_prefix}_recon_epoch{epoch}.png"
-                )
+            #     if config.dataset_name == "points":
+            #         ax = fig.add_subplot(1, 2, 1, projection="3d")
+            #         sc = ax.scatter(
+            #             x[:, 0],
+            #             x[:, 1],
+            #             x[:, 2],
+            #             s=10,
+            #             # c=lab[label_name],
+            #             # cmap=CMAP[label_name],
+            #         )
+            #         plt.xlim(-1.5, 1.5)
+            #         plt.ylim(-1.5, 1.5)
+            #         ax.set_zlim(0, 1.5)
+            #         ax.set_title("original")
+            #         ax2 = fig.add_subplot(1, 2, 2, projection="3d")
+            #         sc2 = ax2.scatter(
+            #             recon_batch[:, 0],
+            #             recon_batch[:, 1],
+            #             recon_batch[:, 2],
+            #             s=10,
+            #             # c=lab[label_name],
+            #             # cmap=CMAP[label_name],
+            #         )
+            #         plt.xlim(-1.5, 1.5)
+            #         plt.ylim(-1.5, 1.5)
+            #         ax2.set_zlim(0, 1.5)
+            #         ax2.set_title("reconstruction")
+            #     elif config.dataset_name == "images":
+            #         _, axs = plt.subplots(2)
+            #         axs[0].imshow(
+            #             x[0].reshape((config.img_size, config.img_size)).cpu()
+            #         )
+            #         axs[1].imshow(
+            #             recon_batch[0].reshape((config.img_size, config.img_size)).cpu()
+            #         )
+            #     else:
+            #         _, axs = plt.subplots(2)
+            #         axs[0].imshow(x.cpu())
+            #         axs[1].imshow(recon_batch.cpu())
+            #     # axs[0].set_title("original", fontsize=10)
+            #     # axs[1].set_title("reconstruction", fontsize=10)
+            #     plt.savefig(
+            #         f"results/figures/{config.results_prefix}_recon_epoch{epoch}.png"
+            #     )
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
