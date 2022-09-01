@@ -34,7 +34,7 @@ def train_model(
 
         test_losses.append(test_loss)
 
-        wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
+        #wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
 
         if epoch % config.checkpt_interval == 0:
 
@@ -83,7 +83,6 @@ def train(epoch, model, train_loader, optimizer, config):
         labels = labels.float()
         x = x.to(config.device)
         optimizer.zero_grad()
-        posterior_params, (q_z, p_z), z, x_rec = model(x)
 
         loss = losses.elbo(x, model, config)
 
@@ -91,16 +90,17 @@ def train(epoch, model, train_loader, optimizer, config):
 
         train_loss += loss.item()
         optimizer.step()
-        if batch_idx % config.log_interval == 0:
-            print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(x),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
-                    loss.item() / len(x),
-                )
-            )
+
+        # if batch_idx % config.log_interval == 0:
+        #     print(
+        #         "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+        #             epoch,
+        #             batch_idx * len(x),
+        #             len(train_loader.dataset),
+        #             100.0 * batch_idx / len(train_loader),
+        #             loss.item() / len(x),
+        #         )
+        #     )
 
     train_loss = train_loss / len(train_loader.dataset)
 

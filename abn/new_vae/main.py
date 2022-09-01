@@ -34,7 +34,8 @@ wandb.init(
         "amp_wiggles": default_config.amp_wiggles,
         "synth_radius": default_config.synth_radius,
         "n_wiggles": default_config.n_wiggles,
-        "embedding_dim ": default_config.embedding_dim,
+        "embedding_dim": default_config.embedding_dim,
+        "rotation": default_config.rotation,
         "noise_var": default_config.noise_var,
         "encoder_dims": default_config.encoder_dims,
         "latent_dim": default_config.latent_dim,
@@ -49,13 +50,15 @@ config = wandb.config
 wandb.run.name = config.run_name
 results_prefix = config.results_prefix
 
+
 dataset = Wiggles(
-    n_times=1500,
-    n_wiggles=6,
-    synth_radius=1,
-    amp_wiggles=0.2,
-    embedding_dim=2,
-    noise_var=0.001,
+    n_times=config.n_times,
+    n_wiggles=config.n_wiggles,
+    synth_radius=config.synth_radius,
+    amp_wiggles=config.amp_wiggles,
+    embedding_dim=config.embedding_dim,
+    noise_var=config.noise_var,
+    rotation=config.rotation,
 )
 
 """
@@ -73,6 +76,9 @@ labels = pd.DataFrame(
         "angles": labels,
     }
 )
+
+
+
 
 data_loader = TrainValLoader(batch_size=config.batch_size)
 

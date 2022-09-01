@@ -7,10 +7,13 @@ to evaluate the efficiency of the methods.
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D  # NOQA
+import seaborn as sns
+import pandas as pd
+sns.set_style("darkgrid")
 
 CMAP = {
     # Color maps for angles related to position
-    "angles": "twilight",
+    "angles": "hsv",
     "angles_tracked": "twilight",
     # Color maps for angles related to head direction
     "angles_head": "hsv",
@@ -56,7 +59,7 @@ def plot_save_latent_space(fname, z, labels):
     if "Unnamed: 0" in label_names:
         label_names.remove("Unnamed: 0")
     n_labels = len(label_names)
-    nrows = 2
+    nrows = 1
     ncols = n_labels // 2 + 1
 
     if latent_dim == 1:
@@ -74,19 +77,27 @@ def plot_save_latent_space(fname, z, labels):
             fig.colorbar(sc, ax=ax)
 
     if latent_dim == 2:
-        fig = plt.figure(figsize=(5 * ncols, 4 * nrows))
+        fig = plt.figure(figsize=(10 * ncols, 10 * nrows))
         for i, label_name in enumerate(label_names):
-            ax = fig.add_subplot(nrows, ncols, i + 1)
+            # ax = fig.add_subplot(nrows, ncols, i + 1)
 
-            sc = ax.scatter(
-                z[:, 0],
-                z[:, 1],
-                s=5,
-                c=labels[label_name],
-                cmap=CMAP[label_name],
-            )
-            ax.set_title(label_name, fontsize=14)
-            fig.colorbar(sc, ax=ax)
+            # sc = ax.scatter(
+            #     z[:, 0],
+            #     z[:, 1],
+            #     s=5,
+            #     c=labels[label_name],
+            #     cmap=CMAP[label_name],
+            # )
+
+            df = pd.DataFrame({"z0": z[:, 0], 
+                    "z1": z[:, 1], 
+                    "pos": labels[label_name] 
+                    })
+                    
+            sc = sns.scatterplot(x="z0", y="z1", hue="pos", data=df, palette="rainbow")
+            plt.title(label_name, fontsize=14)
+
+
 
     elif latent_dim == 3:
         fig = plt.figure(figsize=(10 * ncols, 8 * nrows))

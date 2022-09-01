@@ -1,12 +1,14 @@
 import logging
 
 from datetime import datetime
+import os
 
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
 import torch
 
 
-run_name = "hello"
+run_name = "505"
 
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
@@ -15,12 +17,12 @@ logging.basicConfig(level=logging.INFO)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Training
-batch_size = 128  # 128
-log_interval = 20
-checkpt_interval = 2
-n_epochs = 5
+batch_size = 20  # 
+log_interval = 10
+checkpt_interval = 10
+n_epochs = 100
 learning_rate = 1e-3
-beta = 0.2
+beta = 0.1
 
 
 # Dataset
@@ -45,7 +47,8 @@ if dataset_name == "wiggles":
     synth_radius = 1
     n_wiggles = 5
     embedding_dim = 5
-    noise_var = 0.01
+    rotation = True
+    noise_var = 0.001
 
 else:
     n_times = -1
@@ -54,6 +57,7 @@ else:
     n_wiggles = -1
     embedding_dim = -1
     noise_var = -1
+    rotation = -1
 
 
 # Models
