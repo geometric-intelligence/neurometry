@@ -17,11 +17,11 @@ logging.basicConfig(level=logging.INFO)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Training
-batch_size = 20  # 
+batch_size = 20 # 
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 100
-learning_rate = 1e-3
+n_epochs = 200
+learning_rate = 0.001
 beta = 0.1
 
 
@@ -46,7 +46,7 @@ if dataset_name == "wiggles":
     amp_wiggles = 0.3
     synth_radius = 1
     n_wiggles = 5
-    embedding_dim = 5
+    embedding_dim = 2
     rotation = True
     noise_var = 0.001
 
@@ -62,7 +62,7 @@ else:
 
 # Models
 
-encoder_dims = [40, 30, 20, 10]
+encoder_dims = [40, 100, 50, 10]
 latent_dim = 2
 latent_geometry = "hyperspherical"
 decoder_dims = encoder_dims[::-1]
