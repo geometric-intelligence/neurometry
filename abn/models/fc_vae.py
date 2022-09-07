@@ -5,6 +5,9 @@ This file gathers deep learning models related to G-manifold learning.
 
 import torch
 from torch.nn import functional as F
+from torch.distributions.normal import Normal as Normal
+from hyperspherical_vae.distributions import VonMisesFisher
+from hyperspherical_vae.distributions import HypersphericalUniform
 
 
 class VAE(torch.nn.Module):
@@ -46,12 +49,15 @@ class VAE(torch.nn.Module):
         if posterior_type == "gaussian":
             self.fc_z_mu = torch.nn.Linear(encoder_width, self.latent_dim)
             self.fc_z_logvar = torch.nn.Linear(encoder_width, self.latent_dim)
+        elif posterior_type == "hyperspherical":
+            self.fc_z_mu = torch.nn.Linear(encoder_width, self.latent_dim)
+            self.fc_z_logvar = torch.nn.Linear(encoder_width, 1) # kappa
 
         self.decoder_fc = torch.nn.Linear(self.latent_dim, decoder_width)
         self.decoder_linears = torch.nn.ModuleList(
             [torch.nn.Linear(decoder_width, decoder_width) for _ in range(decoder_depth)])
 
-        if gen_likelihood_type == "gaussian":
+        if gen_likelihood_type == "laplacian":
             self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
             # adding hidden layer to logvar
             self.fc_x_logvar1 = torch.nn.Linear(decoder_width, decoder_width)
@@ -89,6 +95,10 @@ class VAE(torch.nn.Module):
             z_mu = self.fc_z_mu(h)
             z_logvar = self.fc_z_logvar(h)
             posterior_params = z_mu, z_logvar
+        elif self.posterior_type == "hyperspherical":
+            z_mu = self.fc_z_mu(h)
+            z_kappa = F.softplus(self.fc_z_logvar(h)) + 1
+            posterior_params = z_mu, z_kappa
 
         return posterior_params
 
@@ -114,10 +124,18 @@ class VAE(torch.nn.Module):
         if self.posterior_type == "gaussian":
             z_mu, z_logvar = posterior_params
             z_std = torch.exp(0.5 * z_logvar)
-            eps = torch.randn_like(z_std)
-            z = z_mu + eps * z_std
+            # eps = torch.randn_like(z_std)
+            # z = z_mu + eps * z_std
+            p_z = Normal(torch.ones_like(z_mu),torch.ones_like(z_logvar))
+            q_z = Normal(z_mu, z_std)
+        elif self.posterior_type == "hyperspherical":
+            z_mu, z_kappa = posterior_params
+            q_z = VonMisesFisher(z_mu, z_kappa)
+            p_z = HypersphericalUniform(self.latent_dim - 1)
 
-        return z
+        z = q_z.rsample()
+
+        return z, q_z, p_z
 
     def decode(self, z):
         """Decode latent variable z into data.
@@ -137,7 +155,7 @@ class VAE(torch.nn.Module):
         for layer in self.decoder_linears:
             h = F.relu(layer(h))
 
-        if self.gen_likelihood_type == "gaussian":
+        if self.gen_likelihood_type == "laplacian":
             x_mu = self.fc_x_mu(h)
             # adding hidden layer to x_logvar
             h_x_logvar = self.fc_x_logvar1(h)
@@ -169,6 +187,6 @@ class VAE(torch.nn.Module):
         """
 
         posterior_params = self.encode(x)
-        z = self.reparameterize(posterior_params)
+        z, _, _ = self.reparameterize(posterior_params)
         gen_likelihood_params = self.decode(z)
         return gen_likelihood_params, posterior_params

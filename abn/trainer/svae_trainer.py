@@ -1,7 +1,6 @@
 import torch
 from trainer.core import Trainer
 
-
 class SphericalVAETrainer(Trainer):
     def __init__(
         self,
@@ -54,6 +53,10 @@ class SphericalVAETrainer(Trainer):
             recon_loss = (
                 torch.nn.BCEWithLogitsLoss(reduction="none")(x_, x).sum(-1).mean()
             )
+            # recon_loss = torch.nn.MSELoss(reduction="mean")(x_,x)
+
+            #recon_loss = torch.nn.BCEWithLogitsLoss(reduction="mean")(x_,x)
+
 
             if self.model.distribution == "normal":
                 kl_loss = torch.distributions.kl.kl_divergence(q_z, p_z).sum(-1).mean()

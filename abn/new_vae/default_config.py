@@ -20,7 +20,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 20 # 
 log_interval = 10
 checkpt_interval = 10
-n_epochs = 200
+n_epochs = 20
 learning_rate = 0.001
 beta = 0.1
 
@@ -43,7 +43,7 @@ else:
 
 if dataset_name == "wiggles":
     n_times = 1000
-    amp_wiggles = 0.3
+    amp_wiggles = 0.0
     synth_radius = 1
     n_wiggles = 5
     embedding_dim = 2
@@ -64,7 +64,7 @@ else:
 
 encoder_dims = [40, 100, 50, 10]
 latent_dim = 2
-latent_geometry = "hyperspherical"
+latent_geometry = "normal"
 decoder_dims = encoder_dims[::-1]
 
 
@@ -72,3 +72,7 @@ decoder_dims = encoder_dims[::-1]
 now = str(datetime.now().replace(second=0, microsecond=0))
 results_prefix = f"{dataset_name}_{now}"
 trained_model_path = None
+
+
+
+

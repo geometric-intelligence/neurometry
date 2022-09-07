@@ -43,7 +43,9 @@ def train_model(
             z = z.cpu().detach().numpy()
 
             if model.latent_geometry == "normal":
-                labels["var"] = posterior_params["var"]
+                var = posterior_params["var"].cpu().detach().numpy()
+                var = np.sum(var, axis=-1)
+                labels["var"] = var
                 mu_masked = z[labels["var"] < 0.8]
                 labels_masked = labels[labels["var"] < 0.8]
             elif model.latent_geometry == "hyperspherical":
@@ -84,7 +86,9 @@ def train(epoch, model, train_loader, optimizer, config):
         x = x.to(config.device)
         optimizer.zero_grad()
 
-        loss = losses.elbo(x, model, config)
+        posterior_params, (q_z, p_z), z, x_rec = model(x)
+
+        loss = losses.elbo(x, x_rec, q_z, p_z, config)
 
         loss.backward()
 
@@ -131,7 +135,9 @@ def test(epoch, model, test_loader, config):
             x = x.to(config.device)
             labels = labels.float()
 
-            test_loss += losses.elbo(x, model, config)
+            posterior_params, (q_z, p_z), z, x_rec = model(x)
+
+            test_loss += losses.elbo(x, x_rec, q_z, p_z, config)
 
             #recon_batch = model(x)[-1]
 

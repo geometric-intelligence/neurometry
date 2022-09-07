@@ -95,9 +95,9 @@ train_losses, test_losses = losses
 for data, labs in test_loader:
     data, labs = data.to(config.device), labs.to(config.device)
 
-torch.onnx.export(
-    model, data, f"results/trained_models/{config.results_prefix}_model.onnx"
-)
+# torch.onnx.export(
+#     model, data, f"results/trained_models/{config.results_prefix}_model.onnx"
+#)
 wandb.save("/results/trained_models")
 
 
