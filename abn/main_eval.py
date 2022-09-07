@@ -78,6 +78,7 @@ def mean_curv_vector(base_points, params):
             n_wiggles=params["n_wiggles"],
             amp_wiggles=params["amp_wiggles"],
             embedding_dim=params["embedding_dim"],
+            rot = params["rot"]
         )
         metric = neural_metric.NeuralMetric(
             dim=1, embedding_dim=params["embedding_dim"], immersion=immersion

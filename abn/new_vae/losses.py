@@ -3,7 +3,7 @@
 import torch
 
 
-def elbo(x, model, config):
+def elbo(x, x_rec, q_z, p_z, config):
     """Compute VAE elbo loss.
 
     The VAE elbo loss is defined as:
@@ -35,13 +35,13 @@ def elbo(x, model, config):
         VAE elbo loss function on each batch element.
     """
 
-    posterior_params, (q_z, p_z), z, x_rec = model(x)
+    
 
     recon_loss = torch.nn.BCEWithLogitsLoss(reduction="mean")(x_rec, x).sum(-1)
 
-    if model.latent_geometry == "normal":
+    if config.latent_geometry == "normal":
         kl_loss = torch.distributions.kl.kl_divergence(q_z, p_z).sum(-1).mean()
-    elif model.latent_geometry == "hyperspherical":
+    elif config.latent_geometry == "hyperspherical":
         kl_loss = torch.distributions.kl.kl_divergence(q_z, p_z).mean()
     else:
         raise NotImplementedError

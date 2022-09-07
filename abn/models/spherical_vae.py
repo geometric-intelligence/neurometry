@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 from collections import OrderedDict
+import sys
+sys.path.append("../")
 from hyperspherical_vae.distributions import VonMisesFisher
 from hyperspherical_vae.distributions import HypersphericalUniform
  

@@ -2,6 +2,8 @@
 
 import torch
 
+from hyperspherical_vae.distributions import VonMisesFisher
+from hyperspherical_vae.distributions import HypersphericalUniform
 
 def compute_loss(x, labels, gen_likelihood_params, posterior_params, config):
     """Compute total loss function.
@@ -46,8 +48,8 @@ def compute_loss(x, labels, gen_likelihood_params, posterior_params, config):
     """
 
     elbo_loss = elbo(x, gen_likelihood_params, posterior_params, config)
-    lsr_loss = latent_regularization_loss(labels, posterior_params, config)
-    return elbo_loss + lsr_loss
+    #lsr_loss = latent_regularization_loss(labels, posterior_params, config)
+    return elbo_loss #+ lsr_loss
 
 
 def elbo(x, gen_likelihood_params, posterior_params, config):
@@ -87,6 +89,12 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
         z_var = torch.exp(z_logvar)
         kld = -0.5 * torch.sum(1 + z_logvar - z_mu.pow(2) - z_var)
 
+    if config.posterior_type == "hyperspherical":
+        z_mu, z_kappa = posterior_params
+        q_z = VonMisesFisher(z_mu, z_kappa)
+        p_z = HypersphericalUniform(config.latent_dim - 1)
+        kld = torch.distributions.kl.kl_divergence(q_z, p_z).mean()
+
     if config.gen_likelihood_type == "gaussian":
         x_mu, x_logvar = gen_likelihood_params
         x_var = torch.exp(x_logvar)
@@ -95,14 +103,20 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
         recon_loss = torch.sum(
             0.5 * torch.log(x_var) + 0.5 * torch.div((x - x_mu).pow(2), x_var)
         )  # + constant
+    elif config.gen_likelihood_type == "laplacian":
+        x_mu, x_logvar = gen_likelihood_params
+        recon_loss = (
+            torch.nn.BCEWithLogitsLoss(reduction="none")(x_mu, x).sum(-1).mean()
+        )
+    
     elif config.gen_likelihood_type == "poisson":
         x_lambda = gen_likelihood_params
         from scipy import special
-
-        # TODO: check why there are "nan"'s coming up
+         # TODO: check why there are "nan"'s coming up
         recon_loss = torch.sum(
             -x * torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x))
         )
+
 
     return recon_loss + config.beta * kld
 

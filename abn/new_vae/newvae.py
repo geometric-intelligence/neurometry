@@ -143,9 +143,8 @@ class VAE(torch.nn.Module):
             q_z = Normal(posterior_params["mu"], posterior_params["var"])
             p_z = Normal(
                 torch.zeros_like(
-                    posterior_params["mu"], torch.ones_like(posterior_params["mu"])
+                    posterior_params["mu"]), torch.ones_like(posterior_params["mu"])
                 )
-            )
         elif self.latent_geometry == "hyperspherical":
             q_z = VonMisesFisher(posterior_params["mu"], posterior_params["kappa"])
             p_z = HypersphericalUniform(self.latent_dim - 1)
