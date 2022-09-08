@@ -211,6 +211,7 @@ def load_place_cells(n_times=10000, n_cells=40):
 
 
 def load_wiggles(
+    rot,
     n_times=1500,
     synth_radius=1,
     n_wiggles=6,
@@ -259,10 +260,6 @@ def load_wiggles(
             mode="constant",
             value=0.0,
         )
-
-        so = SpecialOrthogonal(n=embedding_dim)
-
-        rot = so.random_point()
 
         return gs.einsum("ik,kj->ij", rot, padded_wiggly_circle)
 
