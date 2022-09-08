@@ -5,6 +5,7 @@ from datetime import datetime
 from platform import architecture
 
 import torch
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 run_name = "trial run"
 
@@ -21,8 +22,9 @@ checkpt_interval = 20
 n_epochs = 200
 learning_rate = 1e-3
 beta = 0.1
-alpha = 100.0
-gamma = 100.0
+alpha = 1
+gamma = 1
+
 
 
 # Dataset
@@ -44,9 +46,9 @@ if dataset_name == "wiggles":
     amp_wiggles = 0.3
     synth_radius = 1
     n_wiggles = 5
-    embedding_dim = 2
+    embedding_dim = 4
     noise_var = 0.001
-
+    rot  = SpecialOrthogonal(n=embedding_dim).random_point()
 else: 
     n_times = -1
     amp_wiggles = -1
@@ -54,6 +56,7 @@ else:
     n_wiggles = -1
     embedding_dim = -1
     noise_var = -1
+    rot=-1
 
 
 # Models
@@ -64,7 +67,7 @@ encoder_depth = 3
 decoder_depth = 3
 latent_dim = 2
 posterior_type = "hyperspherical"
-gen_likelihood_type = "laplacian"
+gen_likelihood_type = "gaussian"
 with_regressor = False
 if with_regressor:
     weight_regressor = 1.0

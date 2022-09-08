@@ -57,7 +57,7 @@ class VAE(torch.nn.Module):
         self.decoder_linears = torch.nn.ModuleList(
             [torch.nn.Linear(decoder_width, decoder_width) for _ in range(decoder_depth)])
 
-        if gen_likelihood_type == "laplacian":
+        if gen_likelihood_type == "laplacian" or gen_likelihood_type == "gaussian":
             self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
             # adding hidden layer to logvar
             self.fc_x_logvar1 = torch.nn.Linear(decoder_width, decoder_width)
@@ -155,7 +155,7 @@ class VAE(torch.nn.Module):
         for layer in self.decoder_linears:
             h = F.relu(layer(h))
 
-        if self.gen_likelihood_type == "laplacian":
+        if self.gen_likelihood_type == "laplacian" or self.gen_likelihood_type == "gaussian":
             x_mu = self.fc_x_mu(h)
             # adding hidden layer to x_logvar
             h_x_logvar = self.fc_x_logvar1(h)
