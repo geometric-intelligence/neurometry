@@ -19,7 +19,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128  # 128
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 120
+n_epochs = 200
 learning_rate = 1e-3
 beta = 0.1
 alpha = 1
@@ -27,7 +27,7 @@ gamma = 1
 
 
 # Dataset
-dataset_name = "wiggles"
+dataset_name = "experimental"
 
 if dataset_name == "experimental":
     expt_id = "34"  # hd: with head direction
@@ -42,10 +42,10 @@ if dataset_name in ["images", "projected_images"]:
 
 if dataset_name == "wiggles":
     n_times = 1000
-    amp_wiggles = 0.2
+    amp_wiggles = 0.3
     radius = 1
-    n_wiggles = 3
-    embedding_dim = 2
+    n_wiggles = 4
+    embedding_dim = 4
     noise_var = 0.001
     rot = SpecialOrthogonal(n=embedding_dim).random_point()
 else:
@@ -62,8 +62,8 @@ else:
 model_type = "fc_vae"
 encoder_width = 400
 decoder_width = 400
-encoder_depth = 3
-decoder_depth = 3
+encoder_depth = 4
+decoder_depth = 4
 latent_dim = 2
 posterior_type = "hyperspherical"
 gen_likelihood_type = "gaussian"

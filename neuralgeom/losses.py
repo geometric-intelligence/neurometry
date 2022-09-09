@@ -6,7 +6,7 @@ from hyperspherical_vae.distributions import VonMisesFisher
 from hyperspherical_vae.distributions import HypersphericalUniform
 
 
-def elbo(x, gen_likelihood_params, posterior_params, config):
+def elbo(x, x_mu, posterior_params, config):
     """Compute VAE elbo loss.
 
     The VAE elbo loss is defined as:
@@ -50,13 +50,8 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
         kld = torch.distributions.kl.kl_divergence(q_z, p_z).mean()
 
     if config.gen_likelihood_type == "gaussian":
-        x_mu, x_logvar = gen_likelihood_params
-        x_var = torch.exp(x_logvar)
-        # manually setting x_var = 0.001
-        x_var = torch.zeros(x_var.shape) + 1e-3
-        recon_loss = torch.sum(
-            0.5 * torch.log(x_var) + 0.5 * torch.div((x - x_mu).pow(2), x_var)
-        )  # + constant
+        recon_loss = torch.sum((x - x_mu).pow(2))
+     # + constant
     # elif config.gen_likelihood_type == "laplacian":
     #     x_mu, x_logvar = gen_likelihood_params
     #     recon_loss = (
@@ -98,8 +93,9 @@ def latent_regularization_loss(labels, posterior_params, config):
     """
     if config.posterior_type == "gaussian":
         z_mu, _ = posterior_params
+    elif config.posterior_type == "hyperspherical":
+        z_mu, _ = posterior_params
 
-    circle_loss = torch.sum((1 - torch.linalg.norm(z_mu, dim=1)) ** 2)
 
     latent_angles = (torch.atan2(z_mu[:, 1], z_mu[:, 0]) + 2 * torch.pi) % (
         2 * torch.pi
@@ -109,4 +105,4 @@ def latent_regularization_loss(labels, posterior_params, config):
 
     angle_loss = torch.sum((latent_angles - labels) ** 2)
 
-    return config.alpha * circle_loss + config.gamma * angle_loss
+    return config.gamma * angle_loss
