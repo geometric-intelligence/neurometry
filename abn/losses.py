@@ -5,53 +5,6 @@ import torch
 from hyperspherical_vae.distributions import VonMisesFisher
 from hyperspherical_vae.distributions import HypersphericalUniform
 
-def compute_loss(x, labels, gen_likelihood_params, posterior_params, config):
-    """Compute total loss function.
-
-    The total loss consists of the VAE elbo loss plus
-    a latent space regularization loss to enforce a certain
-    structure in the latent space.
-
-    Parameters
-    ----------
-
-    x : array-like, shape=[batch_size, input_dim]
-        Input data.
-    labels : array-like, shape=[batch_size]
-        Input labels.
-    gen_likelihood_params : tuple
-        Learned distributional parameters of generative model. (e.g., (x_mu,x_logvar) for Gaussian).
-    posterior_params : tuple
-        Learned distributional parameters of approximate posterior. (e.g., (z_mu,z_logvar) for Gaussian).
-    config : module
-        Module specifying various hyperparameters
-
-    Hyperparameters in config:
-    -------------------
-    gen_likelihood_type : string
-        Specifies type of distribution used for generative model
-    posterior_type : string
-        Specifies type of distribution used as approximate posterior
-    beta : float
-        Multiplicative factor in front of Kld term in loss, should help with
-        disentangling latent space. Classic VAE has beta = 1. See beta-VAE (Higgins, et al.)
-    alpha : float
-        Hyperparameter weighing contribution of 'circle loss' to latent regularization loss
-    gamma: float
-        Hyperparameter weighing contribution of 'angle loss' to latent regularization loss
-
-    Returns
-    -------
-    _ : array-like, shape=[batch_size]
-        Total loss function on each batch element.
-
-    """
-
-    elbo_loss = elbo(x, gen_likelihood_params, posterior_params, config)
-    #lsr_loss = latent_regularization_loss(labels, posterior_params, config)
-    return elbo_loss #+ lsr_loss
-
-
 def elbo(x, gen_likelihood_params, posterior_params, config):
     """Compute VAE elbo loss.
 
@@ -103,19 +56,19 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
         recon_loss = torch.sum(
             0.5 * torch.log(x_var) + 0.5 * torch.div((x - x_mu).pow(2), x_var)
         )  # + constant
-    elif config.gen_likelihood_type == "laplacian":
-        x_mu, x_logvar = gen_likelihood_params
-        recon_loss = (
-            torch.nn.BCEWithLogitsLoss(reduction="none")(x_mu, x).sum(-1).mean()
-        )
+    # elif config.gen_likelihood_type == "laplacian":
+    #     x_mu, x_logvar = gen_likelihood_params
+    #     recon_loss = (
+    #         torch.nn.BCEWithLogitsLoss(reduction="none")(x_mu, x).sum(-1).mean()
+    #     )
     
-    elif config.gen_likelihood_type == "poisson":
-        x_lambda = gen_likelihood_params
-        from scipy import special
-         # TODO: check why there are "nan"'s coming up
-        recon_loss = torch.sum(
-            -x * torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x))
-        )
+    # elif config.gen_likelihood_type == "poisson":
+    #     x_lambda = gen_likelihood_params
+    #     from scipy import special
+    #      # TODO: check why there are "nan"'s coming up
+    #     recon_loss = torch.sum(
+    #         -x * torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x))
+    #     )
 
 
     return recon_loss + config.beta * kld

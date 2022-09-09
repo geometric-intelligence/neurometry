@@ -19,7 +19,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 128  # 128
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 200
+n_epochs = 100
 learning_rate = 1e-3
 beta = 0.1
 alpha = 1
@@ -44,15 +44,15 @@ if dataset_name in ["images", "projected_images"]:
 if dataset_name == "wiggles":
     n_times = 1000
     amp_wiggles = 0.3
-    synth_radius = 1
+    radius = 1
     n_wiggles = 5
-    embedding_dim = 4
+    embedding_dim = 2
     noise_var = 0.001
     rot  = SpecialOrthogonal(n=embedding_dim).random_point()
 else: 
     n_times = -1
     amp_wiggles = -1
-    synth_radius = -1
+    radius = -1
     n_wiggles = -1
     embedding_dim = -1
     noise_var = -1

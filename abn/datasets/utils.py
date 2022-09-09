@@ -59,7 +59,7 @@ def load(config):
     elif config.dataset_name == "wiggles":
         dataset, labels = datasets.synthetic.load_wiggles(
             n_times=config.n_times,
-            synth_radius=config.synth_radius,
+            radius=config.radius,
             n_wiggles=config.n_wiggles,
             amp_wiggles=config.amp_wiggles,
             embedding_dim=config.embedding_dim,

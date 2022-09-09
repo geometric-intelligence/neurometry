@@ -11,39 +11,6 @@ import evaluate.latent
 import wandb
 
 
-def sample(params, distribution):
-    """Produce sample drawn from a given probability distribution.
-    Currently used to sample from learned generative model to obtain reconstruction.
-
-    Parameters
-    ----------
-    distribution : string
-        Specifies the type of distribution being sampled
-    params : tuple
-        Tuple of distirbutional parameters (e.g., (mu,logvar) for Gaussian distribution.)
-
-    Returns
-    -------
-    samp : torch tensor
-        Sample from given distribution
-    """
-
-    if distribution == "gaussian":
-        mu, logvar = params
-        var = torch.exp(logvar)
-        # manually setting x_var = 0.001 (temporarily)
-        var = torch.zeros(var.shape) + 1e-3
-        covar_matrix = torch.diag(var)
-        m = distributions.multivariate_normal.MultivariateNormal(mu, covar_matrix)
-    elif distribution == "poisson":
-        lambd = params
-        m = distributions.poisson.Poisson(lambd)
-
-    samp = m.sample()
-
-    return samp
-
-
 def train_model(
     model, dataset_torch, labels, train_loader, test_loader, optimizer, config
 ):
@@ -113,8 +80,8 @@ def train(epoch, model, train_loader, optimizer, config):
         optimizer.zero_grad()
         gen_likelihood_params_batch, posterior_params = model(data)
 
-        loss = losses.compute_loss(
-            data, labels, gen_likelihood_params_batch, posterior_params, config
+        loss = losses.elbo(
+            data, gen_likelihood_params_batch, posterior_params, config
         )
 
         #pred_loss = 0.0
@@ -186,8 +153,8 @@ def test(epoch, model, test_loader, config):
             #     pred_loss = config.weight_regressor * pred_loss
 
             #test_loss += pred_loss
-            test_loss += losses.compute_loss(
-                data, labels, gen_likelihood_params_batch, posterior_params, config
+            test_loss += losses.elbo(
+                data, gen_likelihood_params_batch, posterior_params, config
             ).item()
             # batch_size = data.shape[0]
             # data_dim = data.shape[1]
