@@ -1,16 +1,16 @@
 # Data files
 *.mat
 *.npy
-abn/data/*.txt
-abn/data/*.npy
-abn/data.zip
+neuralgeom/data/*.txt
+neuralgeom/data/*.npy
+neuralgeom/data.zip
 # Wandb files
-abn/wandb/*
-abn/results/*
+neuralgeom/wandb/*
+neuralgeom/results/*
 
-abn/new_vae/results/*
+neuralgeom/new_vae/results/*
 
-abn/new_vae/wandb/*
+neuralgeom/new_vae/wandb/*
 
 # Result files
 *.png
@@ -149,4 +149,4 @@ dmypy.json
 .pyre/
 
 # vs code
-abn/.vscode/*
+neuralgeom/.vscode/*
