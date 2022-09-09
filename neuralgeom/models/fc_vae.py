@@ -32,13 +32,11 @@ class VAE(torch.nn.Module):
         decoder_width=400,
         decoder_depth=2,
         posterior_type="gaussian",
-        gen_likelihood_type="gaussian",
     ):
         super(VAE, self).__init__()
         self.data_dim = data_dim
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
-        self.gen_likelihood_type = gen_likelihood_type
 
         self.encoder_fc = torch.nn.Linear(self.data_dim, encoder_width)
         self.encoder_linears = torch.nn.ModuleList(
@@ -63,13 +61,7 @@ class VAE(torch.nn.Module):
             ]
         )
 
-        if gen_likelihood_type == "gaussian":
-            self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
-            # adding hidden layer to logvar
-        #     self.fc_x_logvar1 = torch.nn.Linear(decoder_width, decoder_width)
-        #     self.fc_x_logvar2 = torch.nn.Linear(decoder_width, self.data_dim)
-        # elif gen_likelihood_type == "poisson":
-        #     self.fc_x_lambda = torch.nn.Linear(decoder_width, self.data_dim)
+        self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
 
     def encode(self, x):
         """Encode input into mean and log-variance.
@@ -159,18 +151,9 @@ class VAE(torch.nn.Module):
         for layer in self.decoder_linears:
             h = F.relu(layer(h))
 
-        if self.gen_likelihood_type == "gaussian":
-            x_mu = self.fc_x_mu(h)
-            # adding hidden layer to x_logvar
-            # h_x_logvar = self.fc_x_logvar1(h)
-            # x_logvar = self.fc_x_logvar2(h_x_logvar)
-            x_logvar = torch.tensor(1.0)
-            gen_likelihood_params = x_mu, x_logvar
-        elif self.gen_likelihood_type == "poisson":
-            x_lambda = self.fc_x_lambda(h)
-            gen_likelihood_params = x_lambda
+        x_mu = self.fc_x_mu(h)
 
-        return gen_likelihood_params
+        return x_mu
 
     def forward(self, x):
         """Run VAE: Encode, sample and decode.
@@ -193,5 +176,5 @@ class VAE(torch.nn.Module):
 
         posterior_params = self.encode(x)
         z, _, _ = self.reparameterize(posterior_params)
-        gen_likelihood_params = self.decode(z)
-        return gen_likelihood_params, posterior_params
+        x_mu = self.decode(z)
+        return x_mu, posterior_params

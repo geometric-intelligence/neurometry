@@ -65,7 +65,6 @@ if default_config.model_type == "fc_vae":
         decoder_width=config.decoder_width,
         decoder_depth=config.decoder_depth,
         posterior_type=config.posterior_type,
-        gen_likelihood_type=config.gen_likelihood_type,
     ).to(config.device)
 
 regressor = None

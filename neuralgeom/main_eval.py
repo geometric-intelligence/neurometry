@@ -18,7 +18,7 @@ from datasets.synthetic import get_synth_immersion
 def get_model_immersion(model):
     def model_immersion(angle):
         z = gs.array([gs.cos(angle), gs.sin(angle)])
-        x_mu, _ = model.decode(z)
+        x_mu = model.decode(z)
         return x_mu
 
     return model_immersion
