@@ -24,7 +24,7 @@ wandb.init(
         "expt_id": default_config.expt_id,
         "timestep_microsec": default_config.timestep_microsec,
         "n_times": default_config.n_times,
-        "synth_radius": default_config.synth_radius,
+        "radius": default_config.radius,
         "amp_wiggles": default_config.amp_wiggles,
         "embedding_dim": default_config.embedding_dim,
         "noise_var": default_config.noise_var,
@@ -97,7 +97,7 @@ for data, labs in test_loader:
 
 # torch.onnx.export(
 #     model, data, f"results/trained_models/{config.results_prefix}_model.onnx"
-#)
+# )
 wandb.save("/results/trained_models")
 
 
@@ -114,4 +114,6 @@ torch.save(
 )
 
 torch.save(model, f"results/trained_models/{config.results_prefix}_model.pt")
+
+
 wandb.finish()

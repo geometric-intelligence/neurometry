@@ -213,7 +213,7 @@ def load_place_cells(n_times=10000, n_cells=40):
 def load_wiggles(
     rot,
     n_times=1500,
-    synth_radius=1,
+    radius=1,
     n_wiggles=6,
     amp_wiggles=0.4,
     embedding_dim=10,
@@ -244,24 +244,13 @@ def load_wiggles(
         Labels organized in 1 column: angles.
     """
 
-    def polar(angle):
-        return torch.tensor(gs.stack([gs.cos(angle), gs.sin(angle)], axis=0))
-
-    def synth_immersion(angles):
-        amplitudes = synth_radius * (1 + amp_wiggles * gs.cos(n_wiggles * angles))
-        wiggly_circle = gs.einsum(
-            "ik,jk->ij", polar(angles), torch.diag(torch.tensor(amplitudes))
-        )
-        wiggly_circle = torch.tensor(wiggly_circle)
-
-        padded_wiggly_circle = F.pad(
-            input=wiggly_circle,
-            pad=(0, 0, 0, embedding_dim - 2),
-            mode="constant",
-            value=0.0,
-        )
-
-        return gs.einsum("ik,kj->ij", rot, padded_wiggly_circle)
+    immersion = get_synth_immersion(
+        radius=radius,
+        n_wiggles=n_wiggles,
+        amp_wiggles=amp_wiggles,
+        embedding_dim=embedding_dim,
+        rot=rot,
+    )
 
     angles = gs.linspace(0, 2 * gs.pi, n_times)
 
@@ -271,7 +260,10 @@ def load_wiggles(
         }
     )
 
-    data = synth_immersion(angles).T
+    data = torch.zeros(n_times, embedding_dim)
+
+    for _, angle in enumerate(angles):
+        data[_, :] = immersion(angle)
 
     noise_dist = MultivariateNormal(
         loc=torch.zeros(embedding_dim),
@@ -281,3 +273,59 @@ def load_wiggles(
     noisy_data = data + noise_dist.sample((n_times,))
 
     return noisy_data, labels
+
+
+def get_synth_immersion(radius, n_wiggles, amp_wiggles, embedding_dim, rot):
+    """Creates function whose image is "wiggly" circles in high-dim space.
+
+    Parameters
+    ----------
+    circle_radius : float
+        Primary circle radius.
+    n_wiggles : int
+        Number of "wiggles".
+    amp_wiggles : float, < 1
+        Amplitude of "wiggles".
+    embedding_dim : int
+        Dimension of immersion codomain.
+
+    Returns
+    -------
+    synth_immersion : function
+        Synthetic immersion from S1 to R^N.
+    """
+
+    def polar(angle):
+        """Extrinsic coordinates of embedded 1-sphere parameterized by angle.
+
+        Parameters
+        ----------
+        angle : float
+
+        """
+        return gs.array([gs.cos(angle), gs.sin(angle)])
+
+    def synth_immersion(angle):
+        """Synthetic immersion function.
+
+        Parameters
+        ----------
+        angle : float
+            Angle coordinate on circle.
+
+        Returns
+        -------
+        padded_point : array-like, shape=[embedding_dim, ]
+            Yiels an embedding_dim-dimensional point making up wiggly circle
+        """
+        amplitude = radius * (1 + amp_wiggles * gs.cos(n_wiggles * angle))
+
+        point = amplitude * polar(angle)
+
+        padded_point = F.pad(
+            input=point, pad=(0, embedding_dim - 2), mode="constant", value=0.0
+        )
+
+        return gs.einsum("ij,j->i", rot, padded_point)
+
+    return synth_immersion

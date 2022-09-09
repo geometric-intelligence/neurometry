@@ -11,39 +11,6 @@ import evaluate.latent
 import wandb
 
 
-def sample(params, distribution):
-    """Produce sample drawn from a given probability distribution.
-    Currently used to sample from learned generative model to obtain reconstruction.
-
-    Parameters
-    ----------
-    distribution : string
-        Specifies the type of distribution being sampled
-    params : tuple
-        Tuple of distirbutional parameters (e.g., (mu,logvar) for Gaussian distribution.)
-
-    Returns
-    -------
-    samp : torch tensor
-        Sample from given distribution
-    """
-
-    if distribution == "gaussian":
-        mu, logvar = params
-        var = torch.exp(logvar)
-        # manually setting x_var = 0.001 (temporarily)
-        var = torch.zeros(var.shape) + 1e-3
-        covar_matrix = torch.diag(var)
-        m = distributions.multivariate_normal.MultivariateNormal(mu, covar_matrix)
-    elif distribution == "poisson":
-        lambd = params
-        m = distributions.poisson.Poisson(lambd)
-
-    samp = m.sample()
-
-    return samp
-
-
 def train_model(
     model, dataset_torch, labels, train_loader, test_loader, optimizer, config
 ):
@@ -113,11 +80,9 @@ def train(epoch, model, train_loader, optimizer, config):
         optimizer.zero_grad()
         gen_likelihood_params_batch, posterior_params = model(data)
 
-        loss = losses.compute_loss(
-            data, labels, gen_likelihood_params_batch, posterior_params, config
-        )
+        loss = losses.elbo(data, gen_likelihood_params_batch, posterior_params, config)
 
-        #pred_loss = 0.0
+        # pred_loss = 0.0
         # TODO: replace mu with gen_likelihood_params
         # if config.with_regressor:
         #     norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
@@ -127,7 +92,7 @@ def train(epoch, model, train_loader, optimizer, config):
         #     pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
         #     pred_loss = config.weight_regressor * pred_loss
 
-        #loss += pred_loss
+        # loss += pred_loss
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -141,7 +106,7 @@ def train(epoch, model, train_loader, optimizer, config):
                     loss.item() / len(data),
                 )
             )
-           # print(f"Regression loss: {pred_loss}")
+        # print(f"Regression loss: {pred_loss}")
 
     train_loss = train_loss / len(train_loader.dataset)
 
@@ -175,7 +140,7 @@ def test(epoch, model, test_loader, config):
             gen_likelihood_type = model.gen_likelihood_type
             posterior_type = model.posterior_type
 
-            #pred_loss = 0.0
+            # pred_loss = 0.0
             # TODO: replace mu with gen_likelihood_params
             # if config.with_regressor:
             #     norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
@@ -185,9 +150,9 @@ def test(epoch, model, test_loader, config):
             #     pred_loss = F.mse_loss(angle_pred, angle_true)
             #     pred_loss = config.weight_regressor * pred_loss
 
-            #test_loss += pred_loss
-            test_loss += losses.compute_loss(
-                data, labels, gen_likelihood_params_batch, posterior_params, config
+            # test_loss += pred_loss
+            test_loss += losses.elbo(
+                data, gen_likelihood_params_batch, posterior_params, config
             ).item()
             # batch_size = data.shape[0]
             # data_dim = data.shape[1]
@@ -255,5 +220,5 @@ def test(epoch, model, test_loader, config):
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
-    #print("====> Test regression loss: {:.4f}".format(pred_loss))
+    # print("====> Test regression loss: {:.4f}".format(pred_loss))
     return test_loss

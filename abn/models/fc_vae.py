@@ -40,30 +40,36 @@ class VAE(torch.nn.Module):
         self.posterior_type = posterior_type
         self.gen_likelihood_type = gen_likelihood_type
 
-        
-
         self.encoder_fc = torch.nn.Linear(self.data_dim, encoder_width)
         self.encoder_linears = torch.nn.ModuleList(
-            [torch.nn.Linear(encoder_width, encoder_width) for _ in range(encoder_depth)])
+            [
+                torch.nn.Linear(encoder_width, encoder_width)
+                for _ in range(encoder_depth)
+            ]
+        )
 
         if posterior_type == "gaussian":
             self.fc_z_mu = torch.nn.Linear(encoder_width, self.latent_dim)
             self.fc_z_logvar = torch.nn.Linear(encoder_width, self.latent_dim)
         elif posterior_type == "hyperspherical":
             self.fc_z_mu = torch.nn.Linear(encoder_width, self.latent_dim)
-            self.fc_z_logvar = torch.nn.Linear(encoder_width, 1) # kappa
+            self.fc_z_logvar = torch.nn.Linear(encoder_width, 1)  # kappa
 
         self.decoder_fc = torch.nn.Linear(self.latent_dim, decoder_width)
         self.decoder_linears = torch.nn.ModuleList(
-            [torch.nn.Linear(decoder_width, decoder_width) for _ in range(decoder_depth)])
+            [
+                torch.nn.Linear(decoder_width, decoder_width)
+                for _ in range(decoder_depth)
+            ]
+        )
 
-        if gen_likelihood_type == "laplacian" or gen_likelihood_type == "gaussian":
+        if gen_likelihood_type == "gaussian":
             self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
             # adding hidden layer to logvar
-            self.fc_x_logvar1 = torch.nn.Linear(decoder_width, decoder_width)
-            self.fc_x_logvar2 = torch.nn.Linear(decoder_width, self.data_dim)
-        elif gen_likelihood_type == "poisson":
-            self.fc_x_lambda = torch.nn.Linear(decoder_width, self.data_dim)
+        #     self.fc_x_logvar1 = torch.nn.Linear(decoder_width, decoder_width)
+        #     self.fc_x_logvar2 = torch.nn.Linear(decoder_width, self.data_dim)
+        # elif gen_likelihood_type == "poisson":
+        #     self.fc_x_lambda = torch.nn.Linear(decoder_width, self.data_dim)
 
     def encode(self, x):
         """Encode input into mean and log-variance.
@@ -124,9 +130,7 @@ class VAE(torch.nn.Module):
         if self.posterior_type == "gaussian":
             z_mu, z_logvar = posterior_params
             z_std = torch.exp(0.5 * z_logvar)
-            # eps = torch.randn_like(z_std)
-            # z = z_mu + eps * z_std
-            p_z = Normal(torch.ones_like(z_mu),torch.ones_like(z_logvar))
+            p_z = Normal(torch.ones_like(z_mu), torch.ones_like(z_std))
             q_z = Normal(z_mu, z_std)
         elif self.posterior_type == "hyperspherical":
             z_mu, z_kappa = posterior_params
@@ -155,11 +159,12 @@ class VAE(torch.nn.Module):
         for layer in self.decoder_linears:
             h = F.relu(layer(h))
 
-        if self.gen_likelihood_type == "laplacian" or self.gen_likelihood_type == "gaussian":
+        if self.gen_likelihood_type == "gaussian":
             x_mu = self.fc_x_mu(h)
             # adding hidden layer to x_logvar
-            h_x_logvar = self.fc_x_logvar1(h)
-            x_logvar = self.fc_x_logvar2(h_x_logvar)
+            # h_x_logvar = self.fc_x_logvar1(h)
+            # x_logvar = self.fc_x_logvar2(h_x_logvar)
+            x_logvar = torch.tensor(1.0)
             gen_likelihood_params = x_mu, x_logvar
         elif self.gen_likelihood_type == "poisson":
             x_lambda = self.fc_x_lambda(h)
