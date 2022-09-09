@@ -80,11 +80,9 @@ def train(epoch, model, train_loader, optimizer, config):
         optimizer.zero_grad()
         gen_likelihood_params_batch, posterior_params = model(data)
 
-        loss = losses.elbo(
-            data, gen_likelihood_params_batch, posterior_params, config
-        )
+        loss = losses.elbo(data, gen_likelihood_params_batch, posterior_params, config)
 
-        #pred_loss = 0.0
+        # pred_loss = 0.0
         # TODO: replace mu with gen_likelihood_params
         # if config.with_regressor:
         #     norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
@@ -94,7 +92,7 @@ def train(epoch, model, train_loader, optimizer, config):
         #     pred_loss = F.mse_loss(angle_pred, angle_true, reduction="mean")
         #     pred_loss = config.weight_regressor * pred_loss
 
-        #loss += pred_loss
+        # loss += pred_loss
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -108,7 +106,7 @@ def train(epoch, model, train_loader, optimizer, config):
                     loss.item() / len(data),
                 )
             )
-           # print(f"Regression loss: {pred_loss}")
+        # print(f"Regression loss: {pred_loss}")
 
     train_loss = train_loss / len(train_loader.dataset)
 
@@ -142,7 +140,7 @@ def test(epoch, model, test_loader, config):
             gen_likelihood_type = model.gen_likelihood_type
             posterior_type = model.posterior_type
 
-            #pred_loss = 0.0
+            # pred_loss = 0.0
             # TODO: replace mu with gen_likelihood_params
             # if config.with_regressor:
             #     norm = torch.unsqueeze(torch.linalg.norm(mu, dim=1), dim=1)
@@ -152,7 +150,7 @@ def test(epoch, model, test_loader, config):
             #     pred_loss = F.mse_loss(angle_pred, angle_true)
             #     pred_loss = config.weight_regressor * pred_loss
 
-            #test_loss += pred_loss
+            # test_loss += pred_loss
             test_loss += losses.elbo(
                 data, gen_likelihood_params_batch, posterior_params, config
             ).item()
@@ -222,5 +220,5 @@ def test(epoch, model, test_loader, config):
 
     test_loss /= len(test_loader.dataset)
     print("====> Test set loss: {:.4f}".format(test_loss))
-    #print("====> Test regression loss: {:.4f}".format(pred_loss))
+    # print("====> Test regression loss: {:.4f}".format(pred_loss))
     return test_loss

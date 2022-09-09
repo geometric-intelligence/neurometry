@@ -26,7 +26,6 @@ alpha = 1
 gamma = 1
 
 
-
 # Dataset
 dataset_name = "wiggles"
 
@@ -48,15 +47,15 @@ if dataset_name == "wiggles":
     n_wiggles = 5
     embedding_dim = 2
     noise_var = 0.001
-    rot  = SpecialOrthogonal(n=embedding_dim).random_point()
-else: 
+    rot = SpecialOrthogonal(n=embedding_dim).random_point()
+else:
     n_times = -1
     amp_wiggles = -1
     radius = -1
     n_wiggles = -1
     embedding_dim = -1
     noise_var = -1
-    rot=-1
+    rot = -1
 
 
 # Models

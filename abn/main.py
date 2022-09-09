@@ -97,7 +97,7 @@ for data, labs in test_loader:
 
 # torch.onnx.export(
 #     model, data, f"results/trained_models/{config.results_prefix}_model.onnx"
-#)
+# )
 wandb.save("/results/trained_models")
 
 
@@ -114,12 +114,6 @@ torch.save(
 )
 
 torch.save(model, f"results/trained_models/{config.results_prefix}_model.pt")
-
-
-
-
-
-
 
 
 wandb.finish()

@@ -64,7 +64,7 @@ def load(config):
             amp_wiggles=config.amp_wiggles,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
-            rot = config.rot
+            rot=config.rot,
         )
 
     print(f"Dataset shape: {dataset.shape}.")

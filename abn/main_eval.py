@@ -15,25 +15,22 @@ import torch.nn.functional as F
 from datasets.synthetic import get_synth_immersion
 
 
-
-
-
 def get_model_immersion(model):
     def model_immersion(angle):
         z = gs.array([gs.cos(angle), gs.sin(angle)])
         x_mu, _ = model.decode(z)
         return x_mu
-    return model_immersion
 
+    return model_immersion
 
 
 def compute_extrinsic_curvature(angles, immersion, embedding_dim):
 
-    mean_curvature = gs.zeros(len(angles),embedding_dim)
+    mean_curvature = gs.zeros(len(angles), embedding_dim)
     for _, angle in enumerate(angles):
         for i in range(embedding_dim):
-            mean_curvature[_,i] = torch.autograd.functional.hessian(
-                func= lambda x: immersion(x)[i], inputs = angle, strict=True
+            mean_curvature[_, i] = torch.autograd.functional.hessian(
+                func=lambda x: immersion(x)[i], inputs=angle, strict=True
             )
 
     mean_curvature_norm = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
@@ -41,19 +38,17 @@ def compute_extrinsic_curvature(angles, immersion, embedding_dim):
     return mean_curvature, mean_curvature_norm
 
 
-
 def compute_intrinsic_curvature():
     return NotImplementedError
 
 
-
 def plot_curvature_profile(angles, mean_curvature_norms):
-    
+
     colormap = plt.get_cmap("hsv")
     color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms))
-    plt.figure(figsize=(12,5 ))
+    plt.figure(figsize=(12, 5))
 
-    ax2 = plt.subplot(1,2,1,polar=True)
+    ax2 = plt.subplot(1, 2, 1, polar=True)
     sc = ax2.scatter(
         angles,
         np.ones_like(angles),
@@ -68,8 +63,8 @@ def plot_curvature_profile(angles, mean_curvature_norms):
 
     plt.colorbar(sc)
 
-    ax1 = plt.subplot(1,2,2)
-    
-    pt = ax1.plot(angles,mean_curvature_norms)
+    ax1 = plt.subplot(1, 2, 2)
+
+    pt = ax1.plot(angles, mean_curvature_norms)
 
     ax1.set_xlabel("angle")

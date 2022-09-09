@@ -5,6 +5,7 @@ import torch
 from hyperspherical_vae.distributions import VonMisesFisher
 from hyperspherical_vae.distributions import HypersphericalUniform
 
+
 def elbo(x, gen_likelihood_params, posterior_params, config):
     """Compute VAE elbo loss.
 
@@ -61,7 +62,7 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
     #     recon_loss = (
     #         torch.nn.BCEWithLogitsLoss(reduction="none")(x_mu, x).sum(-1).mean()
     #     )
-    
+
     # elif config.gen_likelihood_type == "poisson":
     #     x_lambda = gen_likelihood_params
     #     from scipy import special
@@ -69,7 +70,6 @@ def elbo(x, gen_likelihood_params, posterior_params, config):
     #     recon_loss = torch.sum(
     #         -x * torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x))
     #     )
-
 
     return recon_loss + config.beta * kld
 
