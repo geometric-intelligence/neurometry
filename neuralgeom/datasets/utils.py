@@ -6,9 +6,6 @@ import mat73
 import numpy as np
 import scipy.io
 import torch
-import sys
-
-sys.path.append("../")
 
 
 def load(config):
@@ -168,7 +165,6 @@ def loadmat(filename):
                 elem_list.append(sub_elem)
         return elem_list
 
-    breakpoint()
     try:
         data = scipy.io.loadmat(filename, struct_as_record=False, squeeze_me=True)
     except Exception:
