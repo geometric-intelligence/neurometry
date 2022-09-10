@@ -34,7 +34,6 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
     data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
     labels_path = f"data/expt{expt_id}_labels_timestep{timestep_microsec}.txt"
     times_path = f"data/expt{expt_id}_times_timestep{timestep_microsec}.txt"
-
     if os.path.exists(times_path):
         logging.info(f"# - Found file at {times_path}! Loading...")
         times = np.loadtxt(times_path)
