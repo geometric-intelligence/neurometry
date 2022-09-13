@@ -218,6 +218,7 @@ def load_wiggles(
     amp_wiggles=0.4,
     embedding_dim=10,
     noise_var=0.01,
+    amp_func="wiggles",
 ):
     """Create "wiggly" circles with noise.
 
@@ -245,6 +246,7 @@ def load_wiggles(
     """
 
     immersion = get_synth_immersion(
+        amp_func=amp_func,
         radius=radius,
         n_wiggles=n_wiggles,
         amp_wiggles=amp_wiggles,
@@ -275,7 +277,7 @@ def load_wiggles(
     return noisy_data, labels
 
 
-def get_synth_immersion(radius, n_wiggles, amp_wiggles, embedding_dim, rot):
+def get_synth_immersion(amp_func, radius, n_wiggles, amp_wiggles, embedding_dim, rot):
     """Creates function whose image is "wiggly" circles in high-dim space.
 
     Parameters
@@ -318,7 +320,12 @@ def get_synth_immersion(radius, n_wiggles, amp_wiggles, embedding_dim, rot):
         padded_point : array-like, shape=[embedding_dim, ]
             Yiels an embedding_dim-dimensional point making up wiggly circle
         """
-        amplitude = radius * (1 + amp_wiggles * gs.cos(n_wiggles * angle))
+        if amp_func == "wiggles":
+            amplitude = radius * (1 + amp_wiggles * gs.cos(n_wiggles * angle))
+        elif amp_func == "bump":
+            amplitude = radius * (1 + amp_wiggles * gs.exp(-10 * (angle - gs.pi) ** 2))
+        else:
+            raise NotImplementedError
 
         point = amplitude * polar(angle)
 

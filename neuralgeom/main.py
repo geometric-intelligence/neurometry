@@ -2,6 +2,7 @@
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import geomstats.backend as gs
 import datasets.utils
 import default_config
 import matplotlib.pyplot as plt
@@ -9,6 +10,10 @@ import models.fc_vae
 import models.regressor
 import torch
 import train
+from main_eval import get_mean_curvature
+from main_eval import get_mean_curvature_synth
+from main_eval import get_cross_corr
+from main_eval import master_plot
 
 import wandb
 
@@ -23,9 +28,12 @@ wandb.init(
         "dataset_name": default_config.dataset_name,
         "expt_id": default_config.expt_id,
         "timestep_microsec": default_config.timestep_microsec,
+        "amp_func": default_config.amp_func,
         "n_times": default_config.n_times,
         "radius": default_config.radius,
         "amp_wiggles": default_config.amp_wiggles,
+        "n_wiggles": default_config.n_wiggles,
+        "rot": default_config.rot,
         "embedding_dim": default_config.embedding_dim,
         "noise_var": default_config.noise_var,
         "batch_size": default_config.batch_size,
@@ -97,15 +105,45 @@ for data, labs in test_loader:
 # torch.onnx.export(
 #     model, data, f"results/trained_models/{config.results_prefix}_model.onnx"
 # )
-wandb.save("/results/trained_models")
+# wandb.save("/results/trained_models")
 
 
-plt.figure()
-plt.plot(train_losses, label="train")
-plt.plot(test_losses, label="test")
-plt.legend()
-plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
-plt.close()
+angles = gs.linspace(0, 2 * gs.pi, 1000)
+
+mean_curvature, mean_curvature_norm = get_mean_curvature(
+    model, angles, config.embedding_dim
+)
+
+mean_curvature_synth, mean_curvature_norm_synth = get_mean_curvature_synth(
+    angles, default_config
+)
+
+s1, s2, correlation = get_cross_corr(mean_curvature_norm, mean_curvature_norm_synth)
+
+
+master_plot(
+    model=model,
+    dataset_torch=dataset_torch,
+    labels=labels,
+    angles=angles,
+    mean_curvature_norms=mean_curvature_norm,
+    mean_curvature_norms_synth=mean_curvature_norm_synth,
+    s1=s1,
+    s2=s2,
+    pearson=max(correlation),
+    train_losses=train_losses,
+    test_losses=test_losses,
+    config=config,
+)
+
+# print("the normalized cross-correlation is max(correlation)")
+
+
+# plt.plot(train_losses, label="train")
+# plt.plot(test_losses, label="test")
+# plt.legend()
+# plt.savefig(f"results/figures/{config.results_prefix}_master_plot.png")
+# plt.close()
 
 torch.save(
     model.state_dict(),

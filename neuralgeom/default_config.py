@@ -15,19 +15,19 @@ logging.basicConfig(level=logging.INFO)
 # Hardware
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Training
-batch_size = 128  # 128
-log_interval = 20
-checkpt_interval = 20
-n_epochs = 200
-learning_rate = 1e-3
-beta = 0.1
-alpha = 1
-gamma = 1
+# # Training
+# batch_size = 128  # 128
+# log_interval = 20
+# checkpt_interval = 20
+# n_epochs = 120
+# learning_rate = 1e-3
+# beta = 0.1*radius
+# alpha = 1
+# gamma = 0.0
 
 
 # Dataset
-dataset_name = "experimental"
+dataset_name = "wiggles"
 
 if dataset_name == "experimental":
     expt_id = "34"  # hd: with head direction
@@ -41,12 +41,13 @@ if dataset_name in ["images", "projected_images"]:
 
 
 if dataset_name == "wiggles":
+    amp_func = "bump"
     n_times = 1000
-    amp_wiggles = 0.3
-    radius = 1
-    n_wiggles = 4
-    embedding_dim = 4
-    noise_var = 0.001
+    amp_wiggles = 0.4
+    radius = 10
+    n_wiggles = 5
+    embedding_dim = 3
+    noise_var = 0.001 * radius
     rot = SpecialOrthogonal(n=embedding_dim).random_point()
 else:
     n_times = -1
@@ -56,6 +57,18 @@ else:
     embedding_dim = -1
     noise_var = -1
     rot = -1
+    amp_func = ""
+
+
+# Training
+batch_size = 128  # 128
+log_interval = 20
+checkpt_interval = 20
+n_epochs = 140
+learning_rate = 1e-3
+beta = 0.1 * radius
+alpha = 1
+gamma = 0.0
 
 
 # Models
