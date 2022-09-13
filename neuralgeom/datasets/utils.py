@@ -64,6 +64,7 @@ def load(config):
             amp_wiggles=config.amp_wiggles,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
+            amp_func=config.amp_func,
             rot=config.rot,
         )
 

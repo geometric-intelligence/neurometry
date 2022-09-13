@@ -57,7 +57,7 @@ def get_neural_immersion(model):
     """
 
     def neural_immersion(theta):
-        z = gs.array([gs.cos(theta),gs.sin(theta)])
+        z = gs.array([gs.cos(theta), gs.sin(theta)])
         recon_x = model.decode(z)
         x_mu, _ = recon_x
         return x_mu

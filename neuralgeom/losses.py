@@ -6,7 +6,7 @@ from hyperspherical_vae.distributions import VonMisesFisher
 from hyperspherical_vae.distributions import HypersphericalUniform
 
 
-def elbo(x, x_mu, posterior_params, config):
+def elbo(x, x_mu, posterior_params, z, labels, config):
     """Compute VAE elbo loss.
 
     The VAE elbo loss is defined as:
@@ -51,7 +51,7 @@ def elbo(x, x_mu, posterior_params, config):
 
     if config.gen_likelihood_type == "gaussian":
         recon_loss = torch.sum((x - x_mu).pow(2))
-     # + constant
+    # + constant
     # elif config.gen_likelihood_type == "laplacian":
     #     x_mu, x_logvar = gen_likelihood_params
     #     recon_loss = (
@@ -66,10 +66,14 @@ def elbo(x, x_mu, posterior_params, config):
     #         -x * torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x))
     #     )
 
-    return recon_loss + config.beta * kld
+    return (
+        recon_loss
+        + config.beta * kld
+        + config.gamma * latent_regularization_loss(labels, z, config)
+    )
 
 
-def latent_regularization_loss(labels, posterior_params, config):
+def latent_regularization_loss(labels, z, config):
     """Compute the latent space regularization loss.
     This loss is intended to enforce a certain structure on the latent space.
     Implemented here is a 'circle' regularization loss, where the latent variables
@@ -91,18 +95,16 @@ def latent_regularization_loss(labels, posterior_params, config):
         Latent regularization loss on each batch element.
 
     """
-    if config.posterior_type == "gaussian":
-        z_mu, _ = posterior_params
-    elif config.posterior_type == "hyperspherical":
-        z_mu, _ = posterior_params
 
+    # latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (
+    #     2 * torch.pi
+    # )
 
-    latent_angles = (torch.atan2(z_mu[:, 1], z_mu[:, 0]) + 2 * torch.pi) % (
-        2 * torch.pi
-    )
+    latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
 
-    labels = labels * (torch.pi / 180)
+    if config.dataset_name == "experimental":
+        labels = labels * (torch.pi / 180)
 
-    angle_loss = torch.sum((latent_angles - labels) ** 2)
+    angle_loss = torch.sum(((latent_angles - labels) % (2 * torch.pi)) ** 2)
 
-    return config.gamma * angle_loss
+    return angle_loss

@@ -79,8 +79,9 @@ def train(epoch, model, train_loader, optimizer, config):
         data = data.to(config.device)
         optimizer.zero_grad()
         x_mu_batch, posterior_params = model(data)
+        z, _, _ = model.reparameterize(posterior_params)
 
-        loss = losses.elbo(data, x_mu_batch, posterior_params, config)
+        loss = losses.elbo(data, x_mu_batch, posterior_params, z, labels, config)
 
         # pred_loss = 0.0
         # TODO: replace mu with gen_likelihood_params
@@ -138,6 +139,7 @@ def test(epoch, model, test_loader, config):
             labels = labels.float()
             x_mu_batch, posterior_params = model(data)
             posterior_type = model.posterior_type
+            z, _, _ = model.reparameterize(posterior_params)
 
             # pred_loss = 0.0
             # TODO: replace mu with gen_likelihood_params
@@ -151,7 +153,7 @@ def test(epoch, model, test_loader, config):
 
             # test_loss += pred_loss
             test_loss += losses.elbo(
-                data, x_mu_batch, posterior_params, config
+                data, x_mu_batch, posterior_params, z, labels, config
             ).item()
             # batch_size = data.shape[0]
             # data_dim = data.shape[1]
