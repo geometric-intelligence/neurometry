@@ -111,6 +111,7 @@ def train(epoch, model, train_loader, optimizer, config):
 
     train_loss = train_loss / len(train_loader.dataset)
 
+
     print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss))
     return train_loss
 
