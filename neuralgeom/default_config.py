@@ -41,12 +41,12 @@ if dataset_name in ["images", "projected_images"]:
 
 
 if dataset_name == "wiggles":
-    amp_func = "bump"
+    amp_func = "wiggles"
     n_times = 1000
-    amp_wiggles = 0.4
+    amp_wiggles = 0.2
     radius = 10
-    n_wiggles = 5
-    embedding_dim = 3
+    n_wiggles = 3
+    embedding_dim = 2
     noise_var = 0.001 * radius
     rot = SpecialOrthogonal(n=embedding_dim).random_point()
 else:
@@ -64,7 +64,7 @@ else:
 batch_size = 128  # 128
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 140
+n_epochs = 120
 learning_rate = 1e-3
 beta = 0.1 * radius
 alpha = 1
@@ -74,9 +74,11 @@ gamma = 0.0
 # Models
 model_type = "fc_vae"
 encoder_width = 400
-decoder_width = 400
+#decoder_width = 40
+decoder_width = encoder_width
 encoder_depth = 4
-decoder_depth = 4
+#decoder_depth = 4
+decoder_depth = encoder_depth
 latent_dim = 2
 posterior_type = "hyperspherical"
 gen_likelihood_type = "gaussian"

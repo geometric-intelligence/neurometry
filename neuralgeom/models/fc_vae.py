@@ -84,10 +84,10 @@ class VAE(torch.nn.Module):
             Vector representing the diagonal covariance of the
             multivariate Gaussian in latent space.
         """
-        h = F.relu(self.encoder_fc(x))
+        h = F.softplus(self.encoder_fc(x), beta=3)
 
         for layer in self.encoder_linears:
-            h = F.relu(layer(h))
+            h = F.softplus(layer(h),  beta=3)
 
         if self.posterior_type == "gaussian":
             z_mu = self.fc_z_mu(h)
@@ -146,10 +146,10 @@ class VAE(torch.nn.Module):
         _ : array-like, shape=[batch_size, data_dim]
             Reconstructed data corresponding to z.
         """
-        h = F.relu(self.decoder_fc(z))
+        h = F.softplus(self.decoder_fc(z), beta=3)
 
         for layer in self.decoder_linears:
-            h = F.relu(layer(h))
+            h = F.softplus(layer(h), beta=3)
 
         x_mu = self.fc_x_mu(h)
 
