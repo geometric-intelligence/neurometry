@@ -1,0 +1,37 @@
+program: main.py
+method: bayes
+metric: 
+  name: test_loss
+  goal: minimize
+parameters:
+  encoder_depth:
+    values:
+      - 4
+      - 8
+  encoder_width:
+    values: 
+      - 512
+      - 1024
+  beta:
+    distribution: uniform
+    min: 0.68
+    max: 0.72
+  sftbeta:
+    distribution: uniform
+    min: 3.65
+    max: 3.75
+  gamma:
+    distribution: uniform
+    min: 0.005
+    max: 0.1
+  batch_size:
+    values:
+      - 32
+      - 64
+      - 128
+      - 256
+  # embedding_dim:
+  #   distribution: int_uniform
+  #   min: 2
+  #   max: 40
+

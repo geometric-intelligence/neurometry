@@ -323,7 +323,8 @@ def get_synth_immersion(amp_func, radius, n_wiggles, amp_wiggles, embedding_dim,
         if amp_func == "wiggles":
             amplitude = radius * (1 + amp_wiggles * gs.cos(n_wiggles * angle))
         elif amp_func == "bump":
-            amplitude = radius * (1 + amp_wiggles * gs.exp(-10 * (angle - gs.pi) ** 2))
+            amplitude = radius * (1 + amp_wiggles * gs.exp(-5 * (angle - gs.pi/2) ** 2)
+            + 0*amp_wiggles * gs.exp(-5 * (angle - 3*gs.pi/2) ** 2))
         else:
             raise NotImplementedError
 

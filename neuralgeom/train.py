@@ -34,6 +34,7 @@ def train_model(
 
         test_losses.append(test_loss)
 
+
         wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
 
         # if epoch % config.checkpt_interval == 0:
@@ -77,6 +78,7 @@ def train(epoch, model, train_loader, optimizer, config):
         data, labels = batch_data
         labels = labels.float()
         data = data.to(config.device)
+        labels = labels.to(config.device)
         optimizer.zero_grad()
         x_mu_batch, posterior_params = model(data)
         z, _, _ = model.reparameterize(posterior_params)
@@ -138,6 +140,7 @@ def test(epoch, model, test_loader, config):
             data, labels = batch_data
             data = data.to(config.device)
             labels = labels.float()
+            labels = labels.to(config.device)
             x_mu_batch, posterior_params = model(data)
             posterior_type = model.posterior_type
             z, _, _ = model.reparameterize(posterior_params)

@@ -106,5 +106,5 @@ def latent_regularization_loss(labels, z, config):
         labels = labels * (torch.pi / 180)
 
     angle_loss = torch.sum(((latent_angles - labels) % (2 * torch.pi)) ** 2)
-
+    
     return angle_loss
