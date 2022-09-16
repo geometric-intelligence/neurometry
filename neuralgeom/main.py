@@ -14,6 +14,7 @@ from main_eval import get_mean_curvature
 from main_eval import get_mean_curvature_synth
 from main_eval import get_cross_corr
 from main_eval import master_plot
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 import wandb
 
@@ -33,13 +34,13 @@ wandb.init(
         "radius": default_config.radius,
         "amp_wiggles": default_config.amp_wiggles,
         "n_wiggles": default_config.n_wiggles,
-        "rot": default_config.rot,
         "embedding_dim": default_config.embedding_dim,
         "noise_var": default_config.noise_var,
         "batch_size": default_config.batch_size,
         "n_epochs": default_config.n_epochs,
         "learning_rate": default_config.learning_rate,
         "beta": default_config.beta,
+        "sftbeta": default_config.sftbeta,
         "encoder_width": default_config.encoder_width,
         "encoder_depth": default_config.encoder_depth,
         "decoder_depth": default_config.decoder_depth,
@@ -60,7 +61,11 @@ wandb.run.name = config.run_name
 
 results_prefix = config.results_prefix
 
-dataset_torch, labels, train_loader, test_loader = datasets.utils.load(default_config)
+synth_rotation = SpecialOrthogonal(n=config.embedding_dim).random_point()
+
+dataset_torch, labels, train_loader, test_loader = datasets.utils.load(config, synth_rotation)
+
+dataset_torch.to(config.device)
 
 _, data_dim = dataset_torch.shape
 
@@ -68,6 +73,7 @@ if default_config.model_type == "fc_vae":
     model = models.fc_vae.VAE(
         data_dim=data_dim,
         latent_dim=config.latent_dim,
+        sftbeta=config.sftbeta,
         encoder_width=config.encoder_width,
         encoder_depth=config.encoder_depth,
         decoder_width=config.decoder_width,
@@ -110,18 +116,20 @@ for data, labs in test_loader:
 
 angles = gs.linspace(0, 2 * gs.pi, 1000)
 
+print("Computing curvature...")
+
 mean_curvature, mean_curvature_norm = get_mean_curvature(
     model, angles, config.embedding_dim
 )
 
 mean_curvature_synth, mean_curvature_norm_synth = get_mean_curvature_synth(
-    angles, default_config
-)
+    angles, config, synth_rotation)
 
 s1, s2, correlation = get_cross_corr(mean_curvature_norm, mean_curvature_norm_synth)
 
+print("Generating plots...")
 
-master_plot(
+figure = master_plot(
     model=model,
     dataset_torch=dataset_torch,
     labels=labels,
@@ -151,6 +159,9 @@ torch.save(
 )
 
 torch.save(model, f"results/trained_models/{config.results_prefix}_model.pt")
+
+wandb.log({"correlation": max(correlation), "master_plot": wandb.Image(figure)})
+
 
 
 wandb.finish()

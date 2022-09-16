@@ -6,9 +6,10 @@ import mat73
 import numpy as np
 import scipy.io
 import torch
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 
-def load(config):
+def load(config, synth_rotation):
     """Load dataset according to configuration in config.
 
     Parameters
@@ -65,8 +66,9 @@ def load(config):
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
             amp_func=config.amp_func,
-            rot=config.rot,
+            rot=synth_rotation,
         )
+        print(synth_rotation.shape)
 
     print(f"Dataset shape: {dataset.shape}.")
     dataset_torch = torch.tensor(dataset)

@@ -27,6 +27,7 @@ class VAE(torch.nn.Module):
         self,
         data_dim,
         latent_dim,
+        sftbeta,
         encoder_width=400,
         encoder_depth=2,
         decoder_width=400,
@@ -35,8 +36,12 @@ class VAE(torch.nn.Module):
     ):
         super(VAE, self).__init__()
         self.data_dim = data_dim
+        self.sftbeta = sftbeta
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
+        
+        decoder_width = encoder_width
+        decoder_depth = encoder_depth
 
         self.encoder_fc = torch.nn.Linear(self.data_dim, encoder_width)
         self.encoder_linears = torch.nn.ModuleList(
@@ -84,10 +89,12 @@ class VAE(torch.nn.Module):
             Vector representing the diagonal covariance of the
             multivariate Gaussian in latent space.
         """
-        h = F.softplus(self.encoder_fc(x), beta=3)
+        h = F.softplus(self.encoder_fc(x), beta=self.sftbeta)
+        #h = F.sigmoid(self.encoder_fc(x))
 
         for layer in self.encoder_linears:
-            h = F.softplus(layer(h),  beta=3)
+            h = F.softplus(layer(h),  beta=self.sftbeta)
+            #h = F.sigmoid(layer(h))
 
         if self.posterior_type == "gaussian":
             z_mu = self.fc_z_mu(h)
@@ -146,10 +153,13 @@ class VAE(torch.nn.Module):
         _ : array-like, shape=[batch_size, data_dim]
             Reconstructed data corresponding to z.
         """
-        h = F.softplus(self.decoder_fc(z), beta=3)
+        #breakpoint()
+        h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
+        #h = F.sigmoid(self.decoder_fc(z))
 
         for layer in self.decoder_linears:
-            h = F.softplus(layer(h), beta=3)
+            h = F.softplus(layer(h), beta=self.sftbeta)
+            #h = F.sigmoid(layer(h))
 
         x_mu = self.fc_x_mu(h)
 

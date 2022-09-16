@@ -14,11 +14,13 @@ import numpy as np
 import torch.nn.functional as F
 from datasets.synthetic import get_synth_immersion
 import scipy.signal
+import main
 
 
 def get_model_immersion(model):
     def model_immersion(angle):
         z = gs.array([gs.cos(angle), gs.sin(angle)])
+        z = z.to(main.config.device)
         x_mu = model.decode(z)
         return x_mu
 
@@ -35,6 +37,7 @@ def compute_extrinsic_curvature(angles, immersion, embedding_dim):
             )
 
     mean_curvature_norm = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
+    mean_curvature_norm = [_.item() for _ in mean_curvature_norm]
 
     return mean_curvature, mean_curvature_norm
 
@@ -52,14 +55,14 @@ def get_mean_curvature(model, angles, embedding_dim):
     return mean_curvature, mean_curvature_norm
 
 
-def get_mean_curvature_synth(angles, config):
+def get_mean_curvature_synth(angles, config, synth_rotation):
     immersion = get_synth_immersion(
         amp_func=config.amp_func,
         radius=config.radius,
         n_wiggles=config.n_wiggles,
         amp_wiggles=config.amp_wiggles,
         embedding_dim=config.embedding_dim,
-        rot=config.rot,
+        rot=synth_rotation,
     )
     mean_curvature_synth, mean_curvature_norm_synth = compute_extrinsic_curvature(
         angles, immersion, config.embedding_dim
@@ -69,10 +72,10 @@ def get_mean_curvature_synth(angles, config):
 
 
 def get_cross_corr(signal1, signal2):
-    s1 = np.squeeze(signal1.detach().numpy())
+    s1 = np.squeeze(signal1)
     s1 = s1 - np.mean(s1)
     s1 = s1 / np.linalg.norm(s1)
-    s2 = np.squeeze(signal2.detach().numpy())
+    s2 = np.squeeze(signal2)
     s2 = s2 - np.mean(s2)
     s2 = s2 / np.linalg.norm(s2)
     correlation = np.correlate(s1, s2, mode="same")
@@ -84,7 +87,7 @@ def get_cross_corr(signal1, signal2):
 
 def plot_curvature_profile(angles, mean_curvature_norms):
 
-    colormap = plt.get_cmap("hsv")
+    colormap = plt.get_cmap("twilight")
     color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms))
     plt.figure(figsize=(12, 5))
 
@@ -111,7 +114,7 @@ def plot_curvature_profile(angles, mean_curvature_norms):
 
 
 def plot_curv_synth(figure, angles, mean_curvature_norms):
-    colormap = plt.get_cmap("hsv")
+    colormap = plt.get_cmap("twilight")
     color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms))
 
     ax_circle_synth = figure.add_subplot(3, 3, 4, polar=True)
@@ -140,7 +143,7 @@ def plot_curv_synth(figure, angles, mean_curvature_norms):
 
 
 def plot_curv_learned(figure, angles, mean_curvature_norms):
-    colormap = plt.get_cmap("hsv")
+    colormap = plt.get_cmap("twilight")
     color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms))
 
     ax_circle = figure.add_subplot(3, 3, 7, polar=True)
@@ -169,35 +172,42 @@ def plot_curv_learned(figure, angles, mean_curvature_norms):
 
 
 def plot_recon(figure, model, dataset_torch, labels):
+    colormap = plt.get_cmap("twilight")
     x_data = dataset_torch[:, 0]
     y_data = dataset_torch[:, 1]
-    angles = torch.linspace(0, 2 * gs.pi, 1000)
+    angles = torch.linspace(0, 2 * gs.pi, 2000)
     z = torch.stack([torch.cos(angles), torch.sin(angles)], axis=-1)
+    z = z.to(main.config.device)
     rec = model.decode(z)
-    x_rec = rec[:, 0].cpu().detach().numpy()
-    y_rec = rec[:, 1].cpu().detach().numpy()
+    x_rec = rec[:, 0]#.cpu().detach().numpy()
+    x_rec = [x.item() for x in x_rec]
+    y_rec = rec[:, 1]#.cpu().detach().numpy()
+    y_rec = [y.item() for y in y_rec]
     ax_data = figure.add_subplot(3, 3, 2)
     ax_data.set_title("Synthetic data", fontsize=40)
-    sc_data = ax_data.scatter(x_data, y_data, c=labels["angles"])
+    sc_data = ax_data.scatter(x_data, y_data, c=labels["angles"], cmap=colormap)
     ax_rec = figure.add_subplot(3, 3, 3)
     ax_rec.set_title("Reconstruction", fontsize=40)
-    sc_rec = ax_rec.scatter(x_rec, y_rec, c=labels["angles"])
+    sc_rec = ax_rec.scatter(x_rec, y_rec, c=labels["angles"], cmap=colormap)
     plt.colorbar(sc_rec)
 
 
 def plot_latent_space(figure, model, dataset_torch, labels):
-    _, posterior_params = model(dataset_torch)
+    _, posterior_params = model(dataset_torch.to(main.config.device))
 
     z, _, _ = model.reparameterize(posterior_params)
 
     ax_latent = figure.add_subplot(3, 3, 6)
+    colormap = plt.get_cmap("twilight")
 
-    z0 = z[:, 0].cpu().detach().numpy()
-    z1 = z[:, 1].cpu().detach().numpy()
+    z0 = z[:, 0]
+    z0 = [_.item() for _ in z0]
+    z1 = z[:, 1]
+    z1 = [_.item() for _ in z1]
 
     ax_latent.set_title("Latent space", fontsize=40)
 
-    sc_latent = ax_latent.scatter(z0, z1, c=labels["angles"], s=5)
+    sc_latent = ax_latent.scatter(z0, z1, c=labels["angles"], s=5, cmap=colormap)
 
 
 def plot_loss(figure, train_losses, test_losses):
@@ -238,3 +248,5 @@ def master_plot(
     plt.xticks(fontsize=30)
     ax1.set_title("Pearson correlation = " + str(pearson), fontsize=30)
     plt.savefig(f"results/figures/{config.results_prefix}_master_plot.png")
+    return figure
+
