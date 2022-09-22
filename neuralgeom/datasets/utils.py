@@ -6,14 +6,10 @@ import mat73
 import numpy as np
 import scipy.io
 import torch
-<<<<<<< HEAD
 from sklearn.decomposition import PCA
 from scipy.signal import savgol_filter
 
 
-=======
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal
->>>>>>> main
 
 
 def load(config, synth_rotation):
@@ -83,13 +79,8 @@ def load(config, synth_rotation):
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
-<<<<<<< HEAD
             distortion_func=config.distortion_func,
             rot=config.synthetic_rotation,
-=======
-            amp_func=config.amp_func,
-            rot=synth_rotation,
->>>>>>> main
         )
         print(synth_rotation.shape)
 

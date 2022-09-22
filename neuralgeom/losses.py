@@ -70,11 +70,6 @@ def latent_regularization_loss(labels, z, config):
     if config.dataset_name == "experimental":
         labels = labels * (torch.pi / 180)
 
-<<<<<<< HEAD
     angle_loss = torch.mean(1 - torch.cos(latent_angles - labels))
 
-=======
-    angle_loss = torch.sum(((latent_angles - labels) % (2 * torch.pi)) ** 2)
-    
->>>>>>> main
     return angle_loss
