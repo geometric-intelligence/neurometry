@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import skimage
 import torch
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 import torch.nn.functional as F
 from torch.distributions.multivariate_normal import MultivariateNormal
 
@@ -210,15 +209,15 @@ def load_place_cells(n_times=10000, n_cells=40):
     return np.array(place_cells), pd.DataFrame({"angles": labels})
 
 
-def load_wiggles(
+def load_s1_synthetic(
     rot,
     n_times=1500,
     radius=1,
     n_wiggles=6,
-    amp_wiggles=0.4,
+    distortion_amp=0.4,
     embedding_dim=10,
     noise_var=0.01,
-    amp_func="wiggles",
+    distortion_func="wiggles",
 ):
     """Create "wiggly" circles with noise.
 
@@ -239,17 +238,17 @@ def load_wiggles(
 
     Returns
     -------
-    noisy_data : array-like, shape=[embedding_dim, n_times]
+    noisy_data : array-like, shape=[n_times, embedding_dim]
         Number of firings per time step and per cell.
     labels : pd.DataFrame, shape=[n_times, 1]
         Labels organized in 1 column: angles.
     """
 
-    immersion = get_synth_immersion(
-        amp_func=amp_func,
+    immersion = get_s1_synthetic_immersion(
+        distortion_func=distortion_func,
         radius=radius,
         n_wiggles=n_wiggles,
-        amp_wiggles=amp_wiggles,
+        distortion_amp=distortion_amp,
         embedding_dim=embedding_dim,
         rot=rot,
     )
@@ -269,15 +268,85 @@ def load_wiggles(
 
     noise_dist = MultivariateNormal(
         loc=torch.zeros(embedding_dim),
-        covariance_matrix=noise_var * torch.eye(embedding_dim),
+        covariance_matrix= noise_var * torch.eye(embedding_dim),
     )
 
-    noisy_data = data + noise_dist.sample((n_times,))
+    noisy_data = data + radius*noise_dist.sample((n_times,))
 
     return noisy_data, labels
 
 
-def get_synth_immersion(amp_func, radius, n_wiggles, amp_wiggles, embedding_dim, rot):
+def load_s2_synthetic(rot, n_times, radius, distortion_amp, embedding_dim, noise_var):
+
+    immersion = get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot)
+
+    thetas = gs.linspace(0, gs.pi, n_times)
+
+    phis = gs.linspace(0, 2 * gs.pi, n_times)
+
+    angles = torch.cartesian_prod(thetas, phis)
+
+
+    labels = pd.DataFrame(
+        {
+        "thetas": angles[:,0],
+        "phis": angles[:,1]
+        }
+    )
+
+    data = torch.zeros(n_times*n_times, embedding_dim)
+
+    for _, angle_pair in enumerate(angles):
+        data[_, :] = immersion(angle_pair)
+
+    noise_dist = MultivariateNormal(
+        loc=torch.zeros(embedding_dim),
+        covariance_matrix=radius * noise_var * torch.eye(embedding_dim),
+    )
+
+    noisy_data = data + noise_dist.sample((n_times*n_times,))
+
+    return noisy_data, labels
+
+
+
+def load_t2_synthetic(rot, n_times, major_radius, minor_radius, distortion_amp, embedding_dim, noise_var):
+
+    immersion = get_t2_synthetic_immersion(major_radius, minor_radius, distortion_amp, embedding_dim, rot)
+
+    thetas = gs.linspace(0, 2*gs.pi, n_times)
+
+    psis = gs.linspace(0, 2 * gs.pi, n_times)
+
+    angles = torch.cartesian_prod(thetas, psis)
+
+
+    labels = pd.DataFrame(
+        {
+        "thetas": angles[:,0],
+        "psis": angles[:,1]
+        }
+    )
+
+    data = torch.zeros(n_times*n_times, embedding_dim)
+
+    for _, angle_pair in enumerate(angles):
+        data[_, :] = immersion(angle_pair)
+
+    noise_dist = MultivariateNormal(
+        loc=torch.zeros(embedding_dim),
+        covariance_matrix=major_radius * noise_var * torch.eye(embedding_dim),
+    )
+
+    noisy_data = data + noise_dist.sample((n_times*n_times,))
+
+    return noisy_data, labels
+
+
+
+def get_s1_synthetic_immersion(
+    distortion_func, radius, n_wiggles, distortion_amp, embedding_dim, rot
+):
     """Creates function whose image is "wiggly" circles in high-dim space.
 
     Parameters
@@ -320,10 +389,14 @@ def get_synth_immersion(amp_func, radius, n_wiggles, amp_wiggles, embedding_dim,
         padded_point : array-like, shape=[embedding_dim, ]
             Yiels an embedding_dim-dimensional point making up wiggly circle
         """
-        if amp_func == "wiggles":
-            amplitude = radius * (1 + amp_wiggles * gs.cos(n_wiggles * angle))
-        elif amp_func == "bump":
-            amplitude = radius * (1 + amp_wiggles * gs.exp(-10 * (angle - gs.pi) ** 2))
+        if distortion_func == "wiggles":
+            amplitude = radius * (1 + distortion_amp * gs.cos(n_wiggles * angle))
+        elif distortion_func == "bump":
+            amplitude = radius * (
+                1
+                + distortion_amp * gs.exp(-5 * (angle - gs.pi / 2) ** 2)
+                + distortion_amp * gs.exp(-5 * (angle - 3 * gs.pi / 2) ** 2)
+            )
         else:
             raise NotImplementedError
 
@@ -336,3 +409,53 @@ def get_synth_immersion(amp_func, radius, n_wiggles, amp_wiggles, embedding_dim,
         return gs.einsum("ij,j->i", rot, padded_point)
 
     return synth_immersion
+
+
+def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
+    def spherical(theta, phi):
+        x = gs.sin(theta) * gs.cos(phi)
+        y = gs.sin(theta) * gs.sin(phi)
+        z = gs.cos(theta)
+        return gs.array([x, y, z])
+
+    def s2_synthetic_immersion(angle_pair):
+        theta = angle_pair[0]
+        phi = angle_pair[1]
+        
+        amplitude = radius * (1 + distortion_amp * gs.exp(-5 * theta**2))
+
+        point = amplitude * spherical(theta, phi)
+
+        padded_point = F.pad(
+            input=point, pad=(0, embedding_dim - 3), mode="constant", value=0.0
+        )
+
+        return gs.einsum("ij,j->i", rot, padded_point)
+
+    return s2_synthetic_immersion
+
+
+def get_t2_synthetic_immersion(
+    major_radius, minor_radius, distortion_amp, embedding_dim, rot
+):
+    def torus_proj(theta, psi):
+        x = (major_radius + minor_radius * gs.cos(theta)) * gs.cos(psi)
+        y = (major_radius + minor_radius * gs.cos(theta)) * gs.sin(psi)
+        z = minor_radius * gs.sin(theta)
+        return gs.array([x, y, z])
+
+    def t2_synthetic_immersion(angle_pair):
+
+        theta = angle_pair[0]
+        psi = angle_pair[1]
+        amplitude = 1 + distortion_amp * gs.exp(-5 * (psi-gs.pi/2)**2) + distortion_amp * gs.exp(-5 * (psi-3*gs.pi/2)**2)
+
+        point = amplitude * torus_proj(theta, psi)
+
+        padded_point = F.pad(
+            input=point, pad=(0, embedding_dim - 3), mode="constant", value=0.0
+        )
+
+        return gs.einsum("ij,j->i", rot, padded_point)
+
+    return t2_synthetic_immersion

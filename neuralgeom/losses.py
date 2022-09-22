@@ -50,21 +50,11 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
         kld = torch.distributions.kl.kl_divergence(q_z, p_z).mean()
 
     if config.gen_likelihood_type == "gaussian":
-        recon_loss = torch.sum((x - x_mu).pow(2))
-    # + constant
-    # elif config.gen_likelihood_type == "laplacian":
-    #     x_mu, x_logvar = gen_likelihood_params
-    #     recon_loss = (
-    #         torch.nn.BCEWithLogitsLoss(reduction="none")(x_mu, x).sum(-1).mean()
-    #     )
+        recon_loss = torch.mean((x - x_mu).pow(2))
 
-    # elif config.gen_likelihood_type == "poisson":
-    #     x_lambda = gen_likelihood_params
-    #     from scipy import special
-    #      # TODO: check why there are "nan"'s coming up
-    #     recon_loss = torch.sum(
-    #         -x * torch.log(x_lambda) + x_lambda + torch.log(special.factorial(x))
-    #     )
+    if config.dataset_name == "s1_synthetic":
+        recon_loss = recon_loss / (config.radius**2)
+
 
     return (
         recon_loss
@@ -74,37 +64,12 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
 
 
 def latent_regularization_loss(labels, z, config):
-    """Compute the latent space regularization loss.
-    This loss is intended to enforce a certain structure on the latent space.
-    Implemented here is a 'circle' regularization loss, where the latent variables
-    are penalized for deviating from a radius = 1 from the origin, and
-    for representing the wrong 'angle' compared to the ground truth labels.
-
-    Parameters
-    ----------
-    labels : array-like, shape=[batch_size]
-        Input labels.
-    posterior_params : tuple
-        Learned distributional parameters of approximate posterior. (e.g., (z_mu,z_logvar) for Gaussian).
-    config : module
-        Module specifying various model hyperparameters
-
-    Returns
-    -------
-    _ : array_like, shape=[batch_size]
-        Latent regularization loss on each batch element.
-
-    """
-
-    # latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (
-    #     2 * torch.pi
-    # )
 
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
 
     if config.dataset_name == "experimental":
         labels = labels * (torch.pi / 180)
 
-    angle_loss = torch.sum(((latent_angles - labels) % (2 * torch.pi)) ** 2)
+    angle_loss = torch.mean(1 - torch.cos(latent_angles - labels))
 
     return angle_loss

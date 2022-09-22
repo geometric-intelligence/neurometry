@@ -1,4 +1,4 @@
-name: abn
+name: ng2
 channels:
   - conda-forge
 dependencies:
@@ -15,5 +15,4 @@ dependencies:
     - jupyterlab-code-formatter
     - mat73
     - pre-commit
-    - torch>=1.1.9
     - wandb
