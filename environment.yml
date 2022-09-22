@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+name: ng2
+=======
 name: ng
+>>>>>>> main
 channels:
   - conda-forge
 dependencies:

@@ -89,12 +89,21 @@ class VAE(torch.nn.Module):
             Vector representing the diagonal covariance of the
             multivariate Gaussian in latent space.
         """
+<<<<<<< HEAD:neuralgeom/models/neural_geom_vae.py
+        h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
+        
+
+        for layer in self.encoder_linears:
+            h = F.softplus(layer(h),  beta=self.sftbeta)
+           
+=======
         h = F.softplus(self.encoder_fc(x), beta=self.sftbeta)
         #h = F.sigmoid(self.encoder_fc(x))
 
         for layer in self.encoder_linears:
             h = F.softplus(layer(h),  beta=self.sftbeta)
             #h = F.sigmoid(layer(h))
+>>>>>>> main:neuralgeom/models/fc_vae.py
 
         if self.posterior_type == "gaussian":
             z_mu = self.fc_z_mu(h)
@@ -153,6 +162,15 @@ class VAE(torch.nn.Module):
         _ : array-like, shape=[batch_size, data_dim]
             Reconstructed data corresponding to z.
         """
+<<<<<<< HEAD:neuralgeom/models/neural_geom_vae.py
+        
+        h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
+        
+
+        for layer in self.decoder_linears:
+            h = F.softplus(layer(h), beta=self.sftbeta)
+            
+=======
         #breakpoint()
         h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
         #h = F.sigmoid(self.decoder_fc(z))
@@ -160,6 +178,7 @@ class VAE(torch.nn.Module):
         for layer in self.decoder_linears:
             h = F.softplus(layer(h), beta=self.sftbeta)
             #h = F.sigmoid(layer(h))
+>>>>>>> main:neuralgeom/models/fc_vae.py
 
         x_mu = self.fc_x_mu(h)
 

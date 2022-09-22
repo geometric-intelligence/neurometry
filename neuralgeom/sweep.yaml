@@ -1,9 +1,66 @@
 program: main.py
+<<<<<<< HEAD
+method: grid
+=======
 method: bayes
+>>>>>>> main
 metric: 
   name: test_loss
   goal: minimize
 parameters:
+<<<<<<< HEAD
+  timestep_microsec:
+    values:
+    - 1000000
+    - 5000000
+  smooth:
+    values:
+    - True
+    - False
+  # timestep_microsec:
+  #   values:
+  #   - 1000000
+  #   - 5000000
+  #   - 7500000
+  #   - 10000000
+  # encoder_width:
+  #   values: 
+  #   - 400
+  #   - 728
+  # beta:
+  #   values:
+  #   - 1
+  #   - 0.37
+  #   - 0.03
+  #   - 0.003
+  # sftbeta:
+  #   values:
+  #   - 4.5
+  # gamma:
+  #   values:
+  #   - 3.3
+  #   - 0.33
+  #   - 10
+  #   - 1
+  #   - 0.03
+  # embedding_dim:
+  #   values:
+  #   - 2
+  # radius:
+  #   distribution: q_uniform
+  #     min: 1
+  #     max: 10
+  #     q: 2
+  # noise_var:
+  #   values:
+  #   - 1e-3
+  #   - 5e-3
+  #   - 1e-2
+  #   - 5e-2
+  #   - 7e-2
+  #   - 1e-1
+  #   - 2e-1
+=======
   encoder_depth:
     values:
       - 4
@@ -35,3 +92,4 @@ parameters:
   #   min: 2
   #   max: 40
 
+>>>>>>> main

@@ -6,7 +6,14 @@ import mat73
 import numpy as np
 import scipy.io
 import torch
+<<<<<<< HEAD
+from sklearn.decomposition import PCA
+from scipy.signal import savgol_filter
+
+
+=======
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
+>>>>>>> main
 
 
 def load(config, synth_rotation):
@@ -37,8 +44,19 @@ def load(config, synth_rotation):
         print(labels)
         dataset = dataset[labels["velocities"] > 1]
         labels = labels[labels["velocities"] > 1]
+        #1.768999993801117
+        # dataset = dataset[labels["gains"] == 1.768999993801117]
+        # labels = labels[labels["gains"] == 1.768999993801117]
         dataset = np.log(dataset.astype(np.float32) + 1)
         # dataset = dataset[:, :-2]  # last column is weird
+        # pca = PCA(n_components=20)
+        # dataset = pca.fit_transform(dataset)
+        # print("variance explained by" + str(30) + "principal components: " + str(100*sum(pca.explained_variance_ratio_)) +"%")
+        if config.smooth == True:
+            dataset_smooth = np.zeros_like(dataset)
+            for _ in range(dataset.shape[1]):
+                dataset_smooth[:,_] = savgol_filter(dataset[:,_],window_length=40,polyorder=2)
+            dataset = dataset_smooth
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "synthetic":
         dataset, labels = datasets.synthetic.load_place_cells()
@@ -57,21 +75,31 @@ def load(config, synth_rotation):
     elif config.dataset_name == "points":
         dataset, labels = datasets.synthetic.load_points()
         dataset = dataset.astype(np.float32)
-    elif config.dataset_name == "wiggles":
-        dataset, labels = datasets.synthetic.load_wiggles(
+    elif config.dataset_name == "s1_synthetic":
+        dataset, labels = datasets.synthetic.load_s1_synthetic(
             n_times=config.n_times,
             radius=config.radius,
             n_wiggles=config.n_wiggles,
-            amp_wiggles=config.amp_wiggles,
+            distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
+<<<<<<< HEAD
+            distortion_func=config.distortion_func,
+            rot=config.synthetic_rotation,
+=======
             amp_func=config.amp_func,
             rot=synth_rotation,
+>>>>>>> main
         )
         print(synth_rotation.shape)
 
     print(f"Dataset shape: {dataset.shape}.")
-    dataset_torch = torch.tensor(dataset)
+    if type(dataset) == np.ndarray:
+        dataset_torch = torch.from_numpy(dataset)
+    else:
+        dataset_torch = dataset
+
+    #dataset_torch = dataset_torch - torch.mean(dataset_torch, dim=0)
 
     train_num = int(round(0.7 * len(dataset)))  # 70% training
     indeces = np.arange(len(dataset))

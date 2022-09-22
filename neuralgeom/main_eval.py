@@ -2,39 +2,70 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
+import geomstats.backend as gs
+
+from geomstats.geometry.pullback_metric import PullbackMetric
+
 
 import geomstats.backend as gs
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 import torch
-
-import neural_metric
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 import numpy as np
-import torch.nn.functional as F
-from datasets.synthetic import get_synth_immersion
+from datasets.synthetic import get_s1_synthetic_immersion
 import scipy.signal
 import main
 
 
-def get_model_immersion(model):
+def get_model_immersion(model,device):
     def model_immersion(angle):
         z = gs.array([gs.cos(angle), gs.sin(angle)])
+<<<<<<< HEAD
+        z = z.to(device)
+=======
         z = z.to(main.config.device)
+>>>>>>> main
         x_mu = model.decode(z)
         return x_mu
 
     return model_immersion
 
 
-def compute_extrinsic_curvature(angles, immersion, embedding_dim):
+def get_metric(model, config):
+    immersion = get_model_immersion(model,config.device)
+    embedding_dim = config.embedding_dim
+    metric = PullbackMetric(dim=2,embedding_dim=embedding_dim,immersion=immersion)
+    return metric
 
+
+
+# def compute_extrinsic_curvature(angles, immersion, embedding_dim, radius):
+#     mean_curvature = gs.zeros(len(angles), embedding_dim)
+#     for _, angle in enumerate(angles):
+#         for i in range(embedding_dim):
+            
+#             hessian = torch.autograd.functional.hessian(
+#                 func=lambda x: immersion(x)[i], inputs=angle, strict=True
+#             )
+#             mean_curvature[_, i] = einsum
+
+#     for _, angle in enumerate(angles):
+#         hessian = gs.zeros()
+#         for component in range(embedding_dim):
+#         hessian_row = 
+
+
+#     mean_curvature_norm = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
+#     mean_curvature_norm = [_.item() for _ in mean_curvature_norm]
+
+#     return mean_curvature, mean_curvature_norm
+
+def compute_extrinsic_curvature(angles, immersion, embedding_dim, radius):
     mean_curvature = gs.zeros(len(angles), embedding_dim)
     for _, angle in enumerate(angles):
         for i in range(embedding_dim):
-            mean_curvature[_, i] = torch.autograd.functional.hessian(
+            hessian = torch.autograd.functional.hessian(
                 func=lambda x: immersion(x)[i], inputs=angle, strict=True
             )
+            mean_curvature[_, i] = (1/radius**2)*hessian
 
     mean_curvature_norm = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
     mean_curvature_norm = [_.item() for _ in mean_curvature_norm]
@@ -46,26 +77,36 @@ def compute_intrinsic_curvature():
     return NotImplementedError
 
 
-def get_mean_curvature(model, angles, embedding_dim):
+def get_mean_curvature(model, angles, config, embedding_dim):
     model.eval()
-    immersion = get_model_immersion(model)
+    immersion = get_model_immersion(model, config.device)
     mean_curvature, mean_curvature_norm = compute_extrinsic_curvature(
-        angles, immersion, embedding_dim
+        angles, immersion, embedding_dim, config.radius
     )
     return mean_curvature, mean_curvature_norm
 
 
+<<<<<<< HEAD
+def get_mean_curvature_analytic(angles, config):
+    immersion = get_s1_synthetic_immersion(
+        distortion_func=config.distortion_func,
+=======
 def get_mean_curvature_synth(angles, config, synth_rotation):
     immersion = get_synth_immersion(
         amp_func=config.amp_func,
+>>>>>>> main
         radius=config.radius,
         n_wiggles=config.n_wiggles,
-        amp_wiggles=config.amp_wiggles,
+        distortion_amp=config.distortion_amp,
         embedding_dim=config.embedding_dim,
+<<<<<<< HEAD
+        rot=config.synthetic_rotation,
+=======
         rot=synth_rotation,
+>>>>>>> main
     )
     mean_curvature_synth, mean_curvature_norm_synth = compute_extrinsic_curvature(
-        angles, immersion, config.embedding_dim
+        angles, immersion, config.embedding_dim, config.radius
     )
 
     return mean_curvature_synth, mean_curvature_norm_synth
@@ -84,7 +125,14 @@ def get_cross_corr(signal1, signal2):
     s1 = np.roll(s1, -lag)
     return s1, s2, correlation
 
+def get_difference(thetas, h1, h2):
+    h1 = np.array(h1)
+    h2 = np.array(h2)
+    diff = np.trapz((h1-h2)**2,thetas)/(np.trapz(h1**2,thetas)*np.trapz(h2**2,thetas))
+    return diff
 
+<<<<<<< HEAD
+=======
 def plot_curvature_profile(angles, mean_curvature_norms):
 
     colormap = plt.get_cmap("twilight")
@@ -105,9 +153,11 @@ def plot_curvature_profile(angles, mean_curvature_norms):
     ax2.set_yticks([])
 
     plt.colorbar(sc)
+>>>>>>> main
 
-    ax1 = plt.subplot(1, 2, 2)
 
+<<<<<<< HEAD
+=======
     pt = ax1.plot(angles, mean_curvature_norms)
 
     ax1.set_xlabel("angle")
@@ -250,3 +300,4 @@ def master_plot(
     plt.savefig(f"results/figures/{config.results_prefix}_master_plot.png")
     return figure
 
+>>>>>>> main
