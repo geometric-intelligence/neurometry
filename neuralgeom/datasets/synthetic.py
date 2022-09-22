@@ -389,6 +389,7 @@ def get_s1_synthetic_immersion(
         padded_point : array-like, shape=[embedding_dim, ]
             Yiels an embedding_dim-dimensional point making up wiggly circle
         """
+<<<<<<< HEAD
         if distortion_func == "wiggles":
             amplitude = radius * (1 + distortion_amp * gs.cos(n_wiggles * angle))
         elif distortion_func == "bump":
@@ -397,6 +398,13 @@ def get_s1_synthetic_immersion(
                 + distortion_amp * gs.exp(-5 * (angle - gs.pi / 2) ** 2)
                 + distortion_amp * gs.exp(-5 * (angle - 3 * gs.pi / 2) ** 2)
             )
+=======
+        if amp_func == "wiggles":
+            amplitude = radius * (1 + amp_wiggles * gs.cos(n_wiggles * angle))
+        elif amp_func == "bump":
+            amplitude = radius * (1 + amp_wiggles * gs.exp(-5 * (angle - gs.pi/2) ** 2)
+            + 0*amp_wiggles * gs.exp(-5 * (angle - 3*gs.pi/2) ** 2))
+>>>>>>> main
         else:
             raise NotImplementedError
 
