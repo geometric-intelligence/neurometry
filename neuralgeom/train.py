@@ -34,14 +34,9 @@ def train_model(
 
         test_losses.append(test_loss)
 
-<<<<<<< HEAD
         if test_loss < lowest_test_loss:
             lowest_test_loss = test_loss
             best_model = copy.deepcopy(model)
-=======
-
-        wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
->>>>>>> main
 
 
         wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
