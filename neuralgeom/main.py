@@ -173,7 +173,6 @@ def main():
 
     wandb.finish()
 
-wandb.log({"correlation": max(correlation), "master_plot": wandb.Image(figure)})
 
 
 

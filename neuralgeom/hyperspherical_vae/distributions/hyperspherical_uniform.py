@@ -1,5 +1,6 @@
 import math
 import torch
+import default_config
 
 
 class HypersphericalUniform(torch.distributions.Distribution):
@@ -21,7 +22,7 @@ class HypersphericalUniform(torch.distributions.Distribution):
     def device(self, val):
         self._device = val if isinstance(val, torch.device) else torch.device(val)
 
-    def __init__(self, dim, validate_args=None, device="cuda"):
+    def __init__(self, dim, validate_args=None, device=default_config.device):
         super(HypersphericalUniform, self).__init__(
             torch.Size([dim]), validate_args=validate_args
         )

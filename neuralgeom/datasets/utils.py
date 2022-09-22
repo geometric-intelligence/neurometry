@@ -12,7 +12,7 @@ from scipy.signal import savgol_filter
 
 
 
-def load(config, synth_rotation):
+def load(config):
     """Load dataset according to configuration in config.
 
     Parameters
@@ -82,7 +82,6 @@ def load(config, synth_rotation):
             distortion_func=config.distortion_func,
             rot=config.synthetic_rotation,
         )
-        print(synth_rotation.shape)
 
     print(f"Dataset shape: {dataset.shape}.")
     if type(dataset) == np.ndarray:

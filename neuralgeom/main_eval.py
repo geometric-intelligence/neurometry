@@ -12,7 +12,6 @@ import torch
 import numpy as np
 from datasets.synthetic import get_s1_synthetic_immersion
 import scipy.signal
-import main
 
 
 def get_model_immersion(model,device):
