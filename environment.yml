@@ -14,5 +14,7 @@ dependencies:
     - jupyter
     - jupyterlab-code-formatter
     - mat73
+    - pandas
     - pre-commit
+    - torch
     - wandb

@@ -10,7 +10,7 @@ from geomstats.geometry.pullback_metric import PullbackMetric
 import geomstats.backend as gs
 import torch
 import numpy as np
-from datasets.synthetic import get_s1_synthetic_immersion
+from neuralgeom.datasets.synthetic import get_s1_synthetic_immersion
 import scipy.signal
 
 
@@ -30,24 +30,28 @@ def get_second_fundamental_form(immersion, point, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
 
     christoffels = metric.christoffels(point)
+    assert christoffels.shape == (dim, dim, dim), christoffels.shape
 
     second_fundamental_form = gs.zeros(embedding_dim,dim,dim)
-    for _ in range(embedding_dim):
-        hessian = torch.autograd.functional.hessian(
-            func=lambda x: immersion(x)[_], inputs=point, strict=True
+    for a in range(embedding_dim):
+        hessian_a = torch.autograd.functional.hessian(
+            func=lambda x: immersion(x)[a], inputs=point, strict=True
         )
-        jacobian = torch.autograd.functional.jacobian(
-            func=lambda x: immersion(x)[_], inputs=point, strict=True
+        assert hessian_a.shape == (dim, dim), hessian_a.shape
+        jacobian_a = torch.autograd.functional.jacobian(
+            func=lambda x: immersion(x)[a], inputs=point, strict=True
         )
-        jacobian = torch.squeeze(jacobian, dim=0)
-        second_fundamental_form[_] = hessian + torch.einsum("kij,k->ij", christoffels, jacobian)
+        jacobian_a = torch.squeeze(jacobian_a, dim=0)
+        assert jacobian_a.shape == (dim,), jacobian_a.shape
+        
+        second_fundamental_form[a] = hessian_a - torch.einsum("kij,k->ij", christoffels, jacobian_a)
 
     return second_fundamental_form
 
 
 def compute_mean_curvature(points, immersion, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
-    mean_curvature = torch.zeros(len(points), embedding_dim)
+    mean_curvature = torch.zeros((len(points), embedding_dim))
     for _, point in enumerate(points):
         second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)
         mean_curvature[_,:] = torch.einsum("ij,kij->k",metric.cometric_matrix(point),second_fundamental_form)
