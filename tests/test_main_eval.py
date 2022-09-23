@@ -8,6 +8,7 @@ import itertools
 from neuralgeom.main_eval import get_patch_inner_product_derivative_matrix
 from neuralgeom.main_eval import compute_mean_curvature
 from neuralgeom.main_eval import get_second_fundamental_form as sff
+from neuralgeom.datasets.synthetic import get_s1_synthetic_immersion
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.hypersphere import Hypersphere
 
@@ -225,6 +226,17 @@ def test_inner_product_derivative_matrix_s2():
     assert gs.allclose(derivative_matrix[:, :, 0], expected_1), derivative_matrix[0]
     assert gs.allclose(derivative_matrix[:, :, 1], expected_2), derivative_matrix[1]
 
+
+def test_christoffels_bump():
+    dim, embedding_dim, radius = 1, 2, 1
+    immersion = get_s1_synthetic_immersion(distortion_func="bump",radius=1,n_wiggles=3,distortion_amp=0.3,embedding_dim=2,rot=torch.eye(2))
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)# PATCH: assign new method in pullback metric
+    metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
+        embedding_dim, dim, immersion
+    )
+    point = gs.array([gs.pi / 3])
+
+    christoffels = metric.christoffels(point)
 
 def test_christoffels_s1():
     dim, embedding_dim, radius = 1, 2, 1

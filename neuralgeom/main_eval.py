@@ -66,7 +66,7 @@ def get_patch_inner_product_derivative_matrix(embedding_dim, dim, immersion):
                 func=lambda x: immersion(x)[a], inputs=point, strict=True
             )
             jacobian_a = torch.squeeze(jacobian_a, dim=0)
-            assert jacobian_a.shape == (dim,), jacobian_a.shape
+            #assert jacobian_a.shape == (dim,), jacobian_a.shape
             jacobian_ai[a, :] = jacobian_a
 
         derivative_matrix = gs.einsum(
