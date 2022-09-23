@@ -22,7 +22,7 @@ def main():
 
     # Initialize WandB
     wandb.init(
-        project="mars",
+        project="saturn",
         config={
             "run_name": default_config.run_name,
             "device": default_config.device,
@@ -107,26 +107,27 @@ def main():
 
 
 
-    # print("Computing curvature...")
+    print("Computing curvature...")
 
-    # start_time = time.time()
+    start_time = time.time()
 
-    # # compute model extrinsic curvature
-    # mean_curvature, mean_curvature_norms = get_mean_curvature(
-    #     best_model, angles, config, dataset_torch.shape[1]
-    # )
+    # compute model extrinsic curvature
+    mean_curvature, mean_curvature_norms = get_mean_curvature(
+        best_model, angles, config, dataset_torch.shape[1]
+    )
 
-    # end_time = time.time()
+    end_time = time.time()
 
-    # print("Computation time: " + "%.3f" %(end_time - start_time) + " seconds.")
+    print("Computation time: " + "%.3f" %(end_time - start_time) + " seconds.")
 
     if config.dataset_name == "s1_synthetic":
 
         print("Computing analytic curvature...")
 
-        mean_curvature_synth, mean_curvature_norms_analytic = get_mean_curvature_analytic(
+        mean_curvature_analytic, mean_curvature_norms_analytic = get_mean_curvature_analytic(
             angles, config
         )
+
 
         s1, s2, correlation = get_cross_corr(
             mean_curvature_norms, mean_curvature_norms_analytic

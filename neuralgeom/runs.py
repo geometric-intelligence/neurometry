@@ -1,6 +1,6 @@
 import main
 
-for _ in range(10):
+for _ in range(2):
     main.main()
 
 

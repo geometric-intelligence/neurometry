@@ -1,31 +1,30 @@
-program: main.py
+program: runs.py
 method: grid
 metric: 
   name: test_loss
   goal: minimize
 parameters:
-  gamma:
-    values:
-    - 0.1
-    - 1
-    - 5
-    - 10
-    - 100
-
-  # noise_var:
+  # gamma:
   #   values:
-  #   - 1e-4
-  #   - 25e-5
-  #   - 5e-4
-  #   - 75e-5
-  #   - 1e-3
-  #   - 25e-4
-  #   - 5e-3
-  #   - 75e-4
-  #   - 1e-2
-  #   - 25e-3
-  #   - 5e-2
-  #   - 75e-3
-  #   - 1e-1
-  #   - 25e-2
+  #   - 0.1
+  #   - 1
+  #   - 5
+  #   - 10
+  #   - 100
+  noise_var:
+    values:
+    - 1e-4
+    # - 25e-5
+    # - 5e-4
+    # - 75e-5
+    # - 1e-3
+    # - 25e-4
+    # - 5e-3
+    # - 75e-4
+    # - 1e-2
+    # - 25e-3
+    # - 5e-2
+    # - 75e-3
+    # - 1e-1
+    # - 25e-2
 

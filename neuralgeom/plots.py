@@ -9,8 +9,8 @@ def create_plots(train_losses,test_losses,model,dataset_torch,labels,angles,mean
     fig_loss = plot_loss(train_losses, test_losses, config)
     fig_recon = plot_recon(model, dataset_torch, labels, angles, config)
     fig_latent = plot_latent_space(model, dataset_torch, labels, config)
-    #fig_curv, fig_curv_analytic = plot_curv(angles, mean_curvature_norms, mean_curvature_norms_analytic, config)
     if config.dataset_name == "s1_synthetic":
+        fig_curv, fig_curv_analytic = plot_curv(angles, mean_curvature_norms, mean_curvature_norms_analytic, config)
         fig_comparison = plot_comparison(angles, mean_curvature_norms_analytic, mean_curvature_norms, error, config)
     else:
         fig_comparison = None
@@ -41,7 +41,7 @@ def plot_recon(model, dataset_torch, labels, angles, config):
 
     if config.dataset_name == "s1_synthetic":
         ax_data = fig.add_subplot(1,2,1)
-        colormap = plt.get_cmap("twilight")
+        colormap = plt.get_cmap("hsv")
         x_data = dataset_torch[:, 0]
         y_data = dataset_torch[:, 1]
         z = torch.stack([torch.cos(angles), torch.sin(angles)], axis=-1)
@@ -58,7 +58,9 @@ def plot_recon(model, dataset_torch, labels, angles, config):
         ax_rec = fig.add_subplot(1,2,2)
         ax_rec.set_title("Reconstruction", fontsize=40)
         sc_rec = ax_rec.scatter(x_rec, y_rec, c=labels["angles"], cmap=colormap)
-        plt.colorbar(sc_rec)
+        plt.xticks(fontsize=24)
+        plt.yticks(fontsize=24)
+        #plt.colorbar(sc_rec)
     elif config.dataset_name == "s2_synthetic":
         ax_data = fig.add_subplot(1,2,1, projection="3d")
         x_data = dataset_torch[:,0]
@@ -98,7 +100,6 @@ def plot_recon(model, dataset_torch, labels, angles, config):
 
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.zticks()
     plt.savefig(f"results/figures/{config.results_prefix}_recon.png")
     plt.savefig(f"results/figures/{config.results_prefix}_recon.svg")
     return fig
