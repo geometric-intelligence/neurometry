@@ -23,14 +23,14 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 200
+n_epochs = 150
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03
-gamma = 5
+gamma = 10
 
 # Dataset
-dataset_name = "s2_synthetic"
+dataset_name = "s1_synthetic"
 (   
     expt_id,
     timestep_microsec,
@@ -53,7 +53,7 @@ if dataset_name == "experimental":
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
     n_times = 2000
-    distortion_amp = 0.2
+    distortion_amp = 0.4
     radius = 1
     n_wiggles = 3
     embedding_dim = 2
