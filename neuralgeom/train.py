@@ -61,7 +61,7 @@ def train(epoch, model, train_loader, optimizer, config):
     train_loss = 0
     for batch_idx, batch_data in enumerate(train_loader):
         data, labels = batch_data
-        labels = labels.float()
+        labels = labels#.float()
         data = data.to(config.device)
         labels = labels.to(config.device)
         optimizer.zero_grad()

@@ -22,7 +22,7 @@ def main():
 
     # Initialize WandB
     wandb.init(
-        project="earth",
+        project="mars",
         config={
             "run_name": default_config.run_name,
             "device": default_config.device,
@@ -98,23 +98,27 @@ def main():
         config=config,
     )
 
-    
-    angles = gs.linspace(0, 2 * gs.pi, dataset_torch.shape[0])
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        angles = torch.linspace(0, 2 * gs.pi, dataset_torch.shape[0])
+    elif config.dataset_name == "s2_synthetic":
+        thetas = gs.linspace(0,gs.pi,config.n_times)
+        phis = gs.linspace(0,2*gs.pi,config.n_times)
+        angles = torch.cartesian_prod(thetas,phis)
 
 
 
-    print("Computing curvature...")
+    # print("Computing curvature...")
 
-    start_time = time.time()
+    # start_time = time.time()
 
-    # compute model extrinsic curvature
-    mean_curvature, mean_curvature_norms = get_mean_curvature(
-        best_model, angles, config, dataset_torch.shape[1]
-    )
+    # # compute model extrinsic curvature
+    # mean_curvature, mean_curvature_norms = get_mean_curvature(
+    #     best_model, angles, config, dataset_torch.shape[1]
+    # )
 
-    end_time = time.time()
+    # end_time = time.time()
 
-    print("Computation time: " + "%.3f" %(end_time - start_time) + " seconds.")
+    # print("Computation time: " + "%.3f" %(end_time - start_time) + " seconds.")
 
     if config.dataset_name == "s1_synthetic":
 
@@ -149,6 +153,18 @@ def main():
                 
             }
         )
+    elif config.dataset_name == "s2_synthetic":
+        print("Generating plots...")
+
+        fig_loss, fig_recon, fig_latent, fig_curv, fig_curv_analytic, fig_comparison = create_plots(train_losses,test_losses,model,dataset_torch,labels,angles,None,None, None, config)
+
+        wandb.log(
+            {
+            "fig_loss": wandb.Image(fig_loss),
+            "fig_recon": wandb.Image(fig_recon),
+            "fig_latent": wandb.Image(fig_latent),
+            }
+        )
     elif config.dataset_name == "experimental":
         print("Generating plots...")
 
@@ -157,8 +173,7 @@ def main():
             {
                 "fig_loss": wandb.Image(fig_loss),
                 "fig_recon": wandb.Image(fig_recon),
-                "fig_latent": wandb.Image(fig_latent),
-                "fig_curv": wandb.Image(fig_curv),       
+                "fig_latent": wandb.Image(fig_latent),       
             }
         )
         
