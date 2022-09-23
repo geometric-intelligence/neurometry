@@ -24,34 +24,40 @@ def get_model_immersion(model,device):
     return model_immersion
 
 
-def get_metric(model, config):
-    immersion = get_model_immersion(model,config.device)
-    embedding_dim = config.embedding_dim
-    metric = PullbackMetric(dim=2,embedding_dim=embedding_dim,immersion=immersion)
-    return metric
+#TODO: check this is right
+def get_second_fundamental_form(immersion, point, dim, embedding_dim):
+
+    metric = PullbackMetric(dim,embedding_dim,immersion)
+
+    christoffels = metric.christoffels(point)
+
+    second_fundamental_form = gs.zeros(embedding_dim,dim,dim)
+    for _ in range(embedding_dim):
+        hessian = torch.autograd.functional.hessian(
+            func=lambda x: immersion(x)[_], inputs=point, strict=True
+        )
+        jacobian = torch.autograd.functional.jacobian(
+            func=lambda x: immersion(x)[_], inputs=point, strict=True
+        )
+        jacobian = torch.squeeze(jacobian, dim=0)
+        second_fundamental_form[_] = hessian + torch.einsum("kij,k->ij", christoffels, jacobian)
+
+    return second_fundamental_form
 
 
+def compute_mean_curvature(points, immersion, dim, embedding_dim):
+    metric = PullbackMetric(dim,embedding_dim,immersion)
+    mean_curvature = torch.zeros(len(points), embedding_dim)
+    for _, point in enumerate(points):
+        second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)
+        mean_curvature[_,:] = torch.einsum("ij,kij->k",metric.cometric_matrix(point),second_fundamental_form)
+    
+    mean_curvature_norms = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
+    mean_curvature_norms = [_.item() for _ in mean_curvature_norms]
 
-# def compute_extrinsic_curvature(angles, immersion, embedding_dim, radius):
-#     mean_curvature = gs.zeros(len(angles), embedding_dim)
-#     for _, angle in enumerate(angles):
-#         for i in range(embedding_dim):
-            
-#             hessian = torch.autograd.functional.hessian(
-#                 func=lambda x: immersion(x)[i], inputs=angle, strict=True
-#             )
-#             mean_curvature[_, i] = einsum
-
-#     for _, angle in enumerate(angles):
-#         hessian = gs.zeros()
-#         for component in range(embedding_dim):
-#         hessian_row = 
+    return mean_curvature, mean_curvature_norms
 
 
-#     mean_curvature_norm = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
-#     mean_curvature_norm = [_.item() for _ in mean_curvature_norm]
-
-#     return mean_curvature, mean_curvature_norm
 
 def compute_extrinsic_curvature(angles, immersion, embedding_dim, radius):
     mean_curvature = gs.zeros(len(angles), embedding_dim)
