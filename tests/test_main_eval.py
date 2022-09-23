@@ -57,6 +57,21 @@ def test_second_fundamental_form_s1():
     assert gs.allclose(sec_fun.shape, expected.shape), sec_fun.shape
     assert gs.allclose(sec_fun, expected), sec_fun
 
+def test_second_fundamental_form_bump():
+    dim = 1
+    embedding_dim = 2
+    radius = 3
+
+    point = gs.array([gs.pi / 3])
+    print("point s1:", point.shape)
+
+    immersion = get_s1_synthetic_immersion(
+        distortion_func="bump",radius=1,n_wiggles=3,distortion_amp=0.3,embedding_dim=2,rot=torch.eye(2))
+
+    sec_fun = sff(immersion, point, dim, embedding_dim)
+
+    assert gs.allclose(sec_fun.shape, (embedding_dim, dim, dim)), sec_fun.shape
+
 
 def test_jacobian_s2():
     dim = 2

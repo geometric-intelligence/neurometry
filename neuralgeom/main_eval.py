@@ -27,10 +27,9 @@ def get_model_immersion(model,device):
 #TODO: check this is right
 def get_second_fundamental_form(immersion, point, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
-    if dim > 1:
-        metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
-            embedding_dim, dim, immersion
-        )
+    metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
+        embedding_dim, dim, immersion
+    )
 
     christoffels = metric.christoffels(point)
     assert christoffels.shape == (dim, dim, dim), christoffels.shape
@@ -44,7 +43,10 @@ def get_second_fundamental_form(immersion, point, dim, embedding_dim):
         jacobian_a = torch.autograd.functional.jacobian(
             func=lambda x: immersion(x)[a], inputs=point, strict=True
         )
+        
         jacobian_a = torch.squeeze(jacobian_a, dim=0)
+        if len(jacobian_a.shape) == 0:
+            jacobian_a = gs.to_ndarray(jacobian_a, to_ndim=1)
         assert jacobian_a.shape == (dim,), jacobian_a.shape
         
         second_fundamental_form[a] = hessian_a - torch.einsum("kij,k->ij", christoffels, jacobian_a)
@@ -66,7 +68,9 @@ def get_patch_inner_product_derivative_matrix(embedding_dim, dim, immersion):
                 func=lambda x: immersion(x)[a], inputs=point, strict=True
             )
             jacobian_a = torch.squeeze(jacobian_a, dim=0)
-            #assert jacobian_a.shape == (dim,), jacobian_a.shape
+            if len(jacobian_a.shape) == 0:
+                jacobian_a = gs.to_ndarray(jacobian_a, to_ndim=1)
+            assert jacobian_a.shape == (dim,), jacobian_a.shape
             jacobian_ai[a, :] = jacobian_a
 
         derivative_matrix = gs.einsum(
@@ -81,10 +85,6 @@ def get_patch_inner_product_derivative_matrix(embedding_dim, dim, immersion):
 
 def compute_mean_curvature(points, immersion, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
-    if dim > 1:
-        metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
-            embedding_dim, dim, immersion
-        )
     mean_curvature = torch.zeros((len(points), embedding_dim))
     for i_point, point in enumerate(points):
         second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)
