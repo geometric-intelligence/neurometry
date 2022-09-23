@@ -10,7 +10,7 @@ from geomstats.geometry.pullback_metric import PullbackMetric
 import geomstats.backend as gs
 import torch
 import numpy as np
-from neuralgeom.datasets.synthetic import get_s1_synthetic_immersion
+from datasets.synthetic import get_s1_synthetic_immersion
 import scipy.signal
 
 
@@ -91,7 +91,7 @@ def compute_mean_curvature(points, immersion, dim, embedding_dim):
         mean_curvature[i_point,:] = torch.einsum("ij,aij->a",metric.cometric_matrix(point),second_fundamental_form)
     
     mean_curvature_norms = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
-    mean_curvature_norms = [norm.item() for norm in mean_curvature_norms]
+    mean_curvature_norms = gs.array([norm.item() for norm in mean_curvature_norms])
 
     return mean_curvature, mean_curvature_norms
 
