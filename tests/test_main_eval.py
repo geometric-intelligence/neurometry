@@ -6,11 +6,14 @@ import torch
 
 from neuralgeom.main_eval import compute_mean_curvature
 from neuralgeom.main_eval import get_second_fundamental_form as sff
+from geomstats.geometry.pullback_metric import PullbackMetric
+from geomstats.geometry.hypersphere import Hypersphere
 
+sphere = Hypersphere(dim=2)
 
 def get_immersion(radius):
     def immersion(theta):
-        return radius * gs.array([gs.cos(theta), gs.sin(theta)])
+        return gs.array([radius * gs.cos(theta), radius * gs.sin(theta)])
 
     return immersion
 
@@ -23,7 +26,7 @@ def get_sphere_immersion(radius):
         x = gs.sin(theta) * gs.cos(phi)
         y = gs.sin(theta) * gs.sin(phi)
         z = gs.cos(theta)
-        return radius * gs.array([x, y, z])
+        return gs.array([radius * x, radius * y, radius * z])
 
     return immersion
 
@@ -63,25 +66,33 @@ def test_jacobian_s2():
     # k : rows index the derivatives
     # a (alpha) : columns index the output coordinates
     jacobian_ka = torch.autograd.functional.jacobian(
-            func=lambda x: immersion(x)[:], inputs=points, strict=True
-        )
+        func=lambda x: immersion(x)[:], inputs=points, strict=True
+    )
     jacobian_ka = torch.squeeze(jacobian_ka, dim=0)
-    expected_k1 = gs.array([
-        radius * gs.cos(theta) * gs.cos(phi),
-        - radius * gs.sin(theta) * gs.sin(phi),
-    ])
-    expected_k2 = gs.array([
-        radius * gs.cos(theta) * gs.sin(phi),
-        radius * gs.sin(theta) * gs.cos(phi),])
-    expected_k3 = gs.array([
-        - radius * gs.sin(theta),
-        0,
-    ])
+    expected_k1 = gs.array(
+        [
+            radius * gs.cos(theta) * gs.cos(phi),
+            -radius * gs.sin(theta) * gs.sin(phi),
+        ]
+    )
+    expected_k2 = gs.array(
+        [
+            radius * gs.cos(theta) * gs.sin(phi),
+            radius * gs.sin(theta) * gs.cos(phi),
+        ]
+    )
+    expected_k3 = gs.array(
+        [
+            -radius * gs.sin(theta),
+            0,
+        ]
+    )
     expected_ka = gs.stack([expected_k1, expected_k2, expected_k3], axis=0)
     assert jacobian_ka.shape == (embedding_dim, dim), jacobian_ka.shape
     assert jacobian_ka.shape == expected_ka.shape
 
     assert gs.allclose(jacobian_ka, expected_ka), jacobian_ka
+
 
 def test_second_fundamental_form_s2():
     dim = 2
@@ -121,15 +132,126 @@ def test_second_fundamental_form_s2():
     assert gs.allclose(sec_fun_22, expected_22, atol=1e-5), sec_fun_22
 
 
-def test_compute_mean_curvature_s1():
+def test_metric_matrix_s1():
+    dim, embedding_dim, radius = 1, 2, 3
+
+    immersion = get_immersion(radius=radius)
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    point = gs.array([gs.pi / 4])
+    matrix = metric.metric_matrix(point)
+
+    expected_matrix = gs.array([radius ** 2]).reshape((dim, dim))
+
+    assert gs.allclose(matrix.shape, expected_matrix.shape), matrix.shape
+    assert gs.allclose(matrix, expected_matrix), matrix
+
+def test_cometric_matrix_s1():
+    dim, embedding_dim, radius = 1, 2, 3
+    immersion = get_immersion(radius=radius)
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    point = gs.array([gs.pi / 3])
+
+    comatrix = metric.cometric_matrix(point)
+
+    expected_comatrix = gs.array([1 / radius ** 2]).reshape((dim, dim))
+
+    assert gs.allclose(comatrix.shape, expected_comatrix.shape), comatrix.shape
+    assert gs.allclose(comatrix, expected_comatrix), comatrix
+
+def test_metric_matrix_s2():
+    dim, embedding_dim, radius = 2, 3, 1
+
+    immersion = get_sphere_immersion(radius=radius)
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    point = gs.array([gs.pi / 3, gs.pi])
+    theta, phi = point[0], point[1]
+    matrix = metric.metric_matrix(point)
+
+    expected_matrix = gs.array([
+        [radius ** 2, 0],
+        [0, radius ** 2 * gs.sin(theta) ** 2]])
+
+    assert gs.allclose(matrix.shape, expected_matrix.shape), matrix.shape
+    print(matrix)
+    print(expected_matrix)
+    assert gs.allclose(matrix, expected_matrix), matrix
+
+def test_cometric_matrix_s2():
+    dim, embedding_dim, radius = 2, 3, 4
+    immersion = get_sphere_immersion(radius=radius)
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    point = gs.array([gs.pi / 3, gs.pi])
+    theta, phi = point[0], point[1]
+
+    comatrix = metric.cometric_matrix(point)
+
+    expected_comatrix = gs.array([
+        [1 / (radius ** 2), 0],
+        [0, 1/ (radius ** 2 * gs.sin(theta) ** 2)]])
+
+
+    assert gs.allclose(comatrix.shape, expected_comatrix.shape), comatrix.shape
+    assert gs.allclose(comatrix, expected_comatrix), comatrix
+
+def test_inner_product_derivative_matrix_s2():
+    dim, embedding_dim, radius = 2, 3, 4
+    immersion = get_sphere_immersion(radius=radius)
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    point = gs.array([gs.pi / 3, gs.pi])
+    theta, phi = point[0], point[1]
+
+    derivative_matrix = metric.inner_product_derivative_matrix(point)
+
+    # derivative with respect to theta
+    expected_1 = gs.array([
+        [0, 0],
+        [0, radius ** 2 * gs.cos(theta)]])
+
+    assert gs.allclose(derivative_matrix.shape, (2, 2, 2)), derivative_matrix.shape
+    assert gs.allclose(derivative_matrix[0].shape, expected_1.shape), derivative_matrix[0].shape
+    assert gs.allclose(derivative_matrix[:, :, 0], expected_1), derivative_matrix[0]
+
+
+def test_christoffels_s2():
+    dim, embedding_dim, radius = 2, 3, 1
+    immersion = get_sphere_immersion(radius=radius)
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    point = gs.array([gs.pi / 3, gs.pi])
+    theta, phi = point[0], point[1]
+
+    christoffels = metric.christoffels(point)
+
+    assert gs.allclose(christoffels.shape, (2, 2, 2)), christoffels.shape
+
+    expected_1_11 = expected_2_11 = expected_2_22 = 0
+    expected_1_12 = expected_2_12 = 0
+    assert gs.allclose(christoffels[0, 0, 0], expected_1_11), christoffels[0, 0, 0]
+    assert gs.allclose(christoffels[1, 0, 0], expected_2_11), christoffels[1, 0, 0]
+    assert gs.allclose(christoffels[1, 1, 1], expected_2_22), christoffels[1, 1, 1]
+    assert gs.allclose(christoffels[0, 0, 1], expected_1_12), christoffels[0, 0, 1]
+    assert gs.allclose(christoffels[1, 0, 1], expected_2_12), christoffels[1, 0, 1]
+
+    expected_1_22 = - gs.sin(theta) * gs.cos(theta)
+    expected_2_12 = expected_2_21 = gs.cos(theta) / gs.sin(theta)
+    # 
+    print(christoffels)
+    assert gs.allclose(christoffels, gs.zeros((2, 2, 2))), "whew"
+    print(gs.allclose(christoffels, gs.zeros((2, 2, 2))))
+    print("what")
+    #assert gs.allclose(christoffels[0, 1, 1], expected_1_22), christoffels[0, 1, 1]
+    assert gs.allclose(christoffels[1, 0, 1], expected_2_12), christoffels[1, 0, 1]
+    assert gs.allclose(christoffels[1, 1, 0], expected_2_21), christoffels[1, 1, 0]
+
+def test_compute_mean_curvature_s2():
     dim = 1
     embedding_dim = 2
     radius = 3
 
     # Note: error for point = angle = 0
-    points = gs.linspace(1, 2 * gs.pi, 3)
-    points = points.reshape((len(points), 1))
-    print("points s1:", points.shape)
+    # points = gs.linspace(1, 2 * gs.pi, 4)
+    # points = points.reshape((len(points), 1))
+    # print("points s1:", points.shape)
+    points = gs.array([[gs.pi / 3]])
     # sec_fun = sff(immersion,point,dim,embedding_dim)
 
     immersion = get_immersion(radius=radius)

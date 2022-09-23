@@ -16,5 +16,6 @@ dependencies:
     - mat73
     - pandas
     - pre-commit
+    - pytest
     - torch
     - wandb

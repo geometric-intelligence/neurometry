@@ -52,12 +52,12 @@ def get_second_fundamental_form(immersion, point, dim, embedding_dim):
 def compute_mean_curvature(points, immersion, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
     mean_curvature = torch.zeros((len(points), embedding_dim))
-    for _, point in enumerate(points):
+    for i_point, point in enumerate(points):
         second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)
-        mean_curvature[_,:] = torch.einsum("ij,kij->k",metric.cometric_matrix(point),second_fundamental_form)
+        mean_curvature[i_point,:] = torch.einsum("ij,aij->a",metric.cometric_matrix(point),second_fundamental_form)
     
     mean_curvature_norms = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
-    mean_curvature_norms = [_.item() for _ in mean_curvature_norms]
+    mean_curvature_norms = [norm.item() for norm in mean_curvature_norms]
 
     return mean_curvature, mean_curvature_norms
 
