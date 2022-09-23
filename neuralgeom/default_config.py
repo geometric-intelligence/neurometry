@@ -23,24 +23,34 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 120
+n_epochs = 200
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03
-gamma = 10
+gamma = 5
 
 # Dataset
-dataset_name = "s1_synthetic"
+dataset_name = "s2_synthetic"
+(   
+    expt_id,
+    timestep_microsec,
+    smooth,
+    distortion_func,
+    n_times,
+    distortion_amp,
+    radius,
+    n_wiggles,
+    embedding_dim,
+    noise_var,
+    synthetic_rotation,
+) = [None for _ in range(11)]
+
 
 if dataset_name == "experimental":
     expt_id = "34"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
-else:
-    timestep_microsec, expt_id, smooth = [None for _ in range(3)]
-
-
-if dataset_name == "s1_synthetic":
+elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
     n_times = 2000
     distortion_amp = 0.2
@@ -49,51 +59,28 @@ if dataset_name == "s1_synthetic":
     embedding_dim = 2
     noise_var = 1e-3
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
-else:
-    (
-        n_times,
-        distortion_amp,
-        radius,
-        n_wiggles,
-        embedding_dim,
-        noise_var,
-        distortion_func,
-        synthetic_rotation,
-    ) = [None for _ in range(8)]
+elif dataset_name == "s2_synthetic":
+    # actual number of points is n_times*n_times
+    n_times = 80
+    radius = 1
+    distortion_amp = 0.4
+    embedding_dim = 3
+    noise_var = 1e-4
+    synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 
-radius=1
-
-# if dataset_name == "s2_synthetic":
-#     distortion_func = "bump"
-#     n_times = 2000
-#     distortion_amp = 0.2
-#     radius = 1
-#     embedding_dim = 2
-#     noise_var = 1e-3
-# else:
-#     (
-#         n_times,
-#         distortion_amp,
-#         radius,
-#         n_wiggles,
-#         embedding_dim,
-#         noise_var,
-#         distortion_func,
-#     ) = [None for _ in range(7)]
-
-
-if dataset_name in ["images", "projected_images"]:
-    img_size = 64
 
 # Models
 model_type = "neural_geom_vae"
 encoder_width = 400
-# decoder_width = 40
 decoder_width = encoder_width
 encoder_depth = 4
-# decoder_depth = 4
 decoder_depth = encoder_depth
-latent_dim = 2
+if dataset_name in ("s1_synthetic", "experimental"):
+    latent_dim = 2
+elif dataset_name == "s2_synthetic":
+    latent_dim = 3
+else:
+    latent_dim = 2
 posterior_type = "hyperspherical"
 gen_likelihood_type = "gaussian"
 

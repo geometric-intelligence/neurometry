@@ -31,9 +31,9 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
         Ground truth variables.
         Example: positional angle.
     """
-    data_path = f"/home/facosta/code/neuralgeom/neuralgeom/data/expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
-    labels_path = f"/home/facosta/code/neuralgeom/neuralgeom/data/expt{expt_id}_labels_timestep{timestep_microsec}.txt"
-    times_path = f"/home/facosta/code/neuralgeom/neuralgeom/data/expt{expt_id}_times_timestep{timestep_microsec}.txt"
+    data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
+    labels_path = f"data/expt{expt_id}_labels_timestep{timestep_microsec}.txt"
+    times_path = f"data/expt{expt_id}_times_timestep{timestep_microsec}.txt"
     if os.path.exists(times_path):
         logging.info(f"# - Found file at {times_path}! Loading...")
         times = np.loadtxt(times_path)
@@ -41,7 +41,7 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
         logging.info(f"# - No file at {times_path}. Preprocessing needed:")
         logging.info(f"Loading experiment {expt_id} to bin firing times into times...")
         expt = utils.loadmat(
-            f"/home/facosta/code/neuralgeom/neuralgeom/data/expt{expt_id}.mat"
+            f"data/expt{expt_id}.mat"
         )
         expt = expt["x"]
 

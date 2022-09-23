@@ -82,6 +82,15 @@ def load(config):
             distortion_func=config.distortion_func,
             rot=config.synthetic_rotation,
         )
+    elif config.dataset_name == "s2_synthetic":
+        dataset, labels = datasets.synthetic.load_s2_synthetic(
+            rot = config.synthetic_rotation,
+            n_times=config.n_times,
+            radius=config.radius,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            noise_var=config.noise_var
+        )
 
     print(f"Dataset shape: {dataset.shape}.")
     if type(dataset) == np.ndarray:
@@ -101,15 +110,25 @@ def load(config):
 
     test_dataset = dataset[test_indeces]
     test_labels = labels.iloc[test_indeces]
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        train = []
+        for d, l in zip(
+            train_dataset, train_labels["angles"]
+        ):  # angles : positional angles
+            train.append([d, float(l)])
+        test = []
+        for d, l in zip(test_dataset, test_labels["angles"]):
+            test.append([d, float(l)])
+    elif config.dataset_name == "s2_synthetic":
+        train = []
+        for d, t, p in zip(
+            train_dataset, train_labels["thetas"], train_labels["phis"]
+        ):  # angles : positional angles
+            train.append([d, torch.tensor([float(t), float(p)])])
+        test = []
+        for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"]):
+            test.append([d, torch.tensor([float(t), float(p)])])
 
-    train = []
-    for d, l in zip(
-        train_dataset, train_labels["angles"]
-    ):  # angles : positional angles
-        train.append([d, float(l)])
-    test = []
-    for d, l in zip(test_dataset, test_labels["angles"]):
-        test.append([d, float(l)])
 
     train_loader = torch.utils.data.DataLoader(train, batch_size=config.batch_size)
     test_loader = torch.utils.data.DataLoader(test, batch_size=config.batch_size)

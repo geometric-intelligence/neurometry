@@ -316,15 +316,15 @@ def load_t2_synthetic(rot, n_times, major_radius, minor_radius, distortion_amp, 
 
     thetas = gs.linspace(0, 2*gs.pi, n_times)
 
-    psis = gs.linspace(0, 2 * gs.pi, n_times)
+    phis = gs.linspace(0, 2 * gs.pi, n_times)
 
-    angles = torch.cartesian_prod(thetas, psis)
+    angles = torch.cartesian_prod(thetas, phis)
 
 
     labels = pd.DataFrame(
         {
         "thetas": angles[:,0],
-        "psis": angles[:,1]
+        "phis": angles[:,1]
         }
     )
 
@@ -422,7 +422,8 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
         theta = angle_pair[0]
         phi = angle_pair[1]
         
-        amplitude = radius * (1 + distortion_amp * gs.exp(-5 * theta**2))
+        amplitude = radius * (1 + distortion_amp * gs.exp(-5 * theta**2)
+        + distortion_amp * gs.exp(-5 * (theta-gs.pi)**2))
 
         point = amplitude * spherical(theta, phi)
 
@@ -438,19 +439,19 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
 def get_t2_synthetic_immersion(
     major_radius, minor_radius, distortion_amp, embedding_dim, rot
 ):
-    def torus_proj(theta, psi):
-        x = (major_radius + minor_radius * gs.cos(theta)) * gs.cos(psi)
-        y = (major_radius + minor_radius * gs.cos(theta)) * gs.sin(psi)
+    def torus_proj(theta, phi):
+        x = (major_radius + minor_radius * gs.cos(theta)) * gs.cos(phi)
+        y = (major_radius + minor_radius * gs.cos(theta)) * gs.sin(phi)
         z = minor_radius * gs.sin(theta)
         return gs.array([x, y, z])
 
     def t2_synthetic_immersion(angle_pair):
 
         theta = angle_pair[0]
-        psi = angle_pair[1]
-        amplitude = 1 + distortion_amp * gs.exp(-5 * (psi-gs.pi/2)**2) + distortion_amp * gs.exp(-5 * (psi-3*gs.pi/2)**2)
+        phi = angle_pair[1]
+        amplitude = 1 + distortion_amp * gs.exp(-5 * (phi-gs.pi/2)**2) + distortion_amp * gs.exp(-5 * (phi-3*gs.pi/2)**2)
 
-        point = amplitude * torus_proj(theta, psi)
+        point = amplitude * torus_proj(theta, phi)
 
         padded_point = F.pad(
             input=point, pad=(0, embedding_dim - 3), mode="constant", value=0.0
