@@ -26,11 +26,11 @@ def get_model_immersion(model,device):
 
 #TODO: check this is right
 def get_second_fundamental_form(immersion, point, dim, embedding_dim):
-
     metric = PullbackMetric(dim,embedding_dim,immersion)
-    metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
-        embedding_dim, dim, immersion
-    )
+    if dim > 1:
+        metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
+            embedding_dim, dim, immersion
+        )
 
     christoffels = metric.christoffels(point)
     assert christoffels.shape == (dim, dim, dim), christoffels.shape
@@ -81,9 +81,10 @@ def get_patch_inner_product_derivative_matrix(embedding_dim, dim, immersion):
 
 def compute_mean_curvature(points, immersion, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
-    metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
-        embedding_dim, dim, immersion
-    )
+    if dim > 1:
+        metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
+            embedding_dim, dim, immersion
+        )
     mean_curvature = torch.zeros((len(points), embedding_dim))
     for i_point, point in enumerate(points):
         second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)

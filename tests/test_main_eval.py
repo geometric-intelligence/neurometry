@@ -230,13 +230,17 @@ def test_inner_product_derivative_matrix_s2():
 def test_christoffels_bump():
     dim, embedding_dim, radius = 1, 2, 1
     immersion = get_s1_synthetic_immersion(distortion_func="bump",radius=1,n_wiggles=3,distortion_amp=0.3,embedding_dim=2,rot=torch.eye(2))
-    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)# PATCH: assign new method in pullback metric
+    metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
+    # PATCH: assign new method in pullback metric
     metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
         embedding_dim, dim, immersion
     )
     point = gs.array([gs.pi / 3])
-
     christoffels = metric.christoffels(point)
+    print("WORKING WITH ONE POINT")
+
+    # points =  gs.linspace(0,2*gs.pi,100)
+    # christoffels = metric.christoffels(points)
 
 def test_christoffels_s1():
     dim, embedding_dim, radius = 1, 2, 1
