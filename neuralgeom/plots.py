@@ -82,10 +82,12 @@ def plot_recon(model, dataset_torch, labels, angles, config):
 
         ax_data.set_title("Synthetic data", fontsize=40)
         sc_data = ax_data.scatter3D(x_data, y_data, z_data, s=5, c = norms_data)
+        plt.axis("off")
         #ax_data.view_init(elev=60, azim=45, roll=0)
         ax_rec = fig.add_subplot(1,2,2, projection="3d")
         ax_rec.set_title("Reconstruction", fontsize=40)
         sc_rec = ax_rec.scatter3D(x_rec,y_rec,z_rec,s=5,c = norms_rec)
+        plt.axis("off")
     elif config.dataset_name == "experimental":
         z = torch.stack([torch.cos(angles), torch.sin(angles)], axis=-1)
         image_data = ax_data.imshow(dataset_torch, aspect=0.05)
@@ -130,7 +132,7 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z2 = z[:, 2]
         z2 = [_.item() for _ in z2]
         sc = ax.scatter3D(z0,z1,z2)
-        ax.view_init(elev=60, azim=45, roll=0)
+        #ax.view_init(elev=60, azim=45, roll=0)
         ax.set_xlim(-1.2,1.2)
         ax.set_ylim(-1.2,1.2)
         ax.set_zlim(-1.2,1.2)
