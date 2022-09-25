@@ -404,6 +404,7 @@ def get_s1_synthetic_immersion(
         padded_point = F.pad(
             input=point, pad=(0, embedding_dim - 2), mode="constant", value=0.0
         )
+        padded_point = gs.squeeze(padded_point, axis=1)
         return gs.einsum("ij,j->i", rot, padded_point)
 
     return synth_immersion
