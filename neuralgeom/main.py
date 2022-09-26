@@ -12,7 +12,10 @@ from main_eval import get_mean_curvature
 from main_eval import get_mean_curvature_analytic
 from main_eval import get_cross_corr
 from main_eval import get_difference
+from main_eval import get_model_immersion
+from main_eval import compute_mean_curvature
 from plots import create_plots
+from main_eval import get_difference_s2
 import time
 
 import wandb
@@ -22,7 +25,7 @@ def main():
 
     # Initialize WandB
     wandb.init(
-        project="saturn",
+        project="pluto",
         config={
             "run_name": default_config.run_name,
             "device": default_config.device,
@@ -101,9 +104,9 @@ def main():
     if config.dataset_name in ("s1_synthetic", "experimental"):
         angles = torch.linspace(0, 2 * gs.pi, dataset_torch.shape[0])
     elif config.dataset_name == "s2_synthetic":
-        thetas = gs.linspace(0,gs.pi,config.n_times)
+        thetas = gs.linspace(0.01,gs.pi,config.n_times)
         phis = gs.linspace(0,2*gs.pi,config.n_times)
-        angles = torch.cartesian_prod(thetas,phis)
+        points = torch.cartesian_prod(thetas,phis)
 
 
 
@@ -112,13 +115,21 @@ def main():
     start_time = time.time()
 
     # compute model extrinsic curvature
-    mean_curvature, mean_curvature_norms = get_mean_curvature(
-        best_model, angles, config, dataset_torch.shape[1]
-    )
+    # mean_curvature, mean_curvature_norms = get_mean_curvature(
+    #     best_model, angles, config, dataset_torch.shape[1]
+    # )
+    immersion = get_model_immersion(model, config)
+    mean_curvature, mean_curvature_norms = compute_mean_curvature(points,immersion=immersion,dim=2,embedding_dim=3)
+
+
 
     end_time = time.time()
 
     print("Computation time: " + "%.3f" %(end_time - start_time) + " seconds.")
+
+
+
+
 
     if config.dataset_name == "s1_synthetic":
 
@@ -157,13 +168,21 @@ def main():
     elif config.dataset_name == "s2_synthetic":
         print("Generating plots...")
 
-        fig_loss, fig_recon, fig_latent, fig_curv, fig_curv_analytic, fig_comparison = create_plots(train_losses,test_losses,model,dataset_torch,labels,angles,None,None, None, config)
+        mean_curvature_analytic, mean_curvature_norms_analytic = get_mean_curvature_analytic(
+            points, config
+        )
+        
+        error = get_difference_s2(thetas,phis,mean_curvature_norms,mean_curvature_norms_analytic)
+
+        fig_loss, fig_recon, fig_latent, fig_curv, fig_curv_analytic, fig_comparison = create_plots(train_losses,test_losses,model,dataset_torch,labels,points,mean_curvature_norms,mean_curvature_norms_analytic, error, config)
 
         wandb.log(
             {
             "fig_loss": wandb.Image(fig_loss),
             "fig_recon": wandb.Image(fig_recon),
             "fig_latent": wandb.Image(fig_latent),
+            "fig_curv_analytic": wandb.Image(fig_curv_analytic),
+            "error": error
             }
         )
     elif config.dataset_name == "experimental":
@@ -191,5 +210,5 @@ def main():
 
 
 
-
-main()
+for i in range(5):  
+    main()

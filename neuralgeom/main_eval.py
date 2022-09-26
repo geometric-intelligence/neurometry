@@ -10,15 +10,21 @@ from geomstats.geometry.pullback_metric import PullbackMetric
 import geomstats.backend as gs
 import torch
 import numpy as np
-from datasets.synthetic import get_s1_synthetic_immersion
+from datasets.synthetic import get_s1_synthetic_immersion, get_s2_synthetic_immersion
 import scipy.signal
 
 
-def get_model_immersion(model,device):
+def get_model_immersion(model,config):
     def model_immersion(angle):
-        z = gs.array([gs.cos(angle), gs.sin(angle)])
-        z = z.to(device)
+        if config.dataset_name == "s1_synthetic":
+            z = gs.array([gs.cos(angle), gs.sin(angle)])
+        elif config.dataset_name == "s2_synthetic":
+            theta = angle[0][0] 
+            phi = angle[0][1]
+            z = gs.array([gs.sin(theta)*gs.cos(phi),gs.sin(theta)*gs.sin(phi),gs.cos(theta)])
+        z = z.to(config.device)
         x_mu = model.decode(z)
+
         return x_mu
 
     return model_immersion
@@ -30,8 +36,8 @@ def get_second_fundamental_form(immersion, point, dim, embedding_dim):
     metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
         embedding_dim, dim, immersion
     )
-
     christoffels = metric.christoffels(point)
+    christoffels = gs.squeeze(christoffels)
     assert christoffels.shape == (dim, dim, dim), christoffels.shape
 
     second_fundamental_form = gs.zeros(embedding_dim,dim,dim)
@@ -39,6 +45,7 @@ def get_second_fundamental_form(immersion, point, dim, embedding_dim):
         hessian_a = torch.autograd.functional.hessian(
             func=lambda x: immersion(x)[a], inputs=point, strict=True
         )
+        hessian_a = gs.squeeze(hessian_a)
         assert hessian_a.shape == (dim, dim), hessian_a.shape
         jacobian_a = torch.autograd.functional.jacobian(
             func=lambda x: immersion(x)[a], inputs=point, strict=True
@@ -62,6 +69,7 @@ def get_patch_inner_product_derivative_matrix(embedding_dim, dim, immersion):
             hessian_a = torch.autograd.functional.hessian(
                 func=lambda x: immersion(x)[a], inputs=point, strict=True
             )
+            hessian_a = gs.squeeze(hessian_a)
             assert hessian_a.shape == (dim, dim), hessian_a.shape
             hessian_aij[a, :, :] = hessian_a
             jacobian_a = torch.autograd.functional.jacobian(
@@ -87,8 +95,10 @@ def compute_mean_curvature(points, immersion, dim, embedding_dim):
     metric = PullbackMetric(dim,embedding_dim,immersion)
     mean_curvature = torch.zeros((len(points), embedding_dim))
     for i_point, point in enumerate(points):
+        point = gs.array([point])
         second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)
-        mean_curvature[i_point,:] = torch.einsum("ij,aij->a",metric.cometric_matrix(point),second_fundamental_form)
+        cometric_matrix = gs.squeeze(metric.cometric_matrix(point))
+        mean_curvature[i_point,:] = torch.einsum("ij,aij->a",cometric_matrix,second_fundamental_form)
     
     mean_curvature_norms = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
     mean_curvature_norms = gs.array([norm.item() for norm in mean_curvature_norms])
@@ -126,19 +136,32 @@ def get_mean_curvature(model, angles, config, embedding_dim):
 
 
 def get_mean_curvature_analytic(angles, config):
-    immersion = get_s1_synthetic_immersion(
-        distortion_func=config.distortion_func,
-        radius=config.radius,
-        n_wiggles=config.n_wiggles,
-        distortion_amp=config.distortion_amp,
-        embedding_dim=config.embedding_dim,
-        rot=config.synthetic_rotation,
-    )
-    mean_curvature_synth, mean_curvature_norm_synth = compute_extrinsic_curvature(
-        angles, immersion, config.embedding_dim, config.radius
+    if config.dataset_name == "s1_synthetic":
+        immersion = get_s1_synthetic_immersion(
+            distortion_func=config.distortion_func,
+            radius=config.radius,
+            n_wiggles=config.n_wiggles,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            rot=config.synthetic_rotation,
+        )
+    elif config.dataset_name == "s2_synthetic":
+        immersion = get_s2_synthetic_immersion(
+            radius = config.radius,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            rot=config.synthetic_rotation,
+        )
+
+    mean_curvature_analytic, mean_curvature_norm_analytic = compute_mean_curvature(
+        points=angles,immersion=immersion,dim=2,embedding_dim=config.embedding_dim
     )
 
-    return mean_curvature_synth, mean_curvature_norm_synth
+    # mean_curvature_synth, mean_curvature_norm_synth = compute_extrinsic_curvature(
+    #     angles, immersion, config.embedding_dim, config.radius
+    # )
+
+    return mean_curvature_analytic, mean_curvature_norm_analytic
 
 
 def get_cross_corr(signal1, signal2):
@@ -159,6 +182,21 @@ def get_difference(thetas, h1, h2):
     h2 = np.array(h2)
     diff = np.trapz((h1-h2)**2,thetas)/(np.trapz(h1**2,thetas)*np.trapz(h2**2,thetas))
     return diff
+
+
+
+def integrate_sphere(thetas,phis,h):
+    sum_phis = torch.zeros_like(thetas)
+    for t, theta in enumerate(thetas):
+        sum_phis[t] = torch.trapz(y=h[len(phis)*t:len(phis)*(t+1)],x=phis)*np.sin(theta)
+    integral = torch.trapz(y=sum_phis,x=thetas)
+    return integral
+
+def get_difference_s2(thetas,phis,mean_curvature_norms,mean_curvature_norms_analytic):
+    diff = integrate_sphere(thetas,phis,(mean_curvature_norms-mean_curvature_norms_analytic)**2)
+    normalization = integrate_sphere(thetas,phis,(mean_curvature_norms)**2+(mean_curvature_norms_analytic)**2)
+    return diff/normalization
+    
 
 
 

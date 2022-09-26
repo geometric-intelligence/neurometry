@@ -23,14 +23,14 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 150
+n_epochs = 60
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03
 gamma = 10
 
 # Dataset
-dataset_name = "s1_synthetic"
+dataset_name = "s2_synthetic"
 (   
     expt_id,
     timestep_microsec,
@@ -61,11 +61,11 @@ elif dataset_name == "s1_synthetic":
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "s2_synthetic":
     # actual number of points is n_times*n_times
-    n_times = 80
+    n_times = 50
     radius = 1
     distortion_amp = 0.4
     embedding_dim = 3
-    noise_var = 1e-4
+    noise_var = 3.5e-2
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 
 
