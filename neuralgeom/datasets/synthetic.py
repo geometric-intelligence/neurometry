@@ -279,24 +279,26 @@ def load_s2_synthetic(rot, n_times, radius, distortion_amp, embedding_dim, noise
 
     immersion = get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot)
 
-    thetas = gs.linspace(0, gs.pi, n_times)
+    thetas = gs.linspace(0.01, gs.pi, n_times)
 
     phis = gs.linspace(0, 2 * gs.pi, n_times)
 
-    angles = torch.cartesian_prod(thetas, phis)
+    points = torch.cartesian_prod(thetas, phis)
+
 
 
     labels = pd.DataFrame(
         {
-        "thetas": angles[:,0],
-        "phis": angles[:,1]
+        "thetas": points[:,0],
+        "phis": points[:,1]
         }
     )
 
     data = torch.zeros(n_times*n_times, embedding_dim)
 
-    for _, angle_pair in enumerate(angles):
-        data[_, :] = immersion(angle_pair)
+    for _, point in enumerate(points):
+        point = gs.array(point)
+        data[_, :] = immersion(point)
 
     noise_dist = MultivariateNormal(
         loc=torch.zeros(embedding_dim),
@@ -404,6 +406,8 @@ def get_s1_synthetic_immersion(
         padded_point = F.pad(
             input=point, pad=(0, embedding_dim - 2), mode="constant", value=0.0
         )
+
+        padded_point = gs.squeeze(padded_point, axis=-1)
         return gs.einsum("ij,j->i", rot, padded_point)
 
     return synth_immersion
@@ -425,9 +429,14 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
 
         point = amplitude * spherical(theta, phi)
 
+
         padded_point = F.pad(
             input=point, pad=(0, embedding_dim - 3), mode="constant", value=0.0
         )
+
+
+        padded_point = gs.squeeze(padded_point)
+
 
         return gs.einsum("ij,j->i", rot, padded_point)
 

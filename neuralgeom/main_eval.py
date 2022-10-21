@@ -7,120 +7,92 @@ import geomstats.backend as gs
 from geomstats.geometry.pullback_metric import PullbackMetric
 
 
-import geomstats.backend as gs
 import torch
 import numpy as np
-from datasets.synthetic import get_s1_synthetic_immersion
-import scipy.signal
+
+from datasets.synthetic import get_s1_synthetic_immersion, get_s2_synthetic_immersion
 
 
-def get_model_immersion(model,device):
-    def model_immersion(angle):
-        z = gs.array([gs.cos(angle), gs.sin(angle)])
-        z = z.to(device)
+
+# Defines immersion from latent angles to neural manifold
+def get_neural_immersion(model, config):
+    def neural_immersion(angle):
+        if config.dataset_name in ("s1_synthetic", "experimental"):
+            z = gs.array([gs.cos(angle[0]), gs.sin(angle[0])])
+    
+        elif config.dataset_name == "s2_synthetic":
+            theta = angle[0] 
+            phi = angle[1]
+            z = gs.array([gs.sin(theta)*gs.cos(phi),gs.sin(theta)*gs.sin(phi),gs.cos(theta)])
+    
+        z = z.to(config.device)
         x_mu = model.decode(z)
+
         return x_mu
 
-    return model_immersion
-
-
-#TODO: check this is right
-def get_second_fundamental_form(immersion, point, dim, embedding_dim):
-
-    metric = PullbackMetric(dim,embedding_dim,immersion)
-
-    christoffels = metric.christoffels(point)
-
-    second_fundamental_form = gs.zeros(embedding_dim,dim,dim)
-    for _ in range(embedding_dim):
-        hessian = torch.autograd.functional.hessian(
-            func=lambda x: immersion(x)[_], inputs=point, strict=True
-        )
-        jacobian = torch.autograd.functional.jacobian(
-            func=lambda x: immersion(x)[_], inputs=point, strict=True
-        )
-        jacobian = torch.squeeze(jacobian, dim=0)
-        second_fundamental_form[_] = hessian + torch.einsum("kij,k->ij", christoffels, jacobian)
-
-    return second_fundamental_form
-
-
-def compute_mean_curvature(points, immersion, dim, embedding_dim):
-    metric = PullbackMetric(dim,embedding_dim,immersion)
-    mean_curvature = torch.zeros(len(points), embedding_dim)
-    for _, point in enumerate(points):
-        second_fundamental_form = get_second_fundamental_form(immersion, point, dim, embedding_dim)
-        mean_curvature[_,:] = torch.einsum("ij,kij->k",metric.cometric_matrix(point),second_fundamental_form)
+    return neural_immersion
     
-    mean_curvature_norms = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
-    mean_curvature_norms = [_.item() for _ in mean_curvature_norms]
 
-    return mean_curvature, mean_curvature_norms
+# Compute mean curvature vector at each point, along with their corresponding magnitudes using Geomstats
+def compute_mean_curvature(latent_angle, neural_immersion, dim, embedding_dim):
+    neural_metric = PullbackMetric(dim=dim,embedding_dim=embedding_dim,immersion=neural_immersion)
+    second_fund_form = neural_metric.second_fundamental_form(latent_angle)
+    mean_curvature_vec = neural_metric.mean_curvature_vector(latent_angle)
+    mean_curvature_norms = torch.linalg.norm(mean_curvature_vec, dim=1, keepdim=True)
+    mean_curvature_norms = gs.array([norm.item() for norm in mean_curvature_norms])
 
-
-
-def compute_extrinsic_curvature(angles, immersion, embedding_dim, radius):
-    mean_curvature = gs.zeros(len(angles), embedding_dim)
-    for _, angle in enumerate(angles):
-        for i in range(embedding_dim):
-            hessian = torch.autograd.functional.hessian(
-                func=lambda x: immersion(x)[i], inputs=angle, strict=True
-            )
-            mean_curvature[_, i] = (1/radius**2)*hessian
-
-    mean_curvature_norm = torch.linalg.norm(mean_curvature, dim=1, keepdim=True)
-    mean_curvature_norm = [_.item() for _ in mean_curvature_norm]
-
-    return mean_curvature, mean_curvature_norm
+    return mean_curvature_vec, mean_curvature_norms
 
 
-def compute_intrinsic_curvature():
-    return NotImplementedError
-
-
-def get_mean_curvature(model, angles, config, embedding_dim):
-    model.eval()
-    immersion = get_model_immersion(model, config.device)
-    mean_curvature, mean_curvature_norm = compute_extrinsic_curvature(
-        angles, immersion, embedding_dim, config.radius
-    )
-    return mean_curvature, mean_curvature_norm
-
-
+# Uses compute_mean_curvature to find mean curvature profile from analytic expression of the immersion
 def get_mean_curvature_analytic(angles, config):
-    immersion = get_s1_synthetic_immersion(
-        distortion_func=config.distortion_func,
-        radius=config.radius,
-        n_wiggles=config.n_wiggles,
-        distortion_amp=config.distortion_amp,
-        embedding_dim=config.embedding_dim,
-        rot=config.synthetic_rotation,
+    if config.dataset_name == "s1_synthetic":
+        immersion = get_s1_synthetic_immersion(
+            distortion_func=config.distortion_func,
+            radius=config.radius,
+            n_wiggles=config.n_wiggles,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            rot=config.synthetic_rotation,
+        )
+        dim = 1
+    elif config.dataset_name == "s2_synthetic":
+        immersion = get_s2_synthetic_immersion(
+            radius = config.radius,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            rot=config.synthetic_rotation,
+        )
+        dim=2
+
+    mean_curvature_analytic, mean_curvature_norm_analytic = compute_mean_curvature(
+        latent_angle=angles,neural_immersion=immersion,dim=dim,embedding_dim=config.embedding_dim
     )
-    mean_curvature_synth, mean_curvature_norm_synth = compute_extrinsic_curvature(
-        angles, immersion, config.embedding_dim, config.radius
-    )
 
-    return mean_curvature_synth, mean_curvature_norm_synth
+    return mean_curvature_analytic, mean_curvature_norm_analytic
 
-
-def get_cross_corr(signal1, signal2):
-    s1 = np.squeeze(signal1)
-    s1 = s1 - np.mean(s1)
-    s1 = s1 / np.linalg.norm(s1)
-    s2 = np.squeeze(signal2)
-    s2 = s2 - np.mean(s2)
-    s2 = s2 / np.linalg.norm(s2)
-    correlation = np.correlate(s1, s2, mode="same")
-    lags = scipy.signal.correlation_lags(s1.size, s2.size, mode="same")
-    lag = lags[np.argmax(correlation)]
-    s1 = np.roll(s1, -lag)
-    return s1, s2, correlation
-
+# Computes "error" of learned curvature profile given analytic profile, for S^1
 def get_difference(thetas, h1, h2):
     h1 = np.array(h1)
     h2 = np.array(h2)
     diff = np.trapz((h1-h2)**2,thetas)/(np.trapz(h1**2,thetas)*np.trapz(h2**2,thetas))
     return diff
+
+
+# Helper function for get_difference_s2, integrates over S^2
+def integrate_sphere(thetas,phis,h):
+    sum_phis = torch.zeros_like(thetas)
+    for t, theta in enumerate(thetas):
+        sum_phis[t] = torch.trapz(y=h[len(phis)*t:len(phis)*(t+1)],x=phis)*np.sin(theta)
+    integral = torch.trapz(y=sum_phis,x=thetas)
+    return integral
+
+# Computes "error" of learned curvature profile given analytic profile, for S^2
+def get_difference_s2(thetas,phis,mean_curvature_norms,mean_curvature_norms_analytic):
+    diff = integrate_sphere(thetas,phis,(mean_curvature_norms-mean_curvature_norms_analytic)**2)
+    normalization = integrate_sphere(thetas,phis,(mean_curvature_norms)**2+(mean_curvature_norms_analytic)**2)
+    return diff/normalization
+    
 
 
 

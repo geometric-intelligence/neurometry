@@ -23,14 +23,14 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 150
+n_epochs = 5
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03
 gamma = 10
 
 # Dataset
-dataset_name = "s1_synthetic"
+dataset_name = "s2_synthetic"
 (   
     expt_id,
     timestep_microsec,
@@ -50,22 +50,25 @@ if dataset_name == "experimental":
     expt_id = "34"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
+    manifold_dim = 1
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
-    n_times = 2000
+    n_times = 500
     distortion_amp = 0.4
     radius = 1
+    manifold_dim = 1
     n_wiggles = 3
     embedding_dim = 2
     noise_var = 1e-3
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "s2_synthetic":
     # actual number of points is n_times*n_times
-    n_times = 80
+    n_times = 20
     radius = 1
     distortion_amp = 0.4
+    manifold_dim = 2
     embedding_dim = 3
-    noise_var = 1e-4
+    noise_var = 3.5e-2
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 
 
