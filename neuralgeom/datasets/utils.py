@@ -38,16 +38,12 @@ def load(config):
             expt_id=config.expt_id, timestep_microsec=config.timestep_microsec
         )
         print(labels)
-        dataset = dataset[labels["velocities"] > 1]
-        labels = labels[labels["velocities"] > 1]
+        dataset = dataset[labels["velocities"] > 5]
+        labels = labels[labels["velocities"] > 5]
         #1.768999993801117
         # dataset = dataset[labels["gains"] == 1.768999993801117]
         # labels = labels[labels["gains"] == 1.768999993801117]
         dataset = np.log(dataset.astype(np.float32) + 1)
-        # dataset = dataset[:, :-2]  # last column is weird
-        # pca = PCA(n_components=20)
-        # dataset = pca.fit_transform(dataset)
-        # print("variance explained by" + str(30) + "principal components: " + str(100*sum(pca.explained_variance_ratio_)) +"%")
         if config.smooth == True:
             dataset_smooth = np.zeros_like(dataset)
             for _ in range(dataset.shape[1]):

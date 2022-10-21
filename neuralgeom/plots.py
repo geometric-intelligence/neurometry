@@ -15,7 +15,8 @@ def create_plots(train_losses,test_losses,model,dataset_torch,labels,angles,mean
     else:
         fig_comparison = None
     if config.dataset_name == "s2_synthetic":
-        fig_curv, fig_curv_analytic, fig_comparison = [None for _ in range(3)]
+        fig_curv, fig_curv_analytic = plot_curv(angles, mean_curvature_norms, mean_curvature_norms_analytic, config)
+
 
     return fig_loss, fig_recon, fig_latent, fig_curv, fig_curv_analytic, fig_comparison
 
@@ -170,14 +171,25 @@ def plot_curv(angles, mean_curvature_norms, mean_curvature_norms_analytic, confi
         ax2_analytic.set_xlabel("angle", fontsize=40)
         plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_analytic.png")
         plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_analytic.svg")
+    elif config.dataset_name == "s2_synthetic":
+        fig_analytic = plt.figure(figsize=(40,20))
+        color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms_analytic))
+        ax = fig_analytic.add_subplot(1,2,1, projection="3d")
+        x = config.radius*[np.sin(angle[0])*np.cos(angle[1]) for angle in angles]
+        y = config.radius*[np.sin(angle[0])*np.sin(angle[1]) for angle in angles]
+        z = config.radius*[np.cos(angle[0]) for angle in angles]
+        sc = ax.scatter3D(x,y,z,s=30,c=mean_curvature_norms_analytic, cmap ="Spectral", norm=color_norm)
+        ax.set_title("Norm of mean curvature obtained through analytic immersion")
+        plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_analytic.png")
+        plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_analytic.svg")
+        plt.colorbar(sc)
     else:
         fig_analytic = None
 
-    fig = plt.figure(figsize=(40,20))
-    ax1 = plt.subplot(121, projection='polar')
-    ax2 = plt.subplot(122)
-
     if config.dataset_name in ("experimental", "s1_synthetic"):
+        fig = plt.figure(figsize=(40,20))
+        ax1 = plt.subplot(121, projection='polar')
+        ax2 = plt.subplot(122)
         colormap = plt.get_cmap("hsv")
         color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms))
         sc = ax1.scatter(
@@ -199,6 +211,18 @@ def plot_curv(angles, mean_curvature_norms, mean_curvature_norms_analytic, confi
         ax2.set_xlabel("angle", fontsize=40)
         plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_learned.png")
         plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_learned.svg")
+    elif config.dataset_name == "s2_synthetic":
+        fig = None
+        color_norm = mpl.colors.Normalize(0.0, 1.2 * max(mean_curvature_norms_analytic))
+        ax_learned = fig_analytic.add_subplot(1,2,2, projection="3d")
+        x = config.radius*[np.sin(angle[0])*np.cos(angle[1]) for angle in angles]
+        y = config.radius*[np.sin(angle[0])*np.sin(angle[1]) for angle in angles]
+        z = config.radius*[np.cos(angle[0]) for angle in angles]
+        sc = ax_learned.scatter3D(x,y,z,s=30,c=mean_curvature_norms, cmap="Spectral",norm=color_norm)
+        ax_learned.set_title("Norm of mean curvature obtained through learned immersion")
+        plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_learned.png")
+        plt.savefig(f"results/figures/{config.results_prefix}_curv_profile_learned.svg")
+        plt.colorbar(sc)
     
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
@@ -207,17 +231,27 @@ def plot_curv(angles, mean_curvature_norms, mean_curvature_norms_analytic, confi
 
 
 def plot_comparison(angles, mean_curvature_norms_analytic, mean_curvature_norms, error, config):
-    fig, ax = plt.subplots(figsize=(20,20))
+    
 
     if config.dataset_name == "s1_synthetic":
+        fig, ax = plt.subplots(figsize=(20,20))
         ax.plot(angles, mean_curvature_norms_analytic,"--",label="analytic")
         ax.plot(angles,mean_curvature_norms,label="learned")
-        ax.set_xlabel("angle", fontsize=40)
-    
-    ax.legend(prop={"size": 40}, loc = "upper right")
-    ax.set_title("Error = " + "%.3f" % error, fontsize=30)
-    plt.xticks(fontsize=24)
-    plt.yticks(fontsize=24)
+        ax.set_xlabel("angle", fontsize=40)  
+        ax.legend(prop={"size": 40}, loc = "upper right")
+        ax.set_title("Error = " + "%.3f" % error, fontsize=30)
+        plt.xticks(fontsize=24)
+        plt.yticks(fontsize=24)
+    elif config.dataset_name == "s2_synthetic":
+        fig = plt.figure(figsize=(20,20))
+        ax_analytic = plt.add_subplot(121,projection="3d")
+        ax_learned = plt.add_subplot(122,projection="3d")
+        x = [np.sin(angle[0])*np.cos(angle[1]) for angle in angles]
+        y = [np.sin(angle[0])*np.sin(angle[1]) for angle in angles]
+        z = [np.cos(angle[0]) for angle in angles]
+        sc_analytic = ax_analytic.scatter3D(x,y,z,s=5,c=mean_curvature_norms_analytic)
+        sc_learned = ax_learned.scatter3D(x,y,z,s=5,c=mean_curvature_norms)
+
     plt.savefig(f"results/figures/{config.results_prefix}_comparison.png")
     plt.savefig(f"results/figures/{config.results_prefix}_comparison.svg")
     return fig
