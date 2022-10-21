@@ -297,7 +297,7 @@ def load_s2_synthetic(rot, n_times, radius, distortion_amp, embedding_dim, noise
     data = torch.zeros(n_times*n_times, embedding_dim)
 
     for _, point in enumerate(points):
-        point = gs.array([point])
+        point = gs.array(point)
         data[_, :] = immersion(point)
 
     noise_dist = MultivariateNormal(
@@ -421,9 +421,8 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
         return gs.array([x, y, z])
 
     def s2_synthetic_immersion(angle_pair):
-        #breakpoint()
-        theta = angle_pair[0][0]
-        phi = angle_pair[0][1]
+        theta = angle_pair[0]
+        phi = angle_pair[1]
         
         amplitude = radius * (1 + distortion_amp * gs.exp(-5 * theta**2)
         + distortion_amp * gs.exp(-5 * (theta-gs.pi)**2))

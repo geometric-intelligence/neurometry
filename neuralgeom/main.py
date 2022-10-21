@@ -8,14 +8,14 @@ import default_config
 import models.neural_geom_vae
 import torch
 import train
-from main_eval import get_mean_curvature
 from main_eval import get_mean_curvature_analytic
-from main_eval import get_cross_corr
 from main_eval import get_difference
-from main_eval import get_model_immersion
+from main_eval import get_neural_immersion
 from main_eval import compute_mean_curvature
-from plots import create_plots
 from main_eval import get_difference_s2
+
+from plots import create_plots
+
 import time
 
 import wandb
@@ -25,7 +25,7 @@ def main():
 
     # Initialize WandB
     wandb.init(
-        project="pluto",
+        project="hippocampus",
         config={
             "run_name": default_config.run_name,
             "device": default_config.device,
@@ -55,6 +55,7 @@ def main():
             "decoder_width": default_config.decoder_width,
             "latent_dim": default_config.latent_dim,
             "posterior_type": default_config.posterior_type,
+            "manifold_dim": default_config.manifold_dim,
             "gen_likelihood_type": default_config.gen_likelihood_type,
             "results_prefix": default_config.results_prefix,
             "gamma": default_config.gamma,
@@ -82,7 +83,7 @@ def main():
         posterior_type=config.posterior_type,
     ).to(config.device)
 
-    # Create optimier, scheduler
+    # Create optimizer, scheduler
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     if config.scheduler == True:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -101,8 +102,12 @@ def main():
         config=config,
     )
 
+    print("Done Training!")
+
+    # Begin curvature analysis
+
     if config.dataset_name in ("s1_synthetic", "experimental"):
-        angles = torch.linspace(0, 2 * gs.pi, dataset_torch.shape[0])
+        points = torch.linspace(0, 2 * gs.pi, dataset_torch.shape[0])
     elif config.dataset_name == "s2_synthetic":
         thetas = gs.linspace(0.01,gs.pi,config.n_times)
         phis = gs.linspace(0,2*gs.pi,config.n_times)
@@ -118,16 +123,14 @@ def main():
     # mean_curvature, mean_curvature_norms = get_mean_curvature(
     #     best_model, angles, config, dataset_torch.shape[1]
     # )
-    immersion = get_model_immersion(model, config)
-    mean_curvature, mean_curvature_norms = compute_mean_curvature(points,immersion=immersion,dim=2,embedding_dim=3)
+    immersion = get_neural_immersion(model, config)
+    mean_curvature, mean_curvature_norms = compute_mean_curvature(latent_angle=points,neural_immersion=immersion,dim=config.manifold_dim,embedding_dim=config.embedding_dim)
 
 
 
     end_time = time.time()
 
     print("Computation time: " + "%.3f" %(end_time - start_time) + " seconds.")
-
-
 
 
 
@@ -140,10 +143,6 @@ def main():
         )
 
 
-        s1, s2, correlation = get_cross_corr(
-            mean_curvature_norms, mean_curvature_norms_analytic
-        )
-
         error = get_difference(
             angles, mean_curvature_norms_analytic, mean_curvature_norms
         )
@@ -152,10 +151,10 @@ def main():
 
         fig_loss, fig_recon, fig_latent, fig_curv, fig_curv_analytic, fig_comparison = create_plots(train_losses,test_losses,model,dataset_torch,labels,angles,mean_curvature_norms,mean_curvature_norms_analytic, error, config)
 
+
         wandb.log(
             {
                 "error": error,
-                "correlation": max(correlation),
                 "fig_loss": wandb.Image(fig_loss),
                 "fig_recon": wandb.Image(fig_recon),
                 "fig_latent": wandb.Image(fig_latent),
@@ -210,5 +209,4 @@ def main():
 
 
 
-for i in range(5):  
-    main()
+main()
