@@ -38,4 +38,4 @@ repos:
     hooks:
     -   id: flake8
         additional_dependencies: [flake8-docstrings]
-
+        args : ["--max-line-length = 88", "--extend-ignore = E203"]
