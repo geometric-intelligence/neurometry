@@ -8,10 +8,6 @@ neuralgeom/data.zip
 neuralgeom/wandb/*
 neuralgeom/results/*
 
-neuralgeom/new_vae/results/*
-
-neuralgeom/new_vae/wandb/*
-
 # Result files
 *.png
 *.pt
