@@ -1,6 +1,7 @@
 import math
-import torch
+
 import default_config
+import torch
 
 
 class HypersphericalUniform(torch.distributions.Distribution):

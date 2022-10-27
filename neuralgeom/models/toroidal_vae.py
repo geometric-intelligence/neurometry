@@ -4,13 +4,12 @@ This file gathers deep learning models related to G-manifold learning.
 """
 
 import torch
-from torch.nn import functional as F
+from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
 from torch.distributions.normal import Normal as Normal
-from hyperspherical_vae.distributions import VonMisesFisher
-from hyperspherical_vae.distributions import HypersphericalUniform
+from torch.nn import functional as F
 
 
-class VAE(torch.nn.Module):
+class ToroidalVAE(torch.nn.Module):
     """VAE with Linear (fully connected) layers.
 
     Parameters
@@ -39,7 +38,7 @@ class VAE(torch.nn.Module):
         self.sftbeta = sftbeta
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
-        
+
         decoder_width = encoder_width
         decoder_depth = encoder_depth
 
@@ -57,7 +56,7 @@ class VAE(torch.nn.Module):
         elif posterior_type == "hyperspherical":
             self.fc_z_theta_mu = torch.nn.Linear(encoder_width, self.latent_dim)
             self.fc_z_theta_logvar = torch.nn.Linear(encoder_width, 1)  # kappa
-            
+
             self.fc_z_phi_mu = torch.nn.Linear(encoder_width, self.latent_dim)
             self.fc_z_phi_logvar = torch.nn.Linear(encoder_width, 1)
 
@@ -93,11 +92,10 @@ class VAE(torch.nn.Module):
             multivariate Gaussian in latent space.
         """
         h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
-        
 
         for layer in self.encoder_linears:
-            h = F.softplus(layer(h),  beta=self.sftbeta)
-           
+            h = F.softplus(layer(h), beta=self.sftbeta)
+
         if self.posterior_type == "hyperspherical":
             z_theta_mu = self.fc_z_theta_mu(h)
             z_theta_kappa = F.softplus(self.fc_z_theta_logvar(h)) + 1
@@ -106,8 +104,6 @@ class VAE(torch.nn.Module):
             z_phi_mu = self.fc_z_phi_mu(h)
             z_phi_kappa = F.softplus(self.fc_z_phi_logvar(h)) + 1
             posterior_params_phi = z_phi_mu, z_phi_kappa
-
-
 
         return posterior_params_theta, posterior_params_phi
 
@@ -139,7 +135,6 @@ class VAE(torch.nn.Module):
             q_z_phi = VonMisesFisher(z_phi_mu, z_phi_kappa)
             p_z_phi = HypersphericalUniform(self.latent_dim - 1)
 
-
         z_theta = q_z_theta.rsample()
 
         z_phi = q_z_phi.sample()
@@ -159,13 +154,11 @@ class VAE(torch.nn.Module):
         _ : array-like, shape=[batch_size, data_dim]
             Reconstructed data corresponding to z.
         """
-        
+
         h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
-        
 
         for layer in self.decoder_linears:
             h = F.softplus(layer(h), beta=self.sftbeta)
-            
 
         x_mu = self.fc_x_mu(h)
 

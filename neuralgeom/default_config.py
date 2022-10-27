@@ -23,7 +23,7 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 10  # 240  #
+n_epochs = 2  # 240  #
 learning_rate = 1e-3
 sftbeta = 10
 beta = 0.03
@@ -73,7 +73,7 @@ elif dataset_name == "s2_synthetic":
 
 
 # Models
-model_type = "neural_geom_vae"
+model_type = "neural_vae"
 encoder_width = 400
 decoder_width = encoder_width
 encoder_depth = 6

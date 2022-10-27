@@ -4,13 +4,12 @@ This file gathers deep learning models related to G-manifold learning.
 """
 
 import torch
-from torch.nn import functional as F
+from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
 from torch.distributions.normal import Normal as Normal
-from hyperspherical_vae.distributions import VonMisesFisher
-from hyperspherical_vae.distributions import HypersphericalUniform
+from torch.nn import functional as F
 
 
-class VAE(torch.nn.Module):
+class NeuralVAE(torch.nn.Module):
     """VAE with Linear (fully connected) layers.
 
     Parameters
@@ -34,12 +33,12 @@ class VAE(torch.nn.Module):
         decoder_depth=2,
         posterior_type="gaussian",
     ):
-        super(VAE, self).__init__()
+        super(NeuralVAE, self).__init__()
         self.data_dim = data_dim
         self.sftbeta = sftbeta
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
-        
+
         decoder_width = encoder_width
         decoder_depth = encoder_depth
 
@@ -90,11 +89,9 @@ class VAE(torch.nn.Module):
             multivariate Gaussian in latent space.
         """
         h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
-        
 
         for layer in self.encoder_linears:
-            h = F.softplus(layer(h),  beta=self.sftbeta)
-           
+            h = F.softplus(layer(h), beta=self.sftbeta)
 
         if self.posterior_type == "gaussian":
             z_mu = self.fc_z_mu(h)
@@ -153,13 +150,11 @@ class VAE(torch.nn.Module):
         _ : array-like, shape=[batch_size, data_dim]
             Reconstructed data corresponding to z.
         """
-        
+
         h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
-        
 
         for layer in self.decoder_linears:
             h = F.softplus(layer(h), beta=self.sftbeta)
-            
 
         x_mu = self.fc_x_mu(h)
 

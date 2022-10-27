@@ -1,7 +1,8 @@
-import torch
+from numbers import Number
+
 import numpy as np
 import scipy.special
-from numbers import Number
+import torch
 
 
 class IveFunction(torch.autograd.Function):

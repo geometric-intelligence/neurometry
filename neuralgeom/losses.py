@@ -1,7 +1,7 @@
 """Losses."""
 
 import torch
-from hyperspherical_vae.distributions import HypersphericalUniform, VonMisesFisher
+from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
 
 
 def elbo(x, x_mu, posterior_params, z, labels, config):

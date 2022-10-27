@@ -2,9 +2,8 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
-
-from geomstats.geometry.pullback_metric import PullbackMetric
 import torch
+from geomstats.geometry.pullback_metric import PullbackMetric
 
 
 class NeuralMetric(PullbackMetric):
@@ -29,7 +28,7 @@ class NeuralMetric(PullbackMetric):
         return H
 
 
-def get_neural_immersion(model):
+def get_learned_immersion(model):
     """NEED TO FIX DOCUMENTATION HERE
 
 

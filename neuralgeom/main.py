@@ -7,16 +7,14 @@ import time
 import datasets.utils
 import default_config
 import geomstats.backend as gs
-import models.neural_geom_vae
+import models.neural_vae
 import torch
 import train
 import wandb
-from main_eval import (
-    compute_mean_curvature,
-    get_difference,
-    get_difference_s2,
-    get_mean_curvature_analytic,
-    get_neural_immersion,
+from evaluate import (
+    compute_error,
+    compute_mean_curvature_learned,
+    compute_mean_curvature_true,
 )
 from plots import plot_curv, plot_latent_space, plot_loss, plot_recon
 
@@ -69,11 +67,9 @@ dataset_torch.to(config.device)
 _, data_dim = dataset_torch.shape
 
 
-
-def train_model():
-
+def train_test_model():
     # Create model
-    model = models.neural_geom_vae.VAE(
+    model = models.neural_vae.NeuralVAE(
         data_dim=data_dim,
         latent_dim=config.latent_dim,
         sftbeta=config.sftbeta,
@@ -94,7 +90,7 @@ def train_model():
         scheduler = None
 
     # Train model
-    train_losses, test_losses, best_model = train.train_model(
+    train_losses, test_losses, best_model = train.train_test(
         model=model,
         train_loader=train_loader,
         test_loader=test_loader,
@@ -104,7 +100,10 @@ def train_model():
     )
 
     print("Done Training!")
+    return train_losses, test_losses, best_model
 
+
+def plot_and_log(train_losses, test_losses, model):
     # Plot the loss
     fig_loss = plot_loss(train_losses, test_losses, config)
 
@@ -123,69 +122,40 @@ def train_model():
             "fig_recon": wandb.Image(fig_recon),
         }
     )
-
-    return best_model
+    print("Done Plotting!")
 
 
 def evaluate_curvature(model):
 
-    if config.dataset_name in ("s1_synthetic", "experimental"):
-        points = torch.linspace(0, 2 * gs.pi, dataset_torch.shape[0])
-    elif config.dataset_name == "s2_synthetic":
-        thetas = gs.linspace(0.01, gs.pi, config.n_times)
-        phis = gs.linspace(0, 2 * gs.pi, config.n_times)
-        points = torch.cartesian_prod(thetas, phis)
-
-    print("Computing curvature...")
-
-    embedding_dim = dataset_torch.shape[1]
-    immersion = get_neural_immersion(model, config)
+    print("Computing learned curvature...")
 
     # Compute model mean curvature
-    mean_curvature, mean_curvature_norms = compute_mean_curvature(
-        latent_angle=points,
-        neural_immersion=immersion,
-        dim=config.manifold_dim,
-        embedding_dim=embedding_dim,
-    )
+    z_grid, _, curv_norms_learned = compute_mean_curvature_learned(model, config)
 
-    # Plot learned mean curvature norm profile
-    fig_curv_learned = plot_curv(points, mean_curvature_norms, config, "learned")
+    # Plot and log learned mean curvature norm profile
+    fig_curv_norms_learned = plot_curv(z_grid, curv_norms_learned, config, "learned")
+    wandb.log({"fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned)})
 
-    wandb.log({"fig_curv_learned": wandb.Image(fig_curv_learned)})
-
+    print("Computing true curvature from synthetic data...")
     if config.dataset_name in ("s1_synthetic", "s2_synthetic"):
+        # Compute treu mean curvature
+        z_grid, _, curv_norms_true = compute_mean_curvature_true(config)
+        error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
 
-        # Compute analytic mean curvature
-        (
-            mean_curvature_analytic,
-            mean_curvature_norms_analytic,
-        ) = get_mean_curvature_analytic(points, config)
+        # Plot true mean curvature norm profile
+        fig_curv_norms_true = plot_curv(z_grid, curv_norms_true, config, "true")
 
-        # Calculate method error
-        if config.dataset_name == "s1_synthetic":
-            error = get_difference(
-                points, mean_curvature_norms_analytic, mean_curvature_norms
-            )
-        else:
-            error = get_difference_s2(
-                thetas, phis, mean_curvature_norms_analytic, mean_curvature_norms
-            )
-
-        # Plot analytic mean curvature norm profile
-        fig_curv_analytic = plot_curv(
-            points, mean_curvature_norms_analytic, config, "analytic"
+        wandb.log(
+            {"error": error, "fig_curv_norms_true": wandb.Image(fig_curv_norms_true)}
         )
 
-        wandb.log({"error": error, "fig_curv_analytic": wandb.Image(fig_curv_analytic)})
 
-
-model = train_model()
-
+train_losses, test_losses, best_model = train_test_model()
+plot_and_log(train_losses, test_losses, best_model)
 
 # start_time = time.time()
 
-# evaluate_curvature(model)
+evaluate_curvature(best_model)
 
 # end_time = time.time()
 
