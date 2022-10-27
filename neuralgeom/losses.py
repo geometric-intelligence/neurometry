@@ -1,14 +1,11 @@
 """Losses."""
 
 import torch
-
-from hyperspherical_vae.distributions import VonMisesFisher
-from hyperspherical_vae.distributions import HypersphericalUniform
+from hyperspherical_vae.distributions import HypersphericalUniform, VonMisesFisher
 
 
 def elbo(x, x_mu, posterior_params, z, labels, config):
     """Compute VAE elbo loss.
-
     The VAE elbo loss is defined as:
     = reconstruction loss + Kl divergence
     over all elements and batch
@@ -55,11 +52,10 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
     if config.dataset_name == "s1_synthetic":
         recon_loss = recon_loss / (config.radius**2)
 
-
     return (
         recon_loss
         + config.beta * kld
-        + config.gamma * latent_regularization_loss(labels, z, config)
+        + config.gamma * latent_regularization_loss(labels, z, config) ** 2
     )
 
 
@@ -75,18 +71,17 @@ def latent_regularization_loss(labels, z, config):
         angle_loss = torch.mean(1 - torch.cos(latent_angles - labels))
         latent_loss = angle_loss
     elif config.dataset_name == "s2_synthetic":
-        latent_thetas = torch.arccos(z[:,2])
+        latent_thetas = torch.arccos(z[:, 2])
         latent_phis = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
-        thetas_loss = torch.mean(1-torch.cos(latent_thetas-labels[:,0]))
-        phis_loss = torch.mean(torch.sin(latent_thetas)*torch.sin(labels[:,0])*(1-torch.cos(latent_phis-labels[:,1])))
+        thetas_loss = torch.mean(1 - torch.cos(latent_thetas - labels[:, 0]))
+        phis_loss = torch.mean(
+            torch.sin(latent_thetas)
+            * torch.sin(labels[:, 0])
+            * (1 - torch.cos(latent_phis - labels[:, 1]))
+        )
         latent_loss = thetas_loss + phis_loss
     elif config.dataset_name == "t2_synthetic":
         # TODO
         latent_loss = 0
 
     return latent_loss
-
-
-
-
-
