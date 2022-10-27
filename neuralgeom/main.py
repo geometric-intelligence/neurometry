@@ -128,21 +128,15 @@ def plot_and_log(train_losses, test_losses, model):
 def evaluate_curvature(model):
 
     print("Computing learned curvature...")
-
-    # Compute model mean curvature
     z_grid, _, curv_norms_learned = compute_mean_curvature_learned(model, config)
-
-    # Plot and log learned mean curvature norm profile
     fig_curv_norms_learned = plot_curv(z_grid, curv_norms_learned, config, "learned")
     wandb.log({"fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned)})
 
     print("Computing true curvature from synthetic data...")
     if config.dataset_name in ("s1_synthetic", "s2_synthetic"):
-        # Compute treu mean curvature
         z_grid, _, curv_norms_true = compute_mean_curvature_true(config)
         error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
 
-        # Plot true mean curvature norm profile
         fig_curv_norms_true = plot_curv(z_grid, curv_norms_true, config, "true")
 
         wandb.log(
