@@ -1,16 +1,19 @@
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
-import torch
 import itertools
 
-from neuralgeom.main_eval import get_patch_inner_product_derivative_matrix
-from neuralgeom.main_eval import compute_mean_curvature
-from neuralgeom.main_eval import get_second_fundamental_form as sff
-from neuralgeom.datasets.synthetic import get_s1_synthetic_immersion
-from geomstats.geometry.pullback_metric import PullbackMetric
+import geomstats.backend as gs
+import torch
 from geomstats.geometry.hypersphere import Hypersphere
+from geomstats.geometry.pullback_metric import PullbackMetric
+
+from neuralgeom.datasets.synthetic import get_s1_synthetic_immersion
+from neuralgeom.evaluate import (
+    compute_mean_curvature,
+    get_patch_inner_product_derivative_matrix,
+)
+from neuralgeom.evaluate import get_second_fundamental_form as sff
 
 sphere = Hypersphere(dim=2)
 
@@ -35,7 +38,6 @@ def get_sphere_immersion(radius):
     return immersion
 
 
-
 def test_second_fundamental_form_s1():
     dim = 1
     embedding_dim = 2
@@ -57,6 +59,7 @@ def test_second_fundamental_form_s1():
     assert gs.allclose(sec_fun.shape, expected.shape), sec_fun.shape
     assert gs.allclose(sec_fun, expected), sec_fun
 
+
 def test_second_fundamental_form_bump():
     dim = 1
     embedding_dim = 2
@@ -66,7 +69,13 @@ def test_second_fundamental_form_bump():
     print("point s1:", point.shape)
 
     immersion = get_s1_synthetic_immersion(
-        distortion_func="bump",radius=1,n_wiggles=3,distortion_amp=0.3,embedding_dim=2,rot=torch.eye(2))
+        distortion_func="bump",
+        radius=1,
+        n_wiggles=3,
+        distortion_amp=0.3,
+        embedding_dim=2,
+        rot=torch.eye(2),
+    )
 
     sec_fun = sff(immersion, point, dim, embedding_dim)
 
@@ -159,7 +168,7 @@ def test_metric_matrix_s1():
     point = gs.array([gs.pi / 4])
     matrix = metric.metric_matrix(point)
 
-    expected_matrix = gs.array([radius ** 2]).reshape((dim, dim))
+    expected_matrix = gs.array([radius**2]).reshape((dim, dim))
 
     assert gs.allclose(matrix.shape, expected_matrix.shape), matrix.shape
     assert gs.allclose(matrix, expected_matrix), matrix
@@ -173,7 +182,7 @@ def test_cometric_matrix_s1():
 
     comatrix = metric.cometric_matrix(point)
 
-    expected_comatrix = gs.array([1 / radius ** 2]).reshape((dim, dim))
+    expected_comatrix = gs.array([1 / radius**2]).reshape((dim, dim))
 
     assert gs.allclose(comatrix.shape, expected_comatrix.shape), comatrix.shape
     assert gs.allclose(comatrix, expected_comatrix), comatrix
@@ -189,7 +198,7 @@ def test_metric_matrix_s2():
     matrix = metric.metric_matrix(point)
 
     expected_matrix = gs.array(
-        [[radius ** 2, 0], [0, radius ** 2 * gs.sin(theta) ** 2]]
+        [[radius**2, 0], [0, radius**2 * gs.sin(theta) ** 2]]
     )
 
     assert gs.allclose(matrix.shape, expected_matrix.shape), matrix.shape
@@ -208,7 +217,7 @@ def test_cometric_matrix_s2():
     comatrix = metric.cometric_matrix(point)
 
     expected_comatrix = gs.array(
-        [[1 / (radius ** 2), 0], [0, 1 / (radius ** 2 * gs.sin(theta) ** 2)]]
+        [[1 / (radius**2), 0], [0, 1 / (radius**2 * gs.sin(theta) ** 2)]]
     )
 
     assert gs.allclose(comatrix.shape, expected_comatrix.shape), comatrix.shape
@@ -232,7 +241,7 @@ def test_inner_product_derivative_matrix_s2():
 
     # derivative with respect to theta
     expected_1 = gs.array(
-        [[0, 0], [0, 2 * radius ** 2 * gs.cos(theta) * gs.sin(theta)]]
+        [[0, 0], [0, 2 * radius**2 * gs.cos(theta) * gs.sin(theta)]]
     )
     # derivative with respect to phi
     expected_2 = gs.zeros(1)
@@ -244,7 +253,14 @@ def test_inner_product_derivative_matrix_s2():
 
 def test_christoffels_bump():
     dim, embedding_dim, radius = 1, 2, 1
-    immersion = get_s1_synthetic_immersion(distortion_func="bump",radius=1,n_wiggles=3,distortion_amp=0.3,embedding_dim=2,rot=torch.eye(2))
+    immersion = get_s1_synthetic_immersion(
+        distortion_func="bump",
+        radius=1,
+        n_wiggles=3,
+        distortion_amp=0.3,
+        embedding_dim=2,
+        rot=torch.eye(2),
+    )
     metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
     # PATCH: assign new method in pullback metric
     metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
@@ -257,6 +273,7 @@ def test_christoffels_bump():
     # points =  gs.linspace(0,2*gs.pi,100)
     # christoffels = metric.christoffels(points)
 
+
 def test_christoffels_s1():
     dim, embedding_dim, radius = 1, 2, 1
     immersion = get_immersion(radius=radius)
@@ -267,6 +284,7 @@ def test_christoffels_s1():
 
     assert gs.allclose(christoffels.shape, (1, 1, 1)), christoffels.shape
     assert gs.allclose(christoffels, gs.zeros((1, 1, 1))), christoffels.shape
+
 
 def test_christoffels_s2():
     dim, embedding_dim, radius = 2, 3, 1
