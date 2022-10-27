@@ -1,22 +1,20 @@
 """Fit a VAE to place cells."""
 
 
-import losses
-import torch
 import copy
 
+import losses
+import torch
 import wandb
 
 
-def train_model(
-    model, train_loader, test_loader, optimizer, scheduler, config
-):
+def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
     train_losses = []
     test_losses = []
     lowest_test_loss = 1000
     for epoch in range(1, config.n_epochs + 1):
 
-        train_loss = train(
+        train_loss = train_one_epoch(
             epoch=epoch,
             model=model,
             train_loader=train_loader,
@@ -26,9 +24,8 @@ def train_model(
 
         train_losses.append(train_loss)
 
-        test_loss = test(model=model, test_loader=test_loader, config=config
-        )
-        
+        test_loss = test_one_epoch(model=model, test_loader=test_loader, config=config)
+
         if config.scheduler == "True":
             scheduler.step(test_loss)
 
@@ -38,13 +35,12 @@ def train_model(
             lowest_test_loss = test_loss
             best_model = copy.deepcopy(model)
 
-
         wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
 
     return train_losses, test_losses, best_model
 
 
-def train(epoch, model, train_loader, optimizer, config):
+def train_one_epoch(epoch, model, train_loader, optimizer, config):
     """Run one epoch on the train set.
 
     Parameters
@@ -61,7 +57,8 @@ def train(epoch, model, train_loader, optimizer, config):
     train_loss = 0
     for batch_idx, batch_data in enumerate(train_loader):
         data, labels = batch_data
-        labels = labels#.float()
+
+        labels = labels  # .float()
         data = data.to(config.device)
         labels = labels.to(config.device)
         optimizer.zero_grad()
@@ -86,12 +83,11 @@ def train(epoch, model, train_loader, optimizer, config):
 
     train_loss = train_loss / len(train_loader.dataset)
 
-
     print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss))
     return train_loss
 
 
-def test(model, test_loader, config):
+def test_one_epoch(model, test_loader, config):
     """Run one epoch on the test set.
 
     The loss is computed on the whole test set.
@@ -116,7 +112,6 @@ def test(model, test_loader, config):
             labels = labels.to(config.device)
             x_mu_batch, posterior_params = model(data)
             z, _, _ = model.reparameterize(posterior_params)
-
 
             test_loss += losses.elbo(
                 data, x_mu_batch, posterior_params, z, labels, config
