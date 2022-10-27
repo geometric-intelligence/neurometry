@@ -7,9 +7,9 @@ from datetime import datetime
 import torch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
-run_name = "testing"
+run_name = "nina-test-on-harold"  # "testing"
 
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
@@ -23,14 +23,14 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 240
+n_epochs = 10  # 240  #
 learning_rate = 1e-3
 sftbeta = 10
 beta = 0.03
 gamma = 1
 
 # Dataset
-dataset_name = "experimental"
+dataset_name = "s1_synthetic"  # "experimental"
 (
     expt_id,
     timestep_microsec,

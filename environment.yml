@@ -1,4 +1,4 @@
-name: ng
+name: neuralgeom
 channels:
   - conda-forge
 dependencies:
