@@ -1,10 +1,10 @@
 """Default configuration for a run."""
 
 import logging
-from datetime import datetime
-import torch
 import os
+from datetime import datetime
 
+import torch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
@@ -23,15 +23,15 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 5
+n_epochs = 240
 learning_rate = 1e-3
-sftbeta = 4.5
+sftbeta = 10
 beta = 0.03
-gamma = 10
+gamma = 1
 
 # Dataset
-dataset_name = "s2_synthetic"
-(   
+dataset_name = "experimental"
+(
     expt_id,
     timestep_microsec,
     smooth,
@@ -53,7 +53,7 @@ if dataset_name == "experimental":
     manifold_dim = 1
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
-    n_times = 500
+    n_times = 1000
     distortion_amp = 0.4
     radius = 1
     manifold_dim = 1
@@ -63,12 +63,12 @@ elif dataset_name == "s1_synthetic":
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "s2_synthetic":
     # actual number of points is n_times*n_times
-    n_times = 20
+    n_times = 80
     radius = 1
     distortion_amp = 0.4
     manifold_dim = 2
     embedding_dim = 3
-    noise_var = 3.5e-2
+    noise_var = 1e-3
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 
 
@@ -76,7 +76,7 @@ elif dataset_name == "s2_synthetic":
 model_type = "neural_geom_vae"
 encoder_width = 400
 decoder_width = encoder_width
-encoder_depth = 4
+encoder_depth = 6
 decoder_depth = encoder_depth
 if dataset_name in ("s1_synthetic", "experimental"):
     latent_dim = 2
