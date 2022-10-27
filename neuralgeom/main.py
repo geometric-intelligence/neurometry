@@ -69,6 +69,7 @@ dataset_torch.to(config.device)
 _, data_dim = dataset_torch.shape
 
 
+
 def train_model():
 
     # Create model
