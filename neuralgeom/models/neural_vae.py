@@ -126,16 +126,14 @@ class NeuralVAE(torch.nn.Module):
         if self.posterior_type == "gaussian":
             z_mu, z_logvar = posterior_params
             z_std = torch.exp(0.5 * z_logvar)
-            p_z = Normal(torch.ones_like(z_mu), torch.ones_like(z_std))
             q_z = Normal(z_mu, z_std)
         elif self.posterior_type == "hyperspherical":
             z_mu, z_kappa = posterior_params
             q_z = VonMisesFisher(z_mu, z_kappa)
-            p_z = HypersphericalUniform(self.latent_dim - 1)
 
         z = q_z.rsample()
 
-        return z, q_z, p_z
+        return z
 
     def decode(self, z):
         """Decode latent variable z into data.
@@ -180,6 +178,6 @@ class NeuralVAE(torch.nn.Module):
         """
 
         posterior_params = self.encode(x)
-        z, _, _ = self.reparameterize(posterior_params)
+        z = self.reparameterize(posterior_params)
         x_mu = self.decode(z)
-        return x_mu, posterior_params
+        return z, x_mu, posterior_params

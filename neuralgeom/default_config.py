@@ -23,14 +23,14 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 2  # 240  #
+n_epochs = 30  # 240  #
 learning_rate = 1e-3
 sftbeta = 10
 beta = 0.03
-gamma = 1
+gamma = 0
 
 # Dataset
-dataset_name = "s1_synthetic"  # "experimental"
+dataset_name = "t2_synthetic"
 (
     expt_id,
     timestep_microsec,
@@ -47,13 +47,13 @@ dataset_name = "s1_synthetic"  # "experimental"
 
 
 if dataset_name == "experimental":
-    expt_id = "34"  # hd: with head direction
+    expt_id = "7"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
     manifold_dim = 1
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
-    n_times = 1000
+    n_times = 500
     distortion_amp = 0.4
     radius = 1
     manifold_dim = 1
@@ -62,6 +62,15 @@ elif dataset_name == "s1_synthetic":
     noise_var = 1e-3
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "s2_synthetic":
+    # actual number of points is n_times*n_times
+    n_times = 80
+    radius = 1
+    distortion_amp = 0.4
+    manifold_dim = 2
+    embedding_dim = 3
+    noise_var = 1e-3
+    synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
+elif dataset_name == "t2_synthetic":
     # actual number of points is n_times*n_times
     n_times = 80
     radius = 1
@@ -84,7 +93,7 @@ elif dataset_name == "s2_synthetic":
     latent_dim = 3
 else:
     latent_dim = 2
-posterior_type = "hyperspherical"
+posterior_type = "toroidal"  # "hyperspherical"
 gen_likelihood_type = "gaussian"
 
 # Results

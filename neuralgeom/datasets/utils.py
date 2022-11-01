@@ -6,10 +6,8 @@ import mat73
 import numpy as np
 import scipy.io
 import torch
-from sklearn.decomposition import PCA
 from scipy.signal import savgol_filter
-
-
+from sklearn.decomposition import PCA
 
 
 def load(config):
@@ -40,14 +38,16 @@ def load(config):
         print(labels)
         dataset = dataset[labels["velocities"] > 5]
         labels = labels[labels["velocities"] > 5]
-        #1.768999993801117
+        # 1.768999993801117
         # dataset = dataset[labels["gains"] == 1.768999993801117]
         # labels = labels[labels["gains"] == 1.768999993801117]
         dataset = np.log(dataset.astype(np.float32) + 1)
         if config.smooth == True:
             dataset_smooth = np.zeros_like(dataset)
             for _ in range(dataset.shape[1]):
-                dataset_smooth[:,_] = savgol_filter(dataset[:,_],window_length=40,polyorder=2)
+                dataset_smooth[:, _] = savgol_filter(
+                    dataset[:, _], window_length=40, polyorder=2
+                )
             dataset = dataset_smooth
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "synthetic":
@@ -80,12 +80,22 @@ def load(config):
         )
     elif config.dataset_name == "s2_synthetic":
         dataset, labels = datasets.synthetic.load_s2_synthetic(
-            rot = config.synthetic_rotation,
+            rot=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
-            noise_var=config.noise_var
+            noise_var=config.noise_var,
+        )
+    elif config.dataset_name == "t2_synthetic":
+        dataset, labels = datasets.synthetic.load_t2_synthetic(
+            rot=config.synthetic_rotation,
+            n_times=config.n_times,
+            major_radius=2 * config.radius,
+            minor_radius=config.radius,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            noise_var=config.noise_var,
         )
 
     print(f"Dataset shape: {dataset.shape}.")
@@ -94,7 +104,7 @@ def load(config):
     else:
         dataset_torch = dataset
 
-    #dataset_torch = dataset_torch - torch.mean(dataset_torch, dim=0)
+    # dataset_torch = dataset_torch - torch.mean(dataset_torch, dim=0)
 
     train_num = int(round(0.7 * len(dataset)))  # 70% training
     indeces = np.arange(len(dataset))
@@ -115,7 +125,7 @@ def load(config):
         test = []
         for d, l in zip(test_dataset, test_labels["angles"]):
             test.append([d, float(l)])
-    elif config.dataset_name == "s2_synthetic":
+    elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         train = []
         for d, t, p in zip(
             train_dataset, train_labels["thetas"], train_labels["phis"]
@@ -124,7 +134,6 @@ def load(config):
         test = []
         for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"]):
             test.append([d, torch.tensor([float(t), float(p)])])
-
 
     train_loader = torch.utils.data.DataLoader(train, batch_size=config.batch_size)
     test_loader = torch.utils.data.DataLoader(test, batch_size=config.batch_size)

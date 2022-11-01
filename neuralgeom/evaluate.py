@@ -5,7 +5,11 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 import numpy as np
 import torch
-from datasets.synthetic import get_s1_synthetic_immersion, get_s2_synthetic_immersion
+from datasets.synthetic import (
+    get_s1_synthetic_immersion,
+    get_s2_synthetic_immersion,
+    get_t2_synthetic_immersion,
+)
 from geomstats.geometry.pullback_metric import PullbackMetric
 
 
@@ -24,6 +28,16 @@ def get_learned_immersion(model, config):
                     gs.sin(theta) * gs.cos(phi),
                     gs.sin(theta) * gs.sin(phi),
                     gs.cos(theta),
+                ]
+            )
+        elif config.dataset_name == "t2_synthetic":
+            theta = angle[0]
+            phi = angle[1]
+            z = gs.array(
+                [
+                    (2 + gs.cos(theta)) * gs.cos(phi),
+                    (2 + gs.cos(theta)) * gs.sin(phi),
+                    gs.sin(theta),
                 ]
             )
 
@@ -52,6 +66,14 @@ def get_true_immersion(config):
             embedding_dim=config.embedding_dim,
             rot=config.synthetic_rotation,
         )
+    elif config.dataset_name == "t2_synthetic":
+        immersion = get_t2_synthetic_immersion(
+            major_radius=2 * config.radius,
+            minor_radius=config.radius,
+            distortion_amp=config.distortion_amp,
+            embedding_dim=config.embedding_dim,
+            rot=config.synthetic_rotation,
+        )
     return immersion
 
 
@@ -60,6 +82,10 @@ def get_z_grid(config, n_z=1000):
         z_grid = torch.linspace(0, 2 * gs.pi, n_z)
     elif config.dataset_name == "s2_synthetic":
         thetas = gs.linspace(0.01, gs.pi, n_z)
+        phis = gs.linspace(0, 2 * gs.pi, n_z)
+        z_grid = torch.cartesian_prod(thetas, phis)
+    elif config.dataset_name == "t2_synthetic":
+        thetas = gs.linspace(0, 2 * gs.pi, n_z)
         phis = gs.linspace(0, 2 * gs.pi, n_z)
         z_grid = torch.cartesian_prod(thetas, phis)
     return z_grid
@@ -109,7 +135,7 @@ def compute_mean_curvature_true(config):
 
 
 # Computes "error" of learned curvature profile given true profile, for S^1
-def compute_error_s1(thetas, curv_norms_learned, curv_norms_true):
+def _compute_error_s1(thetas, curv_norms_learned, curv_norms_true):
     curv_norms_learned = np.array(curv_norms_learned)
     curv_norms_true = np.array(curv_norms_true)
     diff = np.trapz((curv_norms_learned - curv_norms_true) ** 2, thetas)
@@ -121,7 +147,7 @@ def compute_error_s1(thetas, curv_norms_learned, curv_norms_true):
 
 
 # Helper function for compute_error_s2, integrates over S^2
-def integrate_s2(thetas, phis, h):
+def _integrate_s2(thetas, phis, h):
     sum_phis = torch.zeros_like(thetas)
     for t, theta in enumerate(thetas):
         sum_phis[t] = torch.trapz(
@@ -132,12 +158,22 @@ def integrate_s2(thetas, phis, h):
 
 
 # Computes "error" of learned curvature profile given true profile, for S^2
-def compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true):
-    diff = integrate_s2(thetas, phis, (curv_norms_ - curv_norms_true) ** 2)
-    normalization = integrate_s2(
-        thetas, phis, (curv_norms_) ** 2 + (curv_norms_true) ** 2
+def _compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true):
+    diff = _integrate_s2(thetas, phis, (curv_norms_learned - curv_norms_true) ** 2)
+    normalization = _integrate_s2(
+        thetas, phis, (curv_norms_learned) ** 2 + (curv_norms_true) ** 2
     )
     return diff / normalization
+
+
+def _integrate_t2(thetas, phis, h):
+    # TODO
+    return 0
+
+
+def _compute_error_t2(thetas, phis, curv_norms_learned, curv_norms_true):
+    # TODO
+    return 0
 
 
 def compute_error(
@@ -145,9 +181,13 @@ def compute_error(
 ):  # Calculate method error
     if config.dataset_name == "s1_synthetic":
         thetas = z_grid
-        error = compute_error_s1(thetas, curv_norms_learned, curv_norms_true)
-    else:
+        error = _compute_error_s1(thetas, curv_norms_learned, curv_norms_true)
+    elif config.dataset_name == "s2_synthetic":
         thetas = z_grid[:, 0]
         phis = z_grid[:, 1]
-        error = compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true)
+        error = _compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true)
+    elif config.dataset_name == "t2_synthetic":
+        thetas = z_grid[:, 0]
+        phis = z_grid[:, 1]
+        error = _compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true)
     return error

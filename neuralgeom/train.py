@@ -62,10 +62,9 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
         data = data.to(config.device)
         labels = labels.to(config.device)
         optimizer.zero_grad()
-        x_mu_batch, posterior_params = model(data)
-        z, _, _ = model.reparameterize(posterior_params)
+        z_batch, x_mu_batch, posterior_params = model(data)
 
-        loss = losses.elbo(data, x_mu_batch, posterior_params, z, labels, config)
+        loss = losses.elbo(data, x_mu_batch, posterior_params, z_batch, labels, config)
 
         loss.backward()
         train_loss += loss.item()
@@ -110,11 +109,10 @@ def test_one_epoch(model, test_loader, config):
             data = data.to(config.device)
             labels = labels.float()
             labels = labels.to(config.device)
-            x_mu_batch, posterior_params = model(data)
-            z, _, _ = model.reparameterize(posterior_params)
+            z_batch, x_mu_batch, posterior_params = model(data)
 
             test_loss += losses.elbo(
-                data, x_mu_batch, posterior_params, z, labels, config
+                data, x_mu_batch, posterior_params, z_batch, labels, config
             ).item()
 
     test_loss /= len(test_loader.dataset)
