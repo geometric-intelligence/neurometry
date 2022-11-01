@@ -35,9 +35,9 @@ def get_learned_immersion(model, config):
             phi = angle[1]
             z = gs.array(
                 [
-                    (2 + gs.cos(theta)) * gs.cos(phi),
-                    (2 + gs.cos(theta)) * gs.sin(phi),
-                    gs.sin(theta),
+                    (config.major_radius + config.minor_radius*gs.cos(theta)) * gs.cos(phi),
+                    (config.major_radius + config.minor_radius*gs.cos(theta)) * gs.sin(phi),
+                    config.minor_radius*gs.sin(theta),
                 ]
             )
 
@@ -68,8 +68,8 @@ def get_true_immersion(config):
         )
     elif config.dataset_name == "t2_synthetic":
         immersion = get_t2_synthetic_immersion(
-            major_radius=2 * config.radius,
-            minor_radius=config.radius,
+            major_radius=config.major_radius,
+            minor_radius=config.minor_radius,
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
             rot=config.synthetic_rotation,
@@ -77,16 +77,16 @@ def get_true_immersion(config):
     return immersion
 
 
-def get_z_grid(config, n_z=1000):
+def get_z_grid(config): 
     if config.dataset_name in ("s1_synthetic", "experimental"):
-        z_grid = torch.linspace(0, 2 * gs.pi, n_z)
+        z_grid = torch.linspace(0, 2 * gs.pi, config.n_times)
     elif config.dataset_name == "s2_synthetic":
-        thetas = gs.linspace(0.01, gs.pi, n_z)
-        phis = gs.linspace(0, 2 * gs.pi, n_z)
+        thetas = gs.linspace(0.01, gs.pi, config.n_times)
+        phis = gs.linspace(0, 2 * gs.pi, config.n_times)
         z_grid = torch.cartesian_prod(thetas, phis)
     elif config.dataset_name == "t2_synthetic":
-        thetas = gs.linspace(0, 2 * gs.pi, n_z)
-        phis = gs.linspace(0, 2 * gs.pi, n_z)
+        thetas = gs.linspace(0, 2 * gs.pi, config.n_times)
+        phis = gs.linspace(0, 2 * gs.pi, config.n_times)
         z_grid = torch.cartesian_prod(thetas, phis)
     return z_grid
 
@@ -96,11 +96,13 @@ def _compute_mean_curvature(z_grid, immersion, dim, embedding_dim):
     neural_metric = PullbackMetric(
         dim=dim, embedding_dim=embedding_dim, immersion=immersion
     )
-    curv = gs.zeros(len(z_grid), embedding_dim)
-    for _, z in enumerate(z_grid):
-        # TODO(nina): Vectorize in geomstats to avoid this for loop
-        z = torch.unsqueeze(z, dim=0)
-        curv[_, :] = neural_metric.mean_curvature_vector(z)
+    # curv = gs.zeros(len(z_grid), embedding_dim)
+    # for _, z in enumerate(z_grid):
+    #     # TODO(nina): Vectorize in geomstats to avoid this for loop
+    #     z = torch.unsqueeze(z, dim=0)
+    #     curv[_, :] = neural_metric.mean_curvature_vector(z)
+
+    curv = neural_metric.mean_curvature_vector(z_grid)
 
     curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True)
     curv_norm = gs.array([norm.item() for norm in curv_norm])

@@ -34,6 +34,8 @@ wandb.init(
         "distortion_func": default_config.distortion_func,
         "n_times": default_config.n_times,
         "radius": default_config.radius,
+        "major_radius": default_config.major_radius,
+        "minor_radius": default_config.minor_radius,
         "distortion_amp": default_config.distortion_amp,
         "n_wiggles": default_config.n_wiggles,
         "embedding_dim": default_config.embedding_dim,
@@ -69,29 +71,29 @@ _, data_dim = dataset_torch.shape
 
 
 def train_test_model():
-    # Create model
-    # model = models.neural_vae.NeuralVAE(
-    #     data_dim=data_dim,
-    #     latent_dim=config.latent_dim,
-    #     sftbeta=config.sftbeta,
-    #     encoder_width=config.encoder_width,
-    #     encoder_depth=config.encoder_depth,
-    #     decoder_width=config.decoder_width,
-    #     decoder_depth=config.decoder_depth,
-    #     posterior_type=config.posterior_type,
-    # ).to(config.device)
-
-    # Create toroidal model
-    model = models.toroidal_vae.ToroidalVAE(
-        data_dim=data_dim,
-        latent_dim=config.latent_dim,
-        sftbeta=config.sftbeta,
-        encoder_width=config.encoder_width,
-        encoder_depth=config.encoder_depth,
-        decoder_width=config.decoder_width,
-        decoder_depth=config.decoder_depth,
-        posterior_type=config.posterior_type,
-    ).to(config.device)
+    
+    if config.posterior_type in ("gaussian", "hyperspherical"):
+        model = models.neural_vae.NeuralVAE(
+            data_dim=data_dim,
+            latent_dim=config.latent_dim,
+            sftbeta=config.sftbeta,
+            encoder_width=config.encoder_width,
+            encoder_depth=config.encoder_depth,
+            decoder_width=config.decoder_width,
+            decoder_depth=config.decoder_depth,
+            posterior_type=config.posterior_type,
+        ).to(config.device)
+    elif config.posterior_type == "toroidal":
+        model = models.toroidal_vae.ToroidalVAE(
+            data_dim=data_dim,
+            latent_dim=config.latent_dim,
+            sftbeta=config.sftbeta,
+            encoder_width=config.encoder_width,
+            encoder_depth=config.encoder_depth,
+            decoder_width=config.decoder_width,
+            decoder_depth=config.decoder_depth,
+            posterior_type=config.posterior_type,
+        ).to(config.device)
 
     # Create optimizer, scheduler
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)

@@ -23,11 +23,12 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 30  # 240  #
+n_epochs = 100  # 240  #
 learning_rate = 1e-3
-sftbeta = 10
+sftbeta = 4.5
 beta = 0.03
-gamma = 0
+gamma = 3
+
 
 # Dataset
 dataset_name = "t2_synthetic"
@@ -39,11 +40,13 @@ dataset_name = "t2_synthetic"
     n_times,
     distortion_amp,
     radius,
+    minor_radius,
+    major_radius,
     n_wiggles,
     embedding_dim,
     noise_var,
     synthetic_rotation,
-) = [None for _ in range(11)]
+) = [None for _ in range(13)]
 
 
 if dataset_name == "experimental":
@@ -53,7 +56,7 @@ if dataset_name == "experimental":
     manifold_dim = 1
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
-    n_times = 500
+    n_times = 1000
     distortion_amp = 0.4
     radius = 1
     manifold_dim = 1
@@ -73,13 +76,14 @@ elif dataset_name == "s2_synthetic":
 elif dataset_name == "t2_synthetic":
     # actual number of points is n_times*n_times
     n_times = 80
-    radius = 1
+    major_radius = 4
+    minor_radius = 1
     distortion_amp = 0.4
     manifold_dim = 2
     embedding_dim = 3
     noise_var = 1e-3
-    synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
-
+    #synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
+    synthetic_rotation = torch.eye(n=embedding_dim)
 
 # Models
 model_type = "neural_vae"
@@ -95,6 +99,7 @@ else:
     latent_dim = 2
 posterior_type = "toroidal"  # "hyperspherical"
 gen_likelihood_type = "gaussian"
+
 
 # Results
 now = str(datetime.now().replace(second=0, microsecond=0))

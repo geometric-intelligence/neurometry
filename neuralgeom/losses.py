@@ -64,7 +64,7 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
     return (
         recon_loss
         + config.beta * kld
-        + config.gamma * latent_regularization_loss(labels, z, config) ** 2
+        + config.gamma * latent_regularization_loss(labels, z, config)**2
     )
 
 
@@ -93,7 +93,7 @@ def latent_regularization_loss(labels, z, config):
         latent_thetas = torch.asin(z[:, 2])
         latent_phis = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
         thetas_loss = torch.mean(1 - torch.cos(latent_thetas - labels[:, 0]))
-        phis_loss = torch.mean(1 - torch.cos(latent_thetas - labels[:, 1]))
+        phis_loss = torch.mean(1 - torch.cos(latent_phis - labels[:, 1]))
 
         latent_loss = thetas_loss + phis_loss
 
