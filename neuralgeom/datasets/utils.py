@@ -91,8 +91,8 @@ def load(config):
         dataset, labels = datasets.synthetic.load_t2_synthetic(
             rot=config.synthetic_rotation,
             n_times=config.n_times,
-            major_radius=2 * config.radius,
-            minor_radius=config.radius,
+            major_radius=config.major_radius,
+            minor_radius=config.minor_radius,
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,

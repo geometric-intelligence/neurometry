@@ -143,10 +143,11 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z2 = z[:, 2]
         z2 = [_.item() for _ in z2]
         sc = ax.scatter3D(z0, z1, z2)
-        # ax.view_init(elev=60, azim=45, roll=0)
-        ax.set_xlim(-1.2, 1.2)
-        ax.set_ylim(-1.2, 1.2)
-        ax.set_zlim(-1.2, 1.2)
+        ax.view_init(elev=60, azim=45, roll=0)
+        #breakpoint()
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+        ax.set_zlim(-1, 1)
 
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
@@ -195,14 +196,14 @@ def plot_curv(angles, mean_curvature_norms, config, profile_type):
     elif config.dataset_name == "t2_synthetic":
         ax = fig.add_subplot(111, projection="3d")
         x = [
-            (2 * config.radius + config.radius * np.cos(angle[0])) * np.cos(angle[1])
+            (config.major_radius + config.minor_radius * np.cos(angle[0])) * np.cos(angle[1])
             for angle in angles
         ]
         y = [
-            (2 * config.radius + config.radius * np.cos(angle[0])) * np.sin(angle[1])
+            (config.major_radius + config.minor_radius * np.cos(angle[0])) * np.sin(angle[1])
             for angle in angles
         ]
-        z = [config.radius * np.sin(angle[0]) for angle in angles]
+        z = [config.minor_radius * np.sin(angle[0]) for angle in angles]
         sc = ax.scatter3D(
             x, y, z, s=30, c=mean_curvature_norms, cmap="Spectral", norm=color_norm
         )
