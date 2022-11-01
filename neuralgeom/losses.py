@@ -46,6 +46,15 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
         p_z = HypersphericalUniform(config.latent_dim - 1)
         kld = torch.distributions.kl.kl_divergence(q_z, p_z).mean()
 
+    if config.posterior_type == "toroidal":
+        z_theta_mu, z_theta_kappa, z_phi_mu, z_phi_kappa = posterior_params
+        q_z_theta = VonMisesFisher(z_theta_mu, z_theta_kappa)
+        q_z_phi = VonMisesFisher(z_phi_mu, z_phi_kappa)
+        p_z = HypersphericalUniform(config.latent_dim - 1)
+        kld_theta = torch.distributions.kl.kl_divergence(q_z_theta, p_z).mean()
+        kld_phi = torch.distributions.kl.kl_divergence(q_z_phi, p_z).mean()
+        kld = kld_theta + kld_phi
+
     if config.gen_likelihood_type == "gaussian":
         recon_loss = torch.mean((x - x_mu).pow(2))
 
@@ -81,7 +90,11 @@ def latent_regularization_loss(labels, z, config):
         )
         latent_loss = thetas_loss + phis_loss
     elif config.dataset_name == "t2_synthetic":
-        # TODO
-        latent_loss = 0
+        latent_thetas = torch.asin(z[:, 2])
+        latent_phis = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
+        thetas_loss = torch.mean(1 - torch.cos(latent_thetas - labels[:, 0]))
+        phis_loss = torch.mean(1 - torch.cos(latent_thetas - labels[:, 1]))
+
+        latent_loss = thetas_loss + phis_loss
 
     return latent_loss

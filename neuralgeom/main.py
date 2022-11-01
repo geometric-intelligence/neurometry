@@ -8,6 +8,7 @@ import datasets.utils
 import default_config
 import geomstats.backend as gs
 import models.neural_vae
+import models.toroidal_vae
 import torch
 import train
 import wandb
@@ -69,7 +70,19 @@ _, data_dim = dataset_torch.shape
 
 def train_test_model():
     # Create model
-    model = models.neural_vae.NeuralVAE(
+    # model = models.neural_vae.NeuralVAE(
+    #     data_dim=data_dim,
+    #     latent_dim=config.latent_dim,
+    #     sftbeta=config.sftbeta,
+    #     encoder_width=config.encoder_width,
+    #     encoder_depth=config.encoder_depth,
+    #     decoder_width=config.decoder_width,
+    #     decoder_depth=config.decoder_depth,
+    #     posterior_type=config.posterior_type,
+    # ).to(config.device)
+
+    # Create toroidal model
+    model = models.toroidal_vae.ToroidalVAE(
         data_dim=data_dim,
         latent_dim=config.latent_dim,
         sftbeta=config.sftbeta,
@@ -133,7 +146,7 @@ def evaluate_curvature(model):
     wandb.log({"fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned)})
 
     print("Computing true curvature from synthetic data...")
-    if config.dataset_name in ("s1_synthetic", "s2_synthetic"):
+    if config.dataset_name in ("s1_synthetic", "s2_synthetic" "t2_synthetic"):
         z_grid, _, curv_norms_true = compute_mean_curvature_true(config)
         error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
 
@@ -149,7 +162,7 @@ plot_and_log(train_losses, test_losses, best_model)
 
 # start_time = time.time()
 
-evaluate_curvature(best_model)
+# evaluate_curvature(best_model)
 
 # end_time = time.time()
 
