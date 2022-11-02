@@ -66,7 +66,7 @@ wandb.run.name = config.run_name
 
 # Load data, labels
 dataset_torch, labels, train_loader, test_loader = datasets.utils.load(config)
-dataset_torch.to(config.device)
+dataset_torch = dataset_torch.to(config.device)
 _, data_dim = dataset_torch.shape
 
 
@@ -128,7 +128,7 @@ def plot_and_log(train_losses, test_losses, model):
     # Plot original data and reconstruction
     fig_recon = plot_recon(model, dataset_torch, labels, config)
 
-    torch.save(best_model, f"results/trained_models/{config.results_prefix}_model.pt")
+    torch.save(model, f"results/trained_models/{config.results_prefix}_model.pt")
 
     wandb.log(
         {
@@ -141,35 +141,48 @@ def plot_and_log(train_losses, test_losses, model):
 
 
 def evaluate_curvature(model):
-
-    print("Computing learned curvature...")
-    z_grid, _, curv_norms_learned = compute_mean_curvature_learned(model, config)
-    fig_curv_norms_learned = plot_curv(z_grid, curv_norms_learned, config, "learned")
-    wandb.log({"fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned)})
-
-    print("Computing true curvature from synthetic data...")
-    if config.dataset_name in ("s1_synthetic", "s2_synthetic" "t2_synthetic"):
+    
+    if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
+        print("Computing true curvature from synthetic data...")
+        #start_time = time.time()
         z_grid, _, curv_norms_true = compute_mean_curvature_true(config)
-        error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
-
-        fig_curv_norms_true = plot_curv(z_grid, curv_norms_true, config, "true")
+        #error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
+        #end_time = time.time()
+        #print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
+        fig_curv_norms_true = plot_curv(z_grid, curv_norms_true, config, None,  "true")
 
         wandb.log(
-            {"error": error, "fig_curv_norms_true": wandb.Image(fig_curv_norms_true)}
+            {"fig_curv_norms_true": wandb.Image(fig_curv_norms_true)}
         )
 
+    print("Computing learned curvature...")
+    #start_time = time.time()
+    z_grid, _, curv_norms_learned = compute_mean_curvature_learned(model, config)
+    #end_time = time.time()
+    #print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
+    norm_val = None
+    if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
+        norm_val = max(curv_norms_true)
+        error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
+        wandb.log(
+            {"error": error}
+        )
+    
+    fig_curv_norms_learned = plot_curv(z_grid, curv_norms_learned, config, norm_val, "learned")
 
-train_losses, test_losses, best_model = train_test_model()
-plot_and_log(train_losses, test_losses, best_model)
+    
 
-# start_time = time.time()
-
-# evaluate_curvature(best_model)
-
-# end_time = time.time()
+    wandb.log({"fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned)})
 
 
-# print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
 
+
+train_losses, test_losses, model = train_test_model()
+plot_and_log(train_losses, test_losses, model)
+
+
+#model = torch.load("/home/facosta/code/neuralgeom/neuralgeom/results/trained_models/t2_synthetic_2022-11-02 09:57:00_model.pt")
+
+evaluate_curvature(model)
 
 wandb.finish()

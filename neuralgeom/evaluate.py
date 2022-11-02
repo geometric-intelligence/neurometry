@@ -12,6 +12,8 @@ from datasets.synthetic import (
 )
 from geomstats.geometry.pullback_metric import PullbackMetric
 
+import time
+
 
 def get_learned_immersion(model, config):
     """Define immersion from latent angles to neural manifold."""
@@ -35,8 +37,8 @@ def get_learned_immersion(model, config):
             phi = angle[1]
             z = gs.array(
                 [
-                    (config.major_radius + config.minor_radius*gs.cos(theta)) * gs.cos(phi),
-                    (config.major_radius + config.minor_radius*gs.cos(theta)) * gs.sin(phi),
+                    (config.major_radius - config.minor_radius*gs.cos(theta)) * gs.cos(phi),
+                    (config.major_radius - config.minor_radius*gs.cos(theta)) * gs.sin(phi),
                     config.minor_radius*gs.sin(theta),
                 ]
             )
@@ -96,13 +98,14 @@ def _compute_mean_curvature(z_grid, immersion, dim, embedding_dim):
     neural_metric = PullbackMetric(
         dim=dim, embedding_dim=embedding_dim, immersion=immersion
     )
-    # curv = gs.zeros(len(z_grid), embedding_dim)
-    # for _, z in enumerate(z_grid):
-    #     # TODO(nina): Vectorize in geomstats to avoid this for loop
-    #     z = torch.unsqueeze(z, dim=0)
-    #     curv[_, :] = neural_metric.mean_curvature_vector(z)
-
-    curv = neural_metric.mean_curvature_vector(z_grid)
+    if dim == 1:
+        curv = gs.zeros(len(z_grid), embedding_dim)
+        for _, z in enumerate(z_grid):
+            # TODO(nina): Vectorize in geomstats to avoid this for loop
+            z = torch.unsqueeze(z, dim=0)
+            curv[_, :] = neural_metric.mean_curvature_vector(z)
+    else:
+        curv = neural_metric.mean_curvature_vector(z_grid)
 
     curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True)
     curv_norm = gs.array([norm.item() for norm in curv_norm])
@@ -114,25 +117,32 @@ def _compute_mean_curvature(z_grid, immersion, dim, embedding_dim):
 def compute_mean_curvature_learned(model, config):
     z_grid = get_z_grid(config)
     immersion = get_learned_immersion(model, config)
+    start_time = time.time()
     curv, curv_norm = _compute_mean_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
         embedding_dim=config.embedding_dim,
     )
+    end_time = time.time()
+    print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return z_grid, curv, curv_norm
+
 
 
 # Uses compute_mean_curvature to find mean curvature profile from true expression of the immersion
 def compute_mean_curvature_true(config):
     z_grid = get_z_grid(config)
     immersion = get_true_immersion(config)
+    start_time = time.time()
     curv, curv_norm = _compute_mean_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
         embedding_dim=config.embedding_dim,
     )
+    end_time = time.time()
+    print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return z_grid, curv, curv_norm
 
 

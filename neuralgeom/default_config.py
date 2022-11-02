@@ -27,11 +27,15 @@ n_epochs = 100  # 240  #
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03
-gamma = 3
+gamma = 10
 
-
+posterior_type = "toroidal"
+# posterior_type = "hyperspherical"
 # Dataset
+#dataset_name = "s1_synthetic"
+# dataset_name = "s2_synthetic"
 dataset_name = "t2_synthetic"
+# dataset_name = "experimental"
 (
     expt_id,
     timestep_microsec,
@@ -56,7 +60,7 @@ if dataset_name == "experimental":
     manifold_dim = 1
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
-    n_times = 1000
+    n_times = 2000
     distortion_amp = 0.4
     radius = 1
     manifold_dim = 1
@@ -66,7 +70,7 @@ elif dataset_name == "s1_synthetic":
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "s2_synthetic":
     # actual number of points is n_times*n_times
-    n_times = 80
+    n_times = 60
     radius = 1
     distortion_amp = 0.4
     manifold_dim = 2
@@ -75,8 +79,8 @@ elif dataset_name == "s2_synthetic":
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "t2_synthetic":
     # actual number of points is n_times*n_times
-    n_times = 80
-    major_radius = 4
+    n_times = 60
+    major_radius = 2
     minor_radius = 1
     distortion_amp = 0.4
     manifold_dim = 2
@@ -89,7 +93,7 @@ elif dataset_name == "t2_synthetic":
 model_type = "neural_vae"
 encoder_width = 400
 decoder_width = encoder_width
-encoder_depth = 6
+encoder_depth = 4
 decoder_depth = encoder_depth
 if dataset_name in ("s1_synthetic", "experimental"):
     latent_dim = 2
@@ -97,7 +101,7 @@ elif dataset_name == "s2_synthetic":
     latent_dim = 3
 else:
     latent_dim = 2
-posterior_type = "toroidal"  # "hyperspherical"
+
 gen_likelihood_type = "gaussian"
 
 

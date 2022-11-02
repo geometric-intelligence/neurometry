@@ -447,8 +447,8 @@ def get_t2_synthetic_immersion(
     major_radius, minor_radius, distortion_amp, embedding_dim, rot
 ):
     def torus_proj(theta, phi):
-        x = (major_radius + minor_radius * gs.cos(theta)) * gs.cos(phi)
-        y = (major_radius + minor_radius * gs.cos(theta)) * gs.sin(phi)
+        x = (major_radius - minor_radius * gs.cos(theta)) * gs.cos(phi)
+        y = (major_radius - minor_radius * gs.cos(theta)) * gs.sin(phi)
         z = minor_radius * gs.sin(theta)
         return gs.array([x, y, z])
 
@@ -456,7 +456,7 @@ def get_t2_synthetic_immersion(
 
         theta = angle_pair[0]
         phi = angle_pair[1]
-        amplitude = 1 + distortion_amp * gs.exp(-5 * (phi-gs.pi/2)**2) + distortion_amp * gs.exp(-5 * (phi-3*gs.pi/2)**2)
+        amplitude = 1 + distortion_amp * gs.exp(-2 * (phi-gs.pi/2)**2)*gs.exp(-2 * (theta-gs.pi)**2) + distortion_amp * gs.exp(-2 * (phi-3*gs.pi/2)**2)*gs.exp(-2 * (theta-gs.pi)**2)
 
         point = amplitude * torus_proj(theta, phi)
 

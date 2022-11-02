@@ -90,7 +90,7 @@ def latent_regularization_loss(labels, z, config):
         )
         latent_loss = thetas_loss + phis_loss
     elif config.dataset_name == "t2_synthetic":
-        latent_thetas = torch.asin(z[:, 2])
+        latent_thetas = (torch.atan2(z[:, 2], 2-torch.sqrt(z[:,0]**2+z[:,1]**2)) + 2 * torch.pi) % (2 * torch.pi)
         latent_phis = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
         thetas_loss = torch.mean(1 - torch.cos(latent_thetas - labels[:, 0]))
         phis_loss = torch.mean(1 - torch.cos(latent_phis - labels[:, 1]))

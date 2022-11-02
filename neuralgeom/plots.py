@@ -25,8 +25,8 @@ def plot_recon(model, dataset_torch, labels, config):
     if config.dataset_name == "s1_synthetic":
         ax_data = fig.add_subplot(1, 2, 1)
         colormap = plt.get_cmap("hsv")
-        x_data = dataset_torch[:, 0]
-        y_data = dataset_torch[:, 1]
+        x_data = dataset_torch[:, 0].detach().cpu().numpy()
+        y_data = dataset_torch[:, 1].detach().cpu().numpy()
         _, rec, _ = model(dataset_torch)
         x_rec = rec[:, 0]
         x_rec = [x.item() for x in x_rec]
@@ -44,19 +44,19 @@ def plot_recon(model, dataset_torch, labels, config):
         # plt.colorbar(sc_rec)
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         ax_data = fig.add_subplot(1, 2, 1, projection="3d")
-        x_data = dataset_torch[:, 0]
-        y_data = dataset_torch[:, 1]
-        z_data = dataset_torch[:, 2]
-        norms_data = torch.linalg.norm(dataset_torch, axis=1).detach().numpy()
+        x_data = dataset_torch[:, 0].detach().cpu().numpy()
+        y_data = dataset_torch[:, 1].detach().cpu().numpy()
+        z_data = dataset_torch[:, 2].detach().cpu().numpy()
+        norms_data = torch.linalg.norm(dataset_torch, axis=1).detach().cpu().numpy()
         _, rec, _ = model(dataset_torch)
-        norms_rec = torch.linalg.norm(rec, axis=1).detach().numpy()
+        norms_rec = torch.linalg.norm(rec, axis=1).detach().cpu().numpy()
         x_rec = rec[:, 0]
         x_rec = [x.item() for x in x_rec]
         y_rec = rec[:, 1]
         y_rec = [y.item() for y in y_rec]
         z_rec = rec[:, 2]
         z_rec = [z.item() for z in z_rec]
-
+        
         ax_data.set_title("Synthetic data", fontsize=40)
         ax_data.scatter3D(x_data, y_data, z_data, s=5, c=norms_data)
         plt.axis("off")
@@ -65,6 +65,15 @@ def plot_recon(model, dataset_torch, labels, config):
         ax_rec.set_title("Reconstruction", fontsize=40)
         ax_rec.scatter3D(x_rec, y_rec, z_rec, s=5, c=norms_rec)
         plt.axis("off")
+        if config.dataset_name == "t2_synthetic":
+            ax_data.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
+            ax_data.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+            ax_data.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+            ax_rec.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
+            ax_rec.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+            ax_rec.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+
+
     elif config.dataset_name == "experimental":
         thetas = np.array(labels["angles"])
         sort = np.argsort(thetas)
@@ -144,10 +153,14 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z2 = [_.item() for _ in z2]
         sc = ax.scatter3D(z0, z1, z2)
         ax.view_init(elev=60, azim=45, roll=0)
-        #breakpoint()
-        ax.set_xlim(-2, 2)
-        ax.set_ylim(-2, 2)
-        ax.set_zlim(-1, 1)
+        if config.dataset_name == "t2_synthetic":
+            ax.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
+            ax.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+            ax.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+        else:
+            ax.set_xlim(-1,1)
+            ax.set_ylim(-1,1)
+            ax.set_zlim(-1,1)
 
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
@@ -157,10 +170,13 @@ def plot_latent_space(model, dataset_torch, labels, config):
     return fig
 
 
-def plot_curv(angles, mean_curvature_norms, config, profile_type):
+def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
     fig = plt.figure(figsize=(24, 12))
     colormap = plt.get_cmap("hsv")
-    color_norm = mpl.colors.Normalize(0.0, max(mean_curvature_norms))
+    if norm_val is not None:
+        color_norm = mpl.colors.Normalize(0.0, norm_val)
+    else:
+        color_norm = mpl.colors.Normalize(0.0, max(mean_curvature_norms))
     if config.dataset_name in ("s1_synthetic", "experimental"):
         ax1 = fig.add_subplot(121)
         ax1.plot(angles, mean_curvature_norms)
@@ -196,11 +212,11 @@ def plot_curv(angles, mean_curvature_norms, config, profile_type):
     elif config.dataset_name == "t2_synthetic":
         ax = fig.add_subplot(111, projection="3d")
         x = [
-            (config.major_radius + config.minor_radius * np.cos(angle[0])) * np.cos(angle[1])
+            (config.major_radius - config.minor_radius * np.cos(angle[0])) * np.cos(angle[1])
             for angle in angles
         ]
         y = [
-            (config.major_radius + config.minor_radius * np.cos(angle[0])) * np.sin(angle[1])
+            (config.major_radius - config.minor_radius * np.cos(angle[0])) * np.sin(angle[1])
             for angle in angles
         ]
         z = [config.minor_radius * np.sin(angle[0]) for angle in angles]
@@ -209,6 +225,9 @@ def plot_curv(angles, mean_curvature_norms, config, profile_type):
         )
         plt.colorbar(sc)
         ax.set_title(f"{profile_type} mean curvature norm profile", fontsize=30)
+        ax.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
+        ax.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+        ax.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
 
     plt.savefig(
         f"results/figures/{config.results_prefix}_curv_profile_{profile_type}.png"

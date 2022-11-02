@@ -88,7 +88,7 @@ class ToroidalVAE(torch.nn.Module):
             Vector representing the diagonal covariance of the
             multivariate Gaussian in latent space.
         """
-        h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
+        h = F.softplus(self.encoder_fc(x), beta=self.sftbeta)
 
         for layer in self.encoder_linears:
             h = F.softplus(layer(h), beta=self.sftbeta)
@@ -113,11 +113,11 @@ class ToroidalVAE(torch.nn.Module):
         cos_phi = z_phi[:, 0]
         sin_phi = z_phi[:, 1]
 
-        major_radius = 1
+        major_radius = 2
         minor_radius = 1
 
-        x = (major_radius + minor_radius * cos_theta) * cos_phi
-        y = (major_radius + minor_radius * cos_theta) * sin_phi
+        x = (major_radius - minor_radius * cos_theta) * cos_phi
+        y = (major_radius - minor_radius * cos_theta) * sin_phi
         z = minor_radius * sin_theta
 
         return gs.stack([x, y, z], axis=-1)
