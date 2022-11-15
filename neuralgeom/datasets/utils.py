@@ -39,8 +39,10 @@ def load(config):
         dataset = dataset[labels["velocities"] > 5]
         labels = labels[labels["velocities"] > 5]
         # 1.768999993801117
-        # dataset = dataset[labels["gains"] == 1.768999993801117]
-        # labels = labels[labels["gains"] == 1.768999993801117]
+        gain =  0.23100000619888306
+        #gain = 1.0
+        dataset = dataset[labels["gains"] <0.24]
+        labels = labels[labels["gains"] <0.24]
         dataset = np.log(dataset.astype(np.float32) + 1)
         if config.smooth == True:
             dataset_smooth = np.zeros_like(dataset)

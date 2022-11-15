@@ -23,19 +23,19 @@ batch_size = 128
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 100  # 240  #
+n_epochs = 200  # 240  #
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03
 gamma = 10
 
-posterior_type = "toroidal"
+posterior_type = "hyperspherical"
 # posterior_type = "hyperspherical"
 # Dataset
-#dataset_name = "s1_synthetic"
+# dataset_name = "s1_synthetic"
 # dataset_name = "s2_synthetic"
-dataset_name = "t2_synthetic"
-# dataset_name = "experimental"
+dataset_name = "experimental"
+
 (
     expt_id,
     timestep_microsec,
@@ -54,13 +54,13 @@ dataset_name = "t2_synthetic"
 
 
 if dataset_name == "experimental":
-    expt_id = "7"  # hd: with head direction
+    expt_id = "12"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
     manifold_dim = 1
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
-    n_times = 2000
+    n_times = 500
     distortion_amp = 0.4
     radius = 1
     manifold_dim = 1

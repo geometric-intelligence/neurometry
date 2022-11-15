@@ -25,8 +25,8 @@ def plot_recon(model, dataset_torch, labels, config):
     if config.dataset_name == "s1_synthetic":
         ax_data = fig.add_subplot(1, 2, 1)
         colormap = plt.get_cmap("hsv")
-        x_data = dataset_torch[:, 0].detach().cpu().numpy()
-        y_data = dataset_torch[:, 1].detach().cpu().numpy()
+        x_data = dataset_torch[:, 0].cpu().detach().cpu().numpy()
+        y_data = dataset_torch[:, 1].cpu().detach().cpu().numpy()
         _, rec, _ = model(dataset_torch)
         x_rec = rec[:, 0]
         x_rec = [x.item() for x in x_rec]
@@ -44,12 +44,12 @@ def plot_recon(model, dataset_torch, labels, config):
         # plt.colorbar(sc_rec)
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         ax_data = fig.add_subplot(1, 2, 1, projection="3d")
-        x_data = dataset_torch[:, 0].detach().cpu().numpy()
-        y_data = dataset_torch[:, 1].detach().cpu().numpy()
-        z_data = dataset_torch[:, 2].detach().cpu().numpy()
-        norms_data = torch.linalg.norm(dataset_torch, axis=1).detach().cpu().numpy()
+        x_data = dataset_torch[:, 0].cpu().detach().cpu().numpy()
+        y_data = dataset_torch[:, 1].cpu().detach().cpu().numpy()
+        z_data = dataset_torch[:, 2].cpu().detach().cpu().numpy()
+        norms_data = torch.linalg.norm(dataset_torch, axis=1).cpu().detach().numpy()
         _, rec, _ = model(dataset_torch)
-        norms_rec = torch.linalg.norm(rec, axis=1).detach().cpu().numpy()
+        norms_rec = torch.linalg.norm(rec, axis=1).cpu().detach().cpu().numpy()
         x_rec = rec[:, 0]
         x_rec = [x.item() for x in x_rec]
         y_rec = rec[:, 1]
@@ -77,12 +77,12 @@ def plot_recon(model, dataset_torch, labels, config):
     elif config.dataset_name == "experimental":
         thetas = np.array(labels["angles"])
         sort = np.argsort(thetas)
-        dataset = dataset_torch.detach().numpy()
+        dataset = dataset_torch.cpu().detach().numpy()
         sorted_dataset = dataset[sort, :]
 
         _, rec, _ = model(dataset_torch)
 
-        rec = rec.detach().numpy()
+        rec = rec.cpu().detach().numpy()
         sorted_rec = rec[sort, :]
 
         color_norm = mpl.colors.Normalize(0.0, np.max(sorted_dataset))
@@ -96,7 +96,7 @@ def plot_recon(model, dataset_torch, labels, config):
 
         ax_data.imshow(
             sorted_dataset.T,
-            extent=[0, 360, 40, 0],
+            extent=[0, 360, dataset_torch.shape[1], 0],
             aspect=5,
             norm=color_norm,
             cmap="viridis",
@@ -112,7 +112,7 @@ def plot_recon(model, dataset_torch, labels, config):
 
         ax_rec.imshow(
             sorted_rec.T,
-            extent=[0, 360, 40, 0],
+            extent=[0, 360, dataset_torch.shape[1], 0],
             aspect=5,
             norm=color_norm,
             cmap="viridis",
