@@ -79,9 +79,9 @@ def get_true_immersion(config):
     return immersion
 
 
-def get_z_grid(config): 
+def get_z_grid(config, num_points): 
     if config.dataset_name in ("s1_synthetic", "experimental"):
-        z_grid = torch.linspace(0, 2 * gs.pi, config.n_times)
+        z_grid = torch.linspace(0, 2 * gs.pi, num_points)
     elif config.dataset_name == "s2_synthetic":
         thetas = gs.linspace(0.01, gs.pi, config.n_times)
         phis = gs.linspace(0, 2 * gs.pi, config.n_times)
@@ -113,16 +113,16 @@ def _compute_mean_curvature(z_grid, immersion, dim, embedding_dim):
     return curv, curv_norm
 
 
-# Uses compute_mean_curvature to find mean curvature profile from true expression of the immersion
-def compute_mean_curvature_learned(model, config):
-    z_grid = get_z_grid(config)
+# Uses _compute_mean_curvature to find mean curvature profile from true expression of the immersion
+def compute_mean_curvature_learned(model, config, num_points, emb_dim):
+    z_grid = get_z_grid(config, num_points)
     immersion = get_learned_immersion(model, config)
     start_time = time.time()
     curv, curv_norm = _compute_mean_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
-        embedding_dim=config.embedding_dim,
+        embedding_dim=emb_dim,
     )
     end_time = time.time()
     print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
@@ -132,7 +132,7 @@ def compute_mean_curvature_learned(model, config):
 
 # Uses compute_mean_curvature to find mean curvature profile from true expression of the immersion
 def compute_mean_curvature_true(config):
-    z_grid = get_z_grid(config)
+    z_grid = get_z_grid(config, config.n_times)
     immersion = get_true_immersion(config)
     start_time = time.time()
     curv, curv_norm = _compute_mean_curvature(

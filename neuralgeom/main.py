@@ -62,10 +62,12 @@ wandb.init(
 
 config = wandb.config
 
+
 wandb.run.name = config.run_name
 
 # Load data, labels
 dataset_torch, labels, train_loader, test_loader = datasets.utils.load(config)
+
 dataset_torch = dataset_torch.to(config.device)
 _, data_dim = dataset_torch.shape
 
@@ -96,7 +98,7 @@ def train_test_model():
         ).to(config.device)
 
     # Create optimizer, scheduler
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate, amsgrad=True)
     if config.scheduler is True:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", factor=0.5
@@ -157,7 +159,7 @@ def evaluate_curvature(model):
 
     print("Computing learned curvature...")
     #start_time = time.time()
-    z_grid, _, curv_norms_learned = compute_mean_curvature_learned(model, config)
+    z_grid, _, curv_norms_learned = compute_mean_curvature_learned(model, config, dataset_torch.shape[0], dataset_torch.shape[1])
     #end_time = time.time()
     #print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     norm_val = None
