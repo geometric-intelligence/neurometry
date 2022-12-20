@@ -5,7 +5,7 @@ import copy
 
 import losses
 import torch
-import wandb
+#import wandb
 
 
 def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
@@ -35,7 +35,7 @@ def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
             lowest_test_loss = test_loss
             best_model = copy.deepcopy(model)
 
-        wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
+        #wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
 
     return train_losses, test_losses, best_model
 
