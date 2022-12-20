@@ -125,7 +125,7 @@ def plot_recon(model, dataset_torch, labels, config):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.savefig(f"results/figures/{config.results_prefix}_recon.png")
-    # plt.savefig(f"results/figures/{config.results_prefix}_recon.svg")
+    plt.savefig(f"results/figures/{config.results_prefix}_recon.svg")
     return fig
 
 
@@ -228,10 +228,15 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
         ax.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
         ax.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
         ax.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+        plt.axis("off")
 
     plt.savefig(
         f"results/figures/{config.results_prefix}_curv_profile_{profile_type}.png"
     )
+    plt.savefig(
+        f"results/figures/{config.results_prefix}_curv_profile_{profile_type}.svg"
+    )
+    
 
     return fig
 

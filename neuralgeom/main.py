@@ -178,13 +178,15 @@ def evaluate_curvature(model):
 
 
 
-
+# Train model and plot results
 train_losses, test_losses, model = train_test_model()
 plot_and_log(train_losses, test_losses, model)
 
-
+# Load existing model
 #model = torch.load("/home/facosta/code/neuralgeom/neuralgeom/results/trained_models/t2_synthetic_2022-11-02 09:57:00_model.pt")
 
+
+# Evaluate curvature
 evaluate_curvature(model)
 
 wandb.finish()

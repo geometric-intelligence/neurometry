@@ -19,21 +19,22 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # Training
-batch_size = 128
+batch_size = 20
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 200  # 240  #
+n_epochs = 200 # 240  #
 learning_rate = 1e-3
 sftbeta = 4.5
-beta = 0.03
-gamma = 10
+beta = 0.03 #0.03
+gamma = 20 #20
 
 posterior_type = "hyperspherical"
-# posterior_type = "hyperspherical"
+# posterior_type = "toroidal"
 # Dataset
 # dataset_name = "s1_synthetic"
 # dataset_name = "s2_synthetic"
+# dataset_name = "t2_synthetic"
 dataset_name = "experimental"
 
 (
@@ -54,7 +55,7 @@ dataset_name = "experimental"
 
 
 if dataset_name == "experimental":
-    expt_id = "12"  # hd: with head direction
+    expt_id = "34"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
     manifold_dim = 1
@@ -79,7 +80,7 @@ elif dataset_name == "s2_synthetic":
     synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
 elif dataset_name == "t2_synthetic":
     # actual number of points is n_times*n_times
-    n_times = 60
+    n_times = 100
     major_radius = 2
     minor_radius = 1
     distortion_amp = 0.4
@@ -91,7 +92,7 @@ elif dataset_name == "t2_synthetic":
 
 # Models
 model_type = "neural_vae"
-encoder_width = 400
+encoder_width = 600
 decoder_width = encoder_width
 encoder_depth = 4
 decoder_depth = encoder_depth

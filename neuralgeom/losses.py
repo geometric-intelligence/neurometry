@@ -64,7 +64,7 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
     return (
         recon_loss
         + config.beta * kld
-        + config.gamma * latent_regularization_loss(labels, z, config)**2
+        + config.gamma * latent_regularization_loss(labels, z, config)
     )
 
 
@@ -97,4 +97,4 @@ def latent_regularization_loss(labels, z, config):
 
         latent_loss = thetas_loss + phis_loss
 
-    return latent_loss
+    return latent_loss**2
