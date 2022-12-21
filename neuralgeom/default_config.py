@@ -23,7 +23,7 @@ batch_size = 20
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 200 # 240  #
+n_epochs = 300 # 240  #
 learning_rate = 1e-3
 sftbeta = 4.5
 beta = 0.03 #0.03
@@ -55,7 +55,7 @@ dataset_name = "experimental"
 
 
 if dataset_name == "experimental":
-    expt_id = "34"  # hd: with head direction
+    expt_id = "41"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
     manifold_dim = 1
