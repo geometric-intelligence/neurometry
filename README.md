@@ -6,7 +6,7 @@ Official PyTorch implementation of the paper "Quantifying Local Extrinsic Curvat
 
 The neural manifold hypothesis postulates that the activity of a neural population forms a low-dimensional manifold within the larger neural state space, whose structure reflects the structure of the encoded task variables. Many dimensionality reduction techniques have been used to study the structure of neural manifolds, but these methods do not provide an explicit parameterization of the manifold, and may not capture the global structure of topologically nontrivial manifolds. Topological data analysis methods can reveal the shared topological structure between neural manifolds and the task variables they represent, but may not to capture much of the geometric information including distance, angles, and curvature. 
 
-![Overview of method to extract geometric features from neural activation manifolds. ](/method_overview.jpg)
+![Overview of method to extract geometric features from neural activation manifolds. ](/method_overview.png)
 
 We introduce a novel approach (see figure above) for studying the geometry of neural manifolds. This approach:
 - computes an explicit parameterization of the manifolds, and
