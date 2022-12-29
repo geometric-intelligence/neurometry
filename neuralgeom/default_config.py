@@ -20,7 +20,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # Dataset
-dataset_name = "s2_synthetic"
+dataset_name = "t2_synthetic"
 if dataset_name not in ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experimental"]:
     raise ValueError(f"Dataset name {dataset_name} not recognized.")
 
