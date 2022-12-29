@@ -9,7 +9,8 @@ import torch
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
-run_name = "nina-test-on-harold"  # "testing"
+project = "neural_geom"
+run_name = "nina-test-locally"  # "testing"
 
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
@@ -18,24 +19,11 @@ logging.basicConfig(level=logging.INFO)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-# Training
-batch_size = 20
-scheduler = False
-log_interval = 20
-checkpt_interval = 20
-n_epochs = 300 # 240  #
-learning_rate = 1e-3
-sftbeta = 4.5
-beta = 0.03 #0.03
-gamma = 20 #20
-
-posterior_type = "hyperspherical"
-# posterior_type = "toroidal"
 # Dataset
-# dataset_name = "s1_synthetic"
-# dataset_name = "s2_synthetic"
-# dataset_name = "t2_synthetic"
-dataset_name = "experimental"
+dataset_name = "s2_synthetic"
+if dataset_name not in ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experimental"]:
+    raise ValueError(f"Dataset name {dataset_name} not recognized.")
+
 
 (
     expt_id,
@@ -87,8 +75,20 @@ elif dataset_name == "t2_synthetic":
     manifold_dim = 2
     embedding_dim = 3
     noise_var = 1e-3
-    #synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
+    # synthetic_rotation = SpecialOrthogonal(n=embedding_dim).random_point()
     synthetic_rotation = torch.eye(n=embedding_dim)
+
+
+# Training
+batch_size = 20
+scheduler = False
+log_interval = 20
+checkpt_interval = 20
+n_epochs = 10  # 240  #
+learning_rate = 1e-3
+sftbeta = 4.5
+beta = 0.03  # 0.03
+gamma = 20  # 20
 
 # Models
 model_type = "neural_vae"
@@ -98,10 +98,14 @@ encoder_depth = 4
 decoder_depth = encoder_depth
 if dataset_name in ("s1_synthetic", "experimental"):
     latent_dim = 2
+    posterior_type = "hyperspherical"
 elif dataset_name == "s2_synthetic":
     latent_dim = 3
-else:
+    posterior_type = "hyperspherical"
+elif dataset_name == "t2_synthetic":
     latent_dim = 2
+    posterior_type = "toroidal"
+
 
 gen_likelihood_type = "gaussian"
 

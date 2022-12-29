@@ -1,7 +1,13 @@
+import os
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+
+FIGURES = "results/figures/"
+if not os.path.exists(FIGURES):
+    os.makedirs(FIGURES)
 
 
 def plot_loss(train_losses, test_losses, config):
@@ -14,8 +20,8 @@ def plot_loss(train_losses, test_losses, config):
     ax.legend(prop={"size": 40})
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
-    plt.savefig(f"results/figures/{config.results_prefix}_losses.png")
-    # plt.savefig(f"results/figures/{config.results_prefix}_losses.svg")
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.png"))
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.svg"))
     return fig
 
 
@@ -56,7 +62,7 @@ def plot_recon(model, dataset_torch, labels, config):
         y_rec = [y.item() for y in y_rec]
         z_rec = rec[:, 2]
         z_rec = [z.item() for z in z_rec]
-        
+
         ax_data.set_title("Synthetic data", fontsize=40)
         ax_data.scatter3D(x_data, y_data, z_data, s=5, c=norms_data)
         plt.axis("off")
@@ -66,13 +72,30 @@ def plot_recon(model, dataset_torch, labels, config):
         ax_rec.scatter3D(x_rec, y_rec, z_rec, s=5, c=norms_rec)
         plt.axis("off")
         if config.dataset_name == "t2_synthetic":
-            ax_data.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
-            ax_data.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
-            ax_data.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
-            ax_rec.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
-            ax_rec.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
-            ax_rec.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
-
+            ax_data.set_xlim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax_data.set_ylim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax_data.set_zlim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax_rec.set_xlim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax_rec.set_ylim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax_rec.set_zlim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
 
     elif config.dataset_name == "experimental":
         thetas = np.array(labels["angles"])
@@ -124,8 +147,8 @@ def plot_recon(model, dataset_torch, labels, config):
 
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.savefig(f"results/figures/{config.results_prefix}_recon.png")
-    plt.savefig(f"results/figures/{config.results_prefix}_recon.svg")
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.png"))
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.svg"))
     return fig
 
 
@@ -154,19 +177,28 @@ def plot_latent_space(model, dataset_torch, labels, config):
         sc = ax.scatter3D(z0, z1, z2)
         ax.view_init(elev=60, azim=45, roll=0)
         if config.dataset_name == "t2_synthetic":
-            ax.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
-            ax.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
-            ax.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+            ax.set_xlim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax.set_ylim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
+            ax.set_zlim(
+                -(config.major_radius + config.minor_radius),
+                (config.major_radius + config.minor_radius),
+            )
         else:
-            ax.set_xlim(-1,1)
-            ax.set_ylim(-1,1)
-            ax.set_zlim(-1,1)
+            ax.set_xlim(-1, 1)
+            ax.set_ylim(-1, 1)
+            ax.set_zlim(-1, 1)
 
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
     ax.set_title("Latent space", fontsize=40)
-    plt.savefig(f"results/figures/{config.results_prefix}_latent_plot.png")
-    # plt.savefig(f"results/figures/{config.results_prefix}_latent_plot.svg")
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.png"))
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.svg"))
     return fig
 
 
@@ -212,11 +244,13 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
     elif config.dataset_name == "t2_synthetic":
         ax = fig.add_subplot(111, projection="3d")
         x = [
-            (config.major_radius - config.minor_radius * np.cos(angle[0])) * np.cos(angle[1])
+            (config.major_radius - config.minor_radius * np.cos(angle[0]))
+            * np.cos(angle[1])
             for angle in angles
         ]
         y = [
-            (config.major_radius - config.minor_radius * np.cos(angle[0])) * np.sin(angle[1])
+            (config.major_radius - config.minor_radius * np.cos(angle[0]))
+            * np.sin(angle[1])
             for angle in angles
         ]
         z = [config.minor_radius * np.sin(angle[0]) for angle in angles]
@@ -225,18 +259,30 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
         )
         plt.colorbar(sc)
         ax.set_title(f"{profile_type} mean curvature norm profile", fontsize=30)
-        ax.set_xlim(-(config.major_radius+config.minor_radius),(config.major_radius+config.minor_radius))
-        ax.set_ylim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
-        ax.set_zlim(-(config.major_radius+config.minor_radius), (config.major_radius+config.minor_radius))
+        ax.set_xlim(
+            -(config.major_radius + config.minor_radius),
+            (config.major_radius + config.minor_radius),
+        )
+        ax.set_ylim(
+            -(config.major_radius + config.minor_radius),
+            (config.major_radius + config.minor_radius),
+        )
+        ax.set_zlim(
+            -(config.major_radius + config.minor_radius),
+            (config.major_radius + config.minor_radius),
+        )
         plt.axis("off")
 
     plt.savefig(
-        f"results/figures/{config.results_prefix}_curv_profile_{profile_type}.png"
+        os.path.join(
+            FIGURES, f"{config.results_prefix}_curv_profile_{profile_type}.png"
+        )
     )
     plt.savefig(
-        f"results/figures/{config.results_prefix}_curv_profile_{profile_type}.svg"
+        os.path.join(
+            FIGURES, f"{config.results_prefix}_curv_profile_{profile_type}.svg"
+        )
     )
-    
 
     return fig
 
@@ -264,6 +310,6 @@ def plot_comparison(
         ax_analytic.scatter3D(x, y, z, s=5, c=mean_curvature_norms_analytic)
         ax_learned.scatter3D(x, y, z, s=5, c=mean_curvature_norms)
 
-    plt.savefig(f"results/figures/{config.results_prefix}_comparison.png")
-    plt.savefig(f"results/figures/{config.results_prefix}_comparison.svg")
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.png"))
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))
     return fig
