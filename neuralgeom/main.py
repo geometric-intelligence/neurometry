@@ -195,6 +195,7 @@ def main_sweep(
         wandb.init(config=fixed_config, dir=tempfile.gettempdir())
         config = wandb.config
         run_name = sweep_prefix + "_run_" + wandb.run.id
+        wandb.run.name = run_name
 
         # The try/except syntax allows continuing experiments even if one run fails
         try:
