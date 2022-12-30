@@ -150,9 +150,6 @@ def main_run(
 
     plot_and_log(train_losses, test_losses, model)
 
-    # Load existing model
-    # model = torch.load("/home/facosta/code/neuralgeom/neuralgeom/results/trained_models/t2_synthetic_2022-11-02 09:57:00_model.pt")
-
     evaluate_curvature(model)
 
     wandb.finish()
@@ -214,7 +211,8 @@ def create_model_and_train_test(config):
     return train_losses, test_losses, best_model
 
 
-def plot_and_log(train_losses, test_losses, model):
+def plot_and_log(config, dataset_torch, labels, train_losses, test_losses, model):
+    # FIXME: the labels here might not be aligned in time.
     # Plot the loss
     fig_loss = plot_loss(train_losses, test_losses, config)
 
@@ -236,7 +234,7 @@ def plot_and_log(train_losses, test_losses, model):
     print("Done Plotting!")
 
 
-def evaluate_curvature(model):
+def evaluate_curvature(config, dataset_torch, model):
 
     if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
         print("Computing true curvature from synthetic data...")
