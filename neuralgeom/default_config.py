@@ -117,10 +117,3 @@ gen_likelihood_type = "gaussian"
 now = str(datetime.now().replace(second=0, microsecond=0))
 results_prefix = f"{dataset_name}_{now}"
 trained_model_path = None
-
-run_name = f"{now}_{dataset_name}"
-if dataset_name == "experimental":
-    if select_first_gain:
-        run_name += f"_{expt_id}_first_gain"
-    else:
-        run_name += f"_{expt_id}_second_gain"
