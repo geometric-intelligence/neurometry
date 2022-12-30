@@ -1,9 +1,11 @@
 # Data files
 *.mat
 *.npy
-neuralgeom/data/*.txt
-neuralgeom/data/*.npy
+neuralgeom/data/raw/*.mat
+neuralgeom/data/binned/*.txt
+neuralgeom/data/binned/*.npy
 neuralgeom/data.zip
+
 # Wandb files
 neuralgeom/wandb/*
 neuralgeom/results/*

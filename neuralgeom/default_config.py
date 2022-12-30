@@ -20,7 +20,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # Dataset
-dataset_name = "s2_synthetic"
+dataset_name = "experimental"
 if dataset_name not in ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experimental"]:
     raise ValueError(f"Dataset name {dataset_name} not recognized.")
 
@@ -43,7 +43,7 @@ if dataset_name not in ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experim
 
 
 if dataset_name == "experimental":
-    expt_id = "41"  # hd: with head direction
+    expt_id = "7"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
     manifold_dim = 1
