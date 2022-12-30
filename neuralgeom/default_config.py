@@ -89,7 +89,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["s1_synthetic"]
+dataset_name = ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experimental"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -102,12 +102,12 @@ for one_dataset_name in dataset_name:
 # Ignored if dataset_name != "experimental"
 expt_id = ["41", "34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]
-smooth = [True, False]
+smooth = [True]
 select_gain_1 = [True, False]
 
 # Ignored if dataset_name == "experimental"
 n_times = [10]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [2]
+embedding_dim = [2, 3, 4]
 distortion_amp = [0.4]
 noise_var = [1e-3]
 
