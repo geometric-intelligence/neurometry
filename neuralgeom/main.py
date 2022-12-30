@@ -4,24 +4,22 @@ import itertools
 import logging
 import os
 import tempfile
+import traceback
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import time
 
 import datasets.utils
 import default_config
+import evaluate
 import geomstats.backend as gs
+import matplotlib.pyplot as plt
 import models.neural_vae
 import models.toroidal_vae
 import torch
 import train
+import viz
 import wandb
-from evaluate import (
-    compute_error,
-    compute_mean_curvature_learned,
-    compute_mean_curvature_true,
-)
-from viz import plot_curv, plot_latent_space, plot_loss, plot_recon
 
 TRAINED_MODELS = "results/trained_models/"
 if not os.path.exists(TRAINED_MODELS):
@@ -37,19 +35,20 @@ def main():
     """
     for dataset_name in default_config.dataset_name:
         if dataset_name == "experimental":
+            # Variable experiments parameters (experimental):
             for (
                 expt_id,
                 timestep_microsec,
                 smooth,
-                select_first_gain,
+                select_gain_1,
             ) in itertools.product(
                 default_config.expt_id,
                 default_config.timestep_microsec,
                 default_config.smooth,
-                default_config.select_first_gain,
+                default_config.select_gain_1,
             ):
                 run_name = f"{default_config.now}_{dataset_name}"
-                if select_first_gain:
+                if select_gain_1:
                     run_name += f"_{expt_id}_first_gain"
                 else:
                     run_name += f"_{expt_id}_second_gain"
@@ -61,10 +60,12 @@ def main():
                     expt_id=expt_id,
                     timestep_microsec=timestep_microsec,
                     smooth=smooth,
-                    select_first_gain=select_first_gain,
+                    select_gain_1=select_gain_1,
                 )
         else:
-            for embedding_dim, distortion_amp, noise_var in itertools.product(
+            # Variable experiments parameters (non-experimental):
+            for n_times, embedding_dim, distortion_amp, noise_var in itertools.product(
+                default_config.n_times,
                 default_config.embedding_dim,
                 default_config.distortion_amp,
                 default_config.noise_var,
@@ -81,6 +82,7 @@ def main():
                 main_run(
                     run_name=run_name,
                     dataset_name=dataset_name,
+                    n_times=n_times,
                     embedding_dim=embedding_dim,
                     distortion_amp=distortion_amp,
                     noise_var=noise_var,
@@ -91,7 +93,10 @@ def main_run(
     run_name,
     dataset_name,
     expt_id=None,
-    select_first_gain=None,
+    timestep_microsec=None,
+    smooth=None,
+    select_gain_1=None,
+    n_times=None,
     embedding_dim=None,
     distortion_amp=None,
     noise_var=None,
@@ -104,15 +109,21 @@ def main_run(
         Name of the run.
     dataset_name : str
         Name of the dataset.
-    expt_id : str
+    expt_id : str (optional, only for experimental)
         ID of the experiment.
-    select_first_gain : bool
+    timestep_microsec : float (optional, only for experimental)
+        Timestep of the experiment.
+    smooth : bool (optional, only for experimental)
+        Whether to smooth the data or not.
+    select_gain_1 : bool (optional, only for experimental)
         Whether to select the first gain or not.
-    embedding_dim : int
+    n_times : int (optional, only for synthetic)
+        Number of times.
+    embedding_dim : int (optional, only for synthetic)
         Dimension of the embedding space.
-    distortion_amp : float
+    distortion_amp : float (optional, only for synthetic)
         Amplitude of the distortion.
-    noise_var : float
+    noise_var : float (optional, only for synthetic)
         Variance of the noise.
     """
     wandb.init(
@@ -120,24 +131,30 @@ def main_run(
         dir=tempfile.gettempdir(),
         config={
             "run_name": run_name,
+            "results_prefix": run_name,
+            # Variable experiments parameters:
             "dataset_name": dataset_name,
             "expt_id": expt_id,
-            "select_first_gain": select_first_gain,
+            "timestep_microsec": timestep_microsec,
+            "smooth": smooth,
+            "select_gain_1": select_gain_1,
             "embedding_dim": embedding_dim,
             "distortion_amp": distortion_amp,
             "noise_var": noise_var,
+            # Fixed experiments parameters:
+            "manifold_dim": default_config.manifold_dim[dataset_name],
+            "latent_dim": default_config.latent_dim[dataset_name],
+            "posterior_type": default_config.posterior_type[dataset_name],
+            "distortion_func": default_config.distortion_func[dataset_name],
+            "n_wiggles": default_config.n_wiggles[dataset_name],
+            "radius": default_config.radius[dataset_name],
+            "major_radius": default_config.major_radius[dataset_name],
+            "minor_radius": default_config.minor_radius[dataset_name],
+            "synthetic_rotation": default_config.synthetic_rotation[dataset_name],
+            # Else:
             "device": default_config.device,
             "log_interval": default_config.log_interval,
             "checkpt_interval": default_config.checkpt_interval,
-            "timestep_microsec": default_config.timestep_microsec,
-            "smooth": default_config.smooth,
-            "distortion_func": default_config.distortion_func,
-            "n_times": default_config.n_times,
-            "radius": default_config.radius,
-            "major_radius": default_config.major_radius,
-            "minor_radius": default_config.minor_radius,
-            "n_wiggles": default_config.n_wiggles,
-            "synthetic_rotation": default_config.synthetic_rotation,
             "batch_size": default_config.batch_size,
             "scheduler": default_config.scheduler,
             "n_epochs": default_config.n_epochs,
@@ -148,36 +165,63 @@ def main_run(
             "encoder_depth": default_config.encoder_depth,
             "decoder_depth": default_config.decoder_depth,
             "decoder_width": default_config.decoder_width,
-            "latent_dim": default_config.latent_dim,
-            "posterior_type": default_config.posterior_type,
-            "manifold_dim": default_config.manifold_dim,
             "gen_likelihood_type": default_config.gen_likelihood_type,
-            "results_prefix": default_config.results_prefix,
             "gamma": default_config.gamma,
         },
     )
-
     config = wandb.config
-
     wandb.run.name = config.run_name
 
-    train_losses, test_losses, model = create_model_and_train_test(config)
+    try:
+        # Load data, labels
+        dataset, labels, train_loader, test_loader = datasets.utils.load(config)
+        data_n_times, data_dim = dataset.shape
+        config.update(
+            {
+                "data_n_times": data_n_times,
+                "data_dim": data_dim,
+            }
+        )
+        # FIXME: loaders might not go on GPUs
+        dataset = dataset.to(config.device)
 
-    plot_and_log(train_losses, test_losses, model)
+        train_losses, test_losses, model = create_model_and_train_test(
+            config, train_loader, test_loader
+        )
+        logging.info(f"---> Done training for run: {config.run_name}.")
 
-    evaluate_curvature(model)
+        training_plot_and_log(config, dataset, labels, train_losses, test_losses, model)
+        logging.info(f"---> Done training's plots and logs for run: {config.run_name}.")
+
+        curvature_compute_plot_and_log(config, dataset, model)
+        logging.info(
+            f"---> Done curvature's computations, plots and logs for run: {config.run_name}."
+        )
+
+    except Exception as err:
+        # Note: print() might not print within the try/except syntax
+        logging.info(f"\n------> FAILED run: {config.run_name}.\n")
+        traceback.print_exc()
+        # Note: exit_code different from 0 marks run as failed
+        wandb.finish(exit_code=1)
+        pass
 
     wandb.finish()
+    logging.info(f"\n------> COMPLETED run: {config.run_name}.\n")
 
 
-def create_model_and_train_test(config):
-    # Load data, labels
-    testing = datasets.utils.load(config)
-    dataset_torch, labels, train_loader, test_loader = datasets.utils.load(config)
+def create_model_and_train_test(config, train_loader, test_loader):
+    """Create model and train and test it.
 
-    dataset_torch = dataset_torch.to(config.device)
-    _, data_dim = dataset_torch.shape
+    Note: train_loader and test_loader have a dataset attribute.
 
+    The dataset attribute is a list of [data_point, label]'s.
+
+    The data_point variable is a tensor of shape (embedding_dim,)
+    corresponding to a single data point.
+    """
+    data_dim = tuple(train_loader.dataset[0][0].data.shape)[0]
+    # Create model
     if config.posterior_type in ("gaussian", "hyperspherical"):
         model = models.neural_vae.NeuralVAE(
             data_dim=data_dim,
@@ -205,14 +249,13 @@ def create_model_and_train_test(config):
     optimizer = torch.optim.Adam(
         model.parameters(), lr=config.learning_rate, amsgrad=True
     )
+    scheduler = None
     if config.scheduler is True:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", factor=0.5
         )
-    else:
-        scheduler = None
 
-    # Train model
+    # Train test model
     train_losses, test_losses, best_model = train.train_test(
         model=model,
         train_loader=train_loader,
@@ -221,24 +264,17 @@ def create_model_and_train_test(config):
         scheduler=scheduler,
         config=config,
     )
-
-    print("Done Training!")
     return train_losses, test_losses, best_model
 
 
-def plot_and_log(config, dataset_torch, labels, train_losses, test_losses, model):
-    # FIXME: the labels here might not be aligned in time.
-    # Plot the loss
-    fig_loss = plot_loss(train_losses, test_losses, config)
+def training_plot_and_log(config, dataset, labels, train_losses, test_losses, model):
+    # Plot
+    fig_loss = viz.plot_loss(train_losses, test_losses, config)
+    fig_latent = viz.plot_latent_space(model, dataset, labels, config)
+    fig_recon = viz.plot_recon(model, dataset, labels, config)
 
-    # Plot the latent space
-    fig_latent = plot_latent_space(model, dataset_torch, labels, config)
-
-    # Plot original data and reconstruction
-    fig_recon = plot_recon(model, dataset_torch, labels, config)
-
+    # Log
     torch.save(model, os.path.join(TRAINED_MODELS, f"{config.results_prefix}_model.pt"))
-
     wandb.log(
         {
             "fig_loss": wandb.Image(fig_loss),
@@ -246,39 +282,69 @@ def plot_and_log(config, dataset_torch, labels, train_losses, test_losses, model
             "fig_recon": wandb.Image(fig_recon),
         }
     )
-    print("Done Plotting!")
+    plt.close("all")
 
 
-def evaluate_curvature(config, dataset_torch, model):
-
-    if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
-        print("Computing true curvature from synthetic data...")
-        # start_time = time.time()
-        z_grid, _, curv_norms_true = compute_mean_curvature_true(config)
-        # error = compute_error(z_grid, curv_norms_learned, curv_norms_true, config)
-        # end_time = time.time()
-        # print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
-        fig_curv_norms_true = plot_curv(z_grid, curv_norms_true, config, None, "true")
-
-        wandb.log({"fig_curv_norms_true": wandb.Image(fig_curv_norms_true)})
-
+def curvature_compute_plot_and_log(config, dataset, model):
+    # Compute
     print("Computing learned curvature...")
-    # start_time = time.time()
-    z_grid, _, curv_norms_learned = compute_mean_curvature_learned(
-        model, config, dataset_torch.shape[0], dataset_torch.shape[1]
+    start_time = time.time()
+    z_grid, _, curv_norms_learned = evaluate.compute_curvature_learned(
+        model, config, dataset.shape[0], dataset.shape[1]
     )
-    # end_time = time.time()
-    # print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
+    comp_time_learned = time.time() - start_time
+
     norm_val = None
     if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
-        norm_val = max(curv_norms_true)
-        curvature_error = compute_error(
+        print("Computing true curvature for synthetic data...")
+        start_time = time.time()
+        z_grid, _, curv_norms_true = evaluate.compute_curvature_true(config)
+        comp_time_true = time.time() - start_time
+        print("Computing curvature error for synthetic data...")
+
+        curvature_error = evaluate.compute_curvature_error(
             z_grid, curv_norms_learned, curv_norms_true, config
         )
-        wandb.log({"curvature_error": curvature_error})
+        norm_val = max(curv_norms_true)
 
-    fig_curv_norms_learned = plot_curv(
-        z_grid, curv_norms_learned, config, norm_val, "learned"
+    # Plot
+    fig_curv_norms_learned = viz.plot_curvature_norms(
+        angles=z_grid,
+        curvature_norms=curv_norms_learned,
+        config=config,
+        norm_val=norm_val,
+        profile_type="learned",
     )
+    if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
+        fig_curv_norms_true = viz.plot_curvature_norms(
+            angles=z_grid,
+            curvature_norms=curv_norms_true,
+            config=config,
+            norm_val=None,
+            profile_type="true",
+        )
 
-    wandb.log({"fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned)})
+    # Log
+    wandb.log(
+        {
+            "comp_time_curv_learned": comp_time_learned,
+            "average_curv_norms_learned": gs.mean(curv_norms_learned),
+            "std_curv_norms_learned": gs.std(curv_norms_learned),
+            "fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned),
+        }
+    )
+    if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
+        wandb.log(
+            {
+                "comp_time_curv_true": comp_time_true,
+                "average_curv_norms_true": gs.mean(curv_norms_true),
+                "std_curv_norms_true": gs.std(curv_norms_true),
+                "curvature_error": curvature_error,
+                "fig_curv_norms_true": wandb.Image(fig_curv_norms_true),
+            }
+        )
+
+    plt.close("all")
+
+
+main()

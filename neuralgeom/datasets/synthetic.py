@@ -411,13 +411,10 @@ def get_s1_synthetic_immersion(
             raise NotImplementedError
 
         point = amplitude * polar(angle)
-
-        padded_point = F.pad(
-            input=point, pad=(0, embedding_dim - 2), mode="constant", value=0.0
-        )
-
-        padded_point = gs.squeeze(padded_point, axis=-1)
-        return gs.einsum("ij,j->i", rot, padded_point)
+        point = gs.squeeze(point, axis=-1)
+        if embedding_dim > 2:
+            point = gs.concatenate([point, gs.zeros(embedding_dim - 2)])
+        return gs.einsum("ij,j->i", rot, point)
 
     return synth_immersion
 
@@ -440,14 +437,11 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
         )
 
         point = amplitude * spherical(theta, phi)
+        point = gs.squeeze(point, axis=-1)
+        if embedding_dim > 3:
+            point = gs.concatenate([point, gs.zeros(embedding_dim - 3)])
 
-        padded_point = F.pad(
-            input=point, pad=(0, embedding_dim - 3), mode="constant", value=0.0
-        )
-
-        padded_point = gs.squeeze(padded_point)
-
-        return gs.einsum("ij,j->i", rot, padded_point)
+        return gs.einsum("ij,j->i", rot, point)
 
     return s2_synthetic_immersion
 
@@ -476,11 +470,10 @@ def get_t2_synthetic_immersion(
         )
 
         point = amplitude * torus_proj(theta, phi)
+        point = gs.squeeze(point, axis=-1)
+        if embedding_dim > 3:
+            point = gs.concatenate([point, gs.zeros(embedding_dim - 3)])
 
-        padded_point = F.pad(
-            input=point, pad=(0, embedding_dim - 3), mode="constant", value=0.0
-        )
-
-        return gs.einsum("ij,j->i", rot, padded_point)
+        return gs.einsum("ij,j->i", rot, point)
 
     return t2_synthetic_immersion

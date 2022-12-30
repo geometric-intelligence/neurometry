@@ -50,25 +50,26 @@ def load(config):
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
 
         gain_counts = labels["gains"].value_counts()
-        first_gain = 1
+        gain_1 = 1
         one_gain = labels["gains"].value_counts().is_unique
         if one_gain:
             print(f"The dataset contains only one gain value: {gain_counts.index[0]}")
-            gain = first_gain
+            gain = gain_1
         else:
-            print("The dataset transitions between two gains:")
             print(
-                f"First gain: {gain_counts.index[0]}; Second gain: {gain_counts.index[1]}"
+                "The dataset transitions between two gains:"
+                f" {gain_counts.index[0]:4f} and {gain_counts.index[1]:4f}."
             )
-            if config.select_first_gain:
-                gain = first_gain
-                print(f"We select the first gain: gain = {first_gain}.")
+            if config.select_gain_1:
+                gain = gain_1
+                print(f"We select gain 1: gain = {gain_1}.")
             else:
-                second_gain = gain_counts.index[0]
-                if second_gain == first_gain:
-                    second_gain = gain_counts.index[1]
-                gain = second_gain
-                print(f"We select the second gain: gain = {second_gain}.")
+                other_gain = gain_counts.index[0]
+                if other_gain == gain_1:
+                    other_gain = gain_counts.index[1]
+                gain = other_gain
+                print(f"We select the other gain: gain = {other_gain:4f}.")
+        config.update({"gain": gain})
         dataset = dataset[labels["gains"] == gain]
         labels = labels[labels["gains"] == gain]
 

@@ -5,7 +5,7 @@ import copy
 
 import losses
 import torch
-#import wandb
+import wandb
 
 
 def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
@@ -21,10 +21,11 @@ def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
             optimizer=optimizer,
             config=config,
         )
-
         train_losses.append(train_loss)
 
-        test_loss = test_one_epoch(model=model, test_loader=test_loader, config=config)
+        test_loss = test_one_epoch(
+            epoch=epoch, model=model, test_loader=test_loader, config=config
+        )
 
         if config.scheduler == "True":
             scheduler.step(test_loss)
@@ -34,8 +35,6 @@ def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
         if test_loss < lowest_test_loss:
             lowest_test_loss = test_loss
             best_model = copy.deepcopy(model)
-
-        #wandb.log({"train_loss": train_loss, "test_loss": test_loss}, step=epoch)
 
     return train_losses, test_losses, best_model
 
@@ -64,10 +63,12 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
         optimizer.zero_grad()
         z_batch, x_mu_batch, posterior_params = model(data)
 
-        loss = losses.elbo(data, x_mu_batch, posterior_params, z_batch, labels, config)
+        elbo_loss, recon_loss, kld, latent_loss = losses.elbo(
+            data, x_mu_batch, posterior_params, z_batch, labels, config
+        )
 
-        loss.backward()
-        train_loss += loss.item()
+        elbo_loss.backward()
+        train_loss += elbo_loss.item()
         optimizer.step()
         if batch_idx % config.log_interval == 0:
             print(
@@ -76,17 +77,27 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
-                    loss.item() / len(data),
+                    elbo_loss.item() / len(data),
                 )
             )
 
-    train_loss = train_loss / len(train_loader.dataset)
+    train_loss /= len(train_loader.dataset)
+
+    wandb.log(
+        {
+            "train_loss": train_loss,
+            "train_recon_loss": recon_loss / len(train_loader.dataset),
+            "train_kld": kld / len(train_loader.dataset),
+            "train_latent_loss": latent_loss / len(train_loader.dataset),
+        },
+        step=epoch,
+    )
 
     print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss))
     return train_loss
 
 
-def test_one_epoch(model, test_loader, config):
+def test_one_epoch(epoch, model, test_loader, config):
     """Run one epoch on the test set.
 
     The loss is computed on the whole test set.
@@ -111,10 +122,20 @@ def test_one_epoch(model, test_loader, config):
             labels = labels.to(config.device)
             z_batch, x_mu_batch, posterior_params = model(data)
 
-            test_loss += losses.elbo(
+            elbo_loss, recon_loss, kld, latent_loss = losses.elbo(
                 data, x_mu_batch, posterior_params, z_batch, labels, config
-            ).item()
+            )
+            test_loss += elbo_loss.item()
 
     test_loss /= len(test_loader.dataset)
+    wandb.log(
+        {
+            "test_loss": test_loss,
+            "test_recon_loss": recon_loss / len(test_loader.dataset),
+            "test_kld": kld / len(test_loader.dataset),
+            "test_latent_loss": latent_loss / len(test_loader.dataset),
+        },
+        step=epoch,
+    )
     print("====> Test set loss: {:.4f}".format(test_loss))
     return test_loss
