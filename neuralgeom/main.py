@@ -18,7 +18,7 @@ from evaluate import (
     compute_mean_curvature_learned,
     compute_mean_curvature_true,
 )
-from plots import plot_curv, plot_latent_space, plot_loss, plot_recon
+from viz import plot_curv, plot_latent_space, plot_loss, plot_recon
 
 TRAINED_MODELS = "results/trained_models/"
 if not os.path.exists(TRAINED_MODELS):
