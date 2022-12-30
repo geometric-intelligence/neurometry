@@ -12,6 +12,7 @@ import datasets.utils
 import default_config
 import evaluate
 import geomstats.backend as gs
+import matplotlib
 import matplotlib.pyplot as plt
 import models.neural_vae
 import models.toroidal_vae
@@ -19,6 +20,9 @@ import torch
 import train
 import viz
 import wandb
+
+# Note: this is required to make matplotlib figures in threads.
+matplotlib.use("Agg")
 
 TRAINED_MODELS = "results/trained_models/"
 if not os.path.exists(TRAINED_MODELS):
@@ -35,7 +39,7 @@ def main():
     """
     for dataset_name in default_config.dataset_name:
         if dataset_name == "experimental":
-            # Variable experiments parameters (experimental):
+            # Variable experiments parameters (experimental datasets):
             for (
                 expt_id,
                 timestep_microsec,
@@ -54,7 +58,7 @@ def main():
                     run_name += f"_{expt_id}_second_gain"
 
                 logging.info(f"\n---> START training for run: {run_name}.")
-                main_run(
+                main_sweep(
                     run_name=run_name,
                     dataset_name=dataset_name,
                     expt_id=expt_id,
@@ -63,7 +67,7 @@ def main():
                     select_gain_1=select_gain_1,
                 )
         else:
-            # Variable experiments parameters (non-experimental):
+            # Variable experiments parameters (synthetic datasets):
             for n_times, embedding_dim, distortion_amp, noise_var in itertools.product(
                 default_config.n_times,
                 default_config.embedding_dim,
@@ -79,7 +83,7 @@ def main():
                 run_name += f"_embedding_dim_{embedding_dim}"
                 run_name += f"_distortion_amp_{distortion_amp}_noise_var_{noise_var}"
                 logging.info(f"\n---> START training for run: {run_name}.")
-                main_run(
+                main_sweep(
                     run_name=run_name,
                     dataset_name=dataset_name,
                     n_times=n_times,
@@ -89,7 +93,7 @@ def main():
                 )
 
 
-def main_run(
+def main_sweep(
     run_name,
     dataset_name,
     expt_id=None,
@@ -126,53 +130,72 @@ def main_run(
     noise_var : float (optional, only for synthetic)
         Variance of the noise.
     """
-    wandb.init(
-        project=default_config.project,
-        dir=tempfile.gettempdir(),
-        config={
-            "run_name": run_name,
-            "results_prefix": run_name,
-            # Variable experiments parameters:
-            "dataset_name": dataset_name,
-            "expt_id": expt_id,
-            "timestep_microsec": timestep_microsec,
-            "smooth": smooth,
-            "select_gain_1": select_gain_1,
-            "embedding_dim": embedding_dim,
-            "distortion_amp": distortion_amp,
-            "noise_var": noise_var,
-            # Fixed experiments parameters:
-            "manifold_dim": default_config.manifold_dim[dataset_name],
-            "latent_dim": default_config.latent_dim[dataset_name],
-            "posterior_type": default_config.posterior_type[dataset_name],
-            "distortion_func": default_config.distortion_func[dataset_name],
-            "n_wiggles": default_config.n_wiggles[dataset_name],
-            "radius": default_config.radius[dataset_name],
-            "major_radius": default_config.major_radius[dataset_name],
-            "minor_radius": default_config.minor_radius[dataset_name],
-            "synthetic_rotation": default_config.synthetic_rotation[dataset_name],
-            # Else:
-            "device": default_config.device,
-            "log_interval": default_config.log_interval,
-            "checkpt_interval": default_config.checkpt_interval,
-            "batch_size": default_config.batch_size,
-            "scheduler": default_config.scheduler,
-            "n_epochs": default_config.n_epochs,
-            "learning_rate": default_config.learning_rate,
-            "beta": default_config.beta,
-            "sftbeta": default_config.sftbeta,
-            "encoder_width": default_config.encoder_width,
-            "encoder_depth": default_config.encoder_depth,
-            "decoder_depth": default_config.decoder_depth,
-            "decoder_width": default_config.decoder_width,
-            "gen_likelihood_type": default_config.gen_likelihood_type,
-            "gamma": default_config.gamma,
-        },
-    )
-    config = wandb.config
-    wandb.run.name = config.run_name
+    CONFIG = {
+        # Parameters specific to this run (unique value):
+        "dataset_name": dataset_name,
+        "run_name": run_name,
+        "results_prefix": run_name,
+        "expt_id": expt_id,
+        "timestep_microsec": timestep_microsec,
+        "smooth": smooth,
+        "select_gain_1": select_gain_1,
+        "n_times": n_times,
+        "embedding_dim": embedding_dim,
+        "distortion_amp": distortion_amp,
+        "noise_var": noise_var,
+        # Parameters fixed across runs (unique value depending on dataset_name):
+        "manifold_dim": default_config.manifold_dim[dataset_name],
+        "latent_dim": default_config.latent_dim[dataset_name],
+        "posterior_type": default_config.posterior_type[dataset_name],
+        "distortion_func": default_config.distortion_func[dataset_name],
+        "n_wiggles": default_config.n_wiggles[dataset_name],
+        "radius": default_config.radius[dataset_name],
+        "major_radius": default_config.major_radius[dataset_name],
+        "minor_radius": default_config.minor_radius[dataset_name],
+        "synthetic_rotation": default_config.synthetic_rotation[dataset_name],
+        # Else:
+        "device": default_config.device,
+        "log_interval": default_config.log_interval,
+        "checkpt_interval": default_config.checkpt_interval,
+        "scheduler": default_config.scheduler,
+        "n_epochs": default_config.n_epochs,
+        "beta": default_config.beta,
+        "gamma": default_config.gamma,
+        "sftbeta": default_config.sftbeta,
+        "gen_likelihood_type": default_config.gen_likelihood_type,
+    }
 
-    try:
+    sweep_config = {
+        "method": "bayes",
+        "name": "sweep",
+        "metric": {"goal": "minimize", "name": "test_loss"},
+        "early_terminate": {"type": "hyperband", "min_iter": 3},
+        "parameters": {
+            "lr": {
+                "min": default_config.lr_min,
+                "max": default_config.lr_max,
+            },
+            "batch_size": {"values": default_config.batch_size},
+            "encoder_width": {
+                "values": default_config.encoder_width,
+            },
+            "encoder_depth": {
+                "values": default_config.encoder_depth,
+            },
+            "decoder_width": {
+                "values": default_config.decoder_width,
+            },
+            "decoder_depth": {
+                "values": default_config.decoder_depth,
+            },
+        },
+    }
+
+    # The try/except syntax allows continuing experiments even if one run fails
+    # try:
+    sweep_id = wandb.sweep(sweep=sweep_config, project=default_config.project)
+
+    def _main_run(config):
         # Load data, labels
         dataset, labels, train_loader, test_loader = datasets.utils.load(config)
         data_n_times, data_dim = dataset.shape
@@ -183,7 +206,7 @@ def main_run(
             }
         )
         # FIXME: loaders might not go on GPUs
-        dataset = dataset.to(config.device)
+        dataset = dataset.to(config.device)  # dataset.to(config.device)
 
         train_losses, test_losses, model = create_model_and_train_test(
             config, train_loader, test_loader
@@ -197,17 +220,31 @@ def main_run(
         logging.info(
             f"---> Done curvature's computations, plots and logs for run: {config.run_name}."
         )
+        logging.info(f"\n------> COMPLETED run: {config.run_name}.\n")
 
-    except Exception:
-        # Note: print() might not print within the try/except syntax
-        logging.info(f"\n------> FAILED run: {config.run_name}.\n")
-        traceback.print_exc()
-        # Note: exit_code different from 0 marks run as failed
-        wandb.finish(exit_code=1)
-        pass
+    def main_run():
+        with wandb.init(
+            project=default_config.project, config=CONFIG, dir=tempfile.gettempdir()
+        ):
+            _main_run(wandb.config)
 
-    wandb.finish()
-    logging.info(f"\n------> COMPLETED run: {config.run_name}.\n")
+    wandb.agent(
+        sweep_id=sweep_id,
+        project=default_config.project,
+        function=main_run,
+        count=default_config.n_runs_per_sweep,
+    )
+
+    # except Exception:
+    #     # Note: print() might not print within the try/except syntax
+    #     logging.info(f"\n------> FAILED run: {config.run_name}.\n")
+    #     traceback.print_exc()
+    #     # Note: exit_code different from 0 marks run as failed
+    #     wandb.finish(exit_code=1)
+    #     pass
+
+    #
+    logging.info(f"\n------> COMPLETED SWEEP: {sweep_id}.\n")
 
 
 def create_model_and_train_test(config, train_loader, test_loader):
@@ -246,9 +283,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
         ).to(config.device)
 
     # Create optimizer, scheduler
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.learning_rate, amsgrad=True
-    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, amsgrad=True)
     scheduler = None
     if config.scheduler is True:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(

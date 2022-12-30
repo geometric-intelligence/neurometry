@@ -21,7 +21,7 @@ def plot_loss(train_losses, test_losses, config):
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.png"))
-    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.svg"))
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.svg"))
     return fig
 
 
@@ -198,7 +198,7 @@ def plot_latent_space(model, dataset_torch, labels, config):
     plt.yticks(fontsize=24)
     ax.set_title("Latent space", fontsize=40)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.png"))
-    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.svg"))
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.svg"))
     return fig
 
 

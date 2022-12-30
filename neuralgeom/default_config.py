@@ -1,4 +1,4 @@
-"""Default configuration for a run."""
+"""Default configuration for launching experiments."""
 
 import logging
 import os
@@ -19,7 +19,8 @@ project = "neuralgeom"
 now = str(datetime.now().replace(second=0, microsecond=0))
 trained_model_path = None
 
-### Fixed experiment parameters (dicts) ###
+### Fixed experiment parameters ###
+### ---> Dicts giving values that are not changed in experiments
 
 manifold_dim = {
     "experimental": 1,
@@ -84,10 +85,11 @@ synthetic_rotation = {
     "t2_synthetic": "identity",  # or "random"
 }
 
-### Variable experiment parameters (lists) ###
+### Variable experiment parameters ###
+### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental", "s1_synthetic", "s2_synthetic", "t2_synthetic"]
+dataset_name = ["s1_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -104,27 +106,33 @@ smooth = [True, False]
 select_gain_1 = [True, False]
 
 # Ignored if dataset_name == "experimental"
-n_times = [10, 100]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [2, 3, 4]
+n_times = [10]  # actual number of times is sqrt_ntimes ** 2
+embedding_dim = [2]
 distortion_amp = [0.4]
 noise_var = [1e-3]
 
-
 # Models
 model_type = "neural_vae"
-encoder_width = 600
-decoder_width = encoder_width
-encoder_depth = 4
-decoder_depth = encoder_depth
 gen_likelihood_type = "gaussian"
 
 # Training
-batch_size = 20
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
 n_epochs = 2  # 240  #
-learning_rate = 1e-3
 sftbeta = 4.5
-beta = 0.03  # 0.03  # hyperparameter weighting KL term
-gamma = 20  # 20  # hyperparameter weighting latent loss term
+beta = 0.03  # 0.03  # weight for KL term
+gamma = 20  # 20  # weight for latent loss term
+
+### Sweep hyperparameters ###
+# --> Lists of values to sweep for each hyperparameter
+# Except for n_runs_per_sweep, lr_min and lr_max which are constants
+
+n_runs_per_sweep = 3
+lr_min = 0.00001
+lr_max = 0.1
+batch_size = [20, 50]
+encoder_width = [6]
+encoder_depth = [4]
+decoder_width = [4, 8]
+decoder_depth = [3, 6]
