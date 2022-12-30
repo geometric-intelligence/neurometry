@@ -10,7 +10,6 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
 project = "neural_geom"
-run_name = "nina-test-locally"  # "testing"
 
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
@@ -20,7 +19,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # Dataset
-dataset_name = "s1_synthetic"
+dataset_name = "experimental"
 if dataset_name not in ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experimental"]:
     raise ValueError(f"Dataset name {dataset_name} not recognized.")
 
@@ -43,10 +42,14 @@ if dataset_name not in ["s1_synthetic", "s2_synthetic", "t2_synthetic", "experim
 
 
 if dataset_name == "experimental":
-    expt_id = "7"  # hd: with head direction
+    expt_id = "41"  # hd: with head direction
     timestep_microsec = int(1e6)
     smooth = False
     manifold_dim = 1
+    # if there are multiple gains:
+    # True selects the first one
+    # False selects the second one
+    select_first_gain = True
 elif dataset_name == "s1_synthetic":
     distortion_func = "bump"
     n_times = 500
@@ -114,3 +117,10 @@ gen_likelihood_type = "gaussian"
 now = str(datetime.now().replace(second=0, microsecond=0))
 results_prefix = f"{dataset_name}_{now}"
 trained_model_path = None
+
+run_name = f"{now}_{dataset_name}"
+if dataset_name == "experimental":
+    if select_first_gain:
+        run_name += f"_{expt_id}_first_gain"
+    else:
+        run_name += f"_{expt_id}_second_gain"

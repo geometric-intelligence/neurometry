@@ -63,6 +63,7 @@ wandb.init(
         "gen_likelihood_type": default_config.gen_likelihood_type,
         "results_prefix": default_config.results_prefix,
         "gamma": default_config.gamma,
+        "select_first_gain": default_config.select_first_gain,
     },
 )
 

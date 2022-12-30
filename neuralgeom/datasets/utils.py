@@ -10,7 +10,6 @@ from scipy.signal import savgol_filter
 from sklearn.decomposition import PCA
 
 
-
 def load(config):
     """Load dataset according to configuration in config.
 
@@ -41,22 +40,6 @@ def load(config):
         labels = labels[labels["velocities"] > 5]
         dataset = np.log(dataset.astype(np.float32) + 1)
 
-
-        if labels["gains"].value_counts().is_unique:
-            two_gains = False
-            print("the dataset contains only one gain value")
-        else:
-            two_gains = True
-            print("the dataset contains more than one gain value")
-            gain1 = 1
-            gain2 = labels["gains"].value_counts().index[0]
-            if gain2 == gain1:
-                gain2 = labels["gains"].value_counts().index[1]
-            dataset_gain1 = dataset[labels["gains"] == gain1]
-            labels_gain1 = labels[labels["gains"] == gain1]
-            dataset_gain2 = dataset[labels["gains"] == gain2]
-            labels_gain2 = labels[labels["gains"] == gain2]
-
         if config.smooth == True:
             dataset_smooth = np.zeros_like(dataset)
             for _ in range(dataset.shape[1]):
@@ -65,6 +48,30 @@ def load(config):
                 )
             dataset = dataset_smooth
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
+
+        gain_counts = labels["gains"].value_counts()
+        first_gain = 1
+        one_gain = labels["gains"].value_counts().is_unique
+        if one_gain:
+            print(f"The dataset contains only one gain value: {gain_counts.index[0]}")
+            gain = first_gain
+        else:
+            print("The dataset transitions between two gains:")
+            print(
+                f"First gain: {gain_counts.index[0]}; Second gain: {gain_counts.index[1]}"
+            )
+            if config.select_first_gain:
+                gain = first_gain
+                print(f"We select the first gain: gain = {first_gain}.")
+            else:
+                second_gain = gain_counts.index[0]
+                if second_gain == first_gain:
+                    second_gain = gain_counts.index[1]
+                gain = second_gain
+                print(f"We select the second gain: gain = {second_gain}.")
+        dataset = dataset[labels["gains"] == gain]
+        labels = labels[labels["gains"] == gain]
+
     elif config.dataset_name == "synthetic":
         dataset, labels = datasets.synthetic.load_place_cells()
         dataset = np.log(dataset.astype(np.float32) + 1)
@@ -122,80 +129,34 @@ def load(config):
     # dataset_torch = dataset_torch - torch.mean(dataset_torch, dim=0)
 
     train_num = int(round(0.7 * len(dataset)))  # 70% training
-    indeces = np.arange(len(dataset))
-    train_indeces = np.random.choice(indeces, train_num, replace=False)
-    test_indeces = np.delete(indeces, train_indeces)
+    indices = np.arange(len(dataset))
 
-    train_dataset = dataset[train_indeces]
-    train_labels = labels.iloc[train_indeces]
+    # Note: this breaks the temporal ordering.
+    train_indices = np.random.choice(indices, train_num, replace=False)
+    test_indices = np.delete(indices, train_indices)
 
-    test_dataset = dataset[test_indeces]
-    test_labels = labels.iloc[test_indeces]
-    if config.dataset_name == "experimental" and two_gains:
-        train_num_gain1 = int(round(0.8 * len(dataset_gain1)))
-        train_num_gain2 = int(round(0.8 * len(dataset_gain2)))
-        train_dataset_gain1 = dataset_gain1[:train_num_gain1]
-        train_labels_gain1 = labels_gain1.iloc[:train_num_gain1]
-        test_dataset_gain1 = dataset_gain1[train_num_gain1:]
-        test_labels_gain1 = labels_gain1.iloc[train_num_gain1:]
-        train_dataset_gain2 = dataset_gain2[:train_num_gain2]
-        train_labels_gain2 = labels_gain2.iloc[:train_num_gain2]
-        test_dataset_gain2 = dataset_gain2[train_num_gain2:]
-        test_labels_gain2 = labels_gain2.iloc[train_num_gain2:]
-    else:
-        train_dataset = dataset[train_indeces]
-        train_labels = labels.iloc[train_indeces]
-        test_dataset = dataset[test_indeces]
-        test_labels = labels.iloc[test_indeces]
-        # train_dataset = dataset[0:round(0.7*len(dataset))]
-        # train_labels = labels.iloc[0:round(0.7*len(dataset))]
-        # test_dataset = dataset[round(0.7*len(dataset)):]
-        # test_labels = labels.iloc[round(0.7*len(dataset)):]
-    if config.dataset_name == "experimental":
-        if two_gains:
-            train_gain1 = []
-            for d, l in zip(
-                train_dataset_gain1, train_labels_gain1["angles"]
-            ):  # angles : positional angles
-                train_gain1.append([d, float(l)])
-            test_gain1 = []
-            for d, l in zip(test_dataset_gain1, test_labels_gain1["angles"]):
-                test_gain1.append([d, float(l)])
-            train_gain2 = []
-            for d, l in zip(
-                train_dataset_gain2, train_labels_gain2["angles"]
-            ):
-                train_gain2.append([d, float(l)])
-            test_gain2 = []
-            for d, l in zip(test_dataset_gain2, test_labels_gain2["angles"]):
-                test_gain2.append([d, float(l)])
-    
-            train_loader_gain1 = torch.utils.data.DataLoader(train_gain1, batch_size=config.batch_size)
-            test_loader_gain1 = torch.utils.data.DataLoader(test_gain1, batch_size=config.batch_size)
-            train_loader_gain2 = torch.utils.data.DataLoader(train_gain2, batch_size=config.batch_size)
-            test_loader_gain2 = torch.utils.data.DataLoader(test_gain2, batch_size=config.batch_size)
-            return dataset_gain1, labels_gain1, dataset_gain2, labels_gain2, train_loader_gain1, test_loader_gain1, train_loader_gain2, test_loader_gain2
-        else:
-            train = []
-            for d, l in zip(train_dataset, train_labels["angles"]):
-                train.append([d, float(l)])
-            test = []
-            for d, l in zip(test_dataset, test_labels["angles"]):
-                test.append([d, float(l)])
-    elif config.dataset_name =="s1_synthetic":
+    train_dataset = dataset[train_indices]
+    train_labels = labels.iloc[train_indices]
+
+    test_dataset = dataset[test_indices]
+    test_labels = labels.iloc[test_indices]
+
+    train_dataset = dataset[train_indices]
+    train_labels = labels.iloc[train_indices]
+    test_dataset = dataset[test_indices]
+    test_labels = labels.iloc[test_indices]
+
+    # The angles are positional angles in the lab frame
+    if config.dataset_name in ("experimental", "s1_synthetic"):
         train = []
-        for d, l in zip(
-            train_dataset, train_labels["angles"]
-        ):  # angles : positional angles
+        for d, l in zip(train_dataset, train_labels["angles"]):
             train.append([d, float(l)])
         test = []
         for d, l in zip(test_dataset, test_labels["angles"]):
             test.append([d, float(l)])
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         train = []
-        for d, t, p in zip(
-            train_dataset, train_labels["thetas"], train_labels["phis"]
-        ):  # angles : positional angles
+        for d, t, p in zip(train_dataset, train_labels["thetas"], train_labels["phis"]):
             train.append([d, torch.tensor([float(t), float(p)])])
         test = []
         for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"]):
