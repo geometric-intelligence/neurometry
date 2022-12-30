@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation as R
 
+RAW_DIR = "data/raw"
+BINNED_DIR = "data/binned"
+
 
 def load_place_cells(expt_id=34, timestep_microsec=1000000):
     """Load pre-processed experimental place cells firings.
@@ -31,18 +34,22 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
         Ground truth variables.
         Example: positional angle.
     """
-    data_path = f"data/expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
-    labels_path = f"data/expt{expt_id}_labels_timestep{timestep_microsec}.txt"
-    times_path = f"data/expt{expt_id}_times_timestep{timestep_microsec}.txt"
+    data_path = os.path.join(
+        BINNED_DIR, f"expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
+    )
+    labels_path = os.path.join(
+        BINNED_DIR, f"expt{expt_id}_labels_timestep{timestep_microsec}.txt"
+    )
+    times_path = os.path.join(
+        BINNED_DIR, f"expt{expt_id}_times_timestep{timestep_microsec}.txt"
+    )
     if os.path.exists(times_path):
         logging.info(f"# - Found file at {times_path}! Loading...")
         times = np.loadtxt(times_path)
     else:
         logging.info(f"# - No file at {times_path}. Preprocessing needed:")
         logging.info(f"Loading experiment {expt_id} to bin firing times into times...")
-        expt = utils.loadmat(
-            f"data/expt{expt_id}.mat"
-        )
+        expt = utils.loadmat(os.path.join(RAW_DIR, f"expt{expt_id}.mat"))
         expt = expt["x"]
 
         firing_times = _extract_firing_times(expt)
@@ -82,7 +89,7 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
 
     else:
         logging.info(f"# - No file at {labels_path}. Preprocessing needed:")
-        expt = utils.loadmat(f"data/expt{expt_id}.mat")
+        expt = utils.loadmat(os.path.join(RAW_DIR, f"expt{expt_id}.mat"))
         expt = expt["x"]
 
         enc_times = expt["rosdata"]["encTimes"]
@@ -93,7 +100,7 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
         rat = expt["rat"]
         day = expt["day"]
 
-        tracking_path = f"data/{rat}-{day}_trackingResults.mat"
+        tracking_path = os.path.join(RAW_DIR, f"{rat}-{day}_trackingResults.mat")
         if os.path.exists(tracking_path):
             logging.info(f"Found file at {data_path}! Loading...")
             tracking = utils.loadmat(tracking_path)
