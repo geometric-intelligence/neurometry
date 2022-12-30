@@ -128,7 +128,7 @@ gamma = 20  # 20  # weight for latent loss term
 # --> Lists of values to sweep for each hyperparameter
 # Except for n_runs_per_sweep, lr_min and lr_max which are constants
 
-n_runs_per_sweep = 3
+n_runs_per_sweep = 5
 lr_min = 0.00001
 lr_max = 0.1
 batch_size = [20, 50]

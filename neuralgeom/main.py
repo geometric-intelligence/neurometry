@@ -30,7 +30,7 @@ if not os.path.exists(TRAINED_MODELS):
 
 
 def main():
-    """Parse the default_config file and runs all experiments.
+    """Parse the default_config file and launch all experiments.
 
     This launches experiments with wandb with different config parameters.
 
@@ -51,15 +51,15 @@ def main():
                 default_config.smooth,
                 default_config.select_gain_1,
             ):
-                run_name = f"{default_config.now}_{dataset_name}"
+                sweep_prefix = f"{default_config.now}_{dataset_name}"
                 if select_gain_1:
-                    run_name += f"_{expt_id}_first_gain"
+                    sweep_prefix += f"_{expt_id}_gain_1"
                 else:
-                    run_name += f"_{expt_id}_second_gain"
+                    sweep_prefix += f"_{expt_id}_other_gain"
 
-                logging.info(f"\n---> START training for run: {run_name}.")
+                logging.info(f"\n---> START training for sweep: {sweep_prefix}.")
                 main_sweep(
-                    run_name=run_name,
+                    sweep_prefix=sweep_prefix,
                     dataset_name=dataset_name,
                     expt_id=expt_id,
                     timestep_microsec=timestep_microsec,
@@ -79,12 +79,10 @@ def main():
                     and embedding_dim <= 2
                 ):
                     continue
-                run_name = f"{default_config.now}_{dataset_name}"
-                run_name += f"_embedding_dim_{embedding_dim}"
-                run_name += f"_distortion_amp_{distortion_amp}_noise_var_{noise_var}"
-                logging.info(f"\n---> START training for run: {run_name}.")
+                sweep_prefix = f"{default_config.now}_{dataset_name}"
+                logging.info(f"\n---> START training for sweep: {sweep_prefix}.")
                 main_sweep(
-                    run_name=run_name,
+                    sweep_prefix=sweep_prefix,
                     dataset_name=dataset_name,
                     n_times=n_times,
                     embedding_dim=embedding_dim,
@@ -94,7 +92,7 @@ def main():
 
 
 def main_sweep(
-    run_name,
+    sweep_prefix,
     dataset_name,
     expt_id=None,
     timestep_microsec=None,
@@ -109,8 +107,8 @@ def main_sweep(
 
     Parameters
     ----------
-    run_name : str
-        Name of the run.
+    sweep_prefix : str
+        Prefix for name of the sweep that will launches several runs.
     dataset_name : str
         Name of the dataset.
     expt_id : str (optional, only for experimental)
@@ -130,40 +128,6 @@ def main_sweep(
     noise_var : float (optional, only for synthetic)
         Variance of the noise.
     """
-    CONFIG = {
-        # Parameters specific to this run (unique value):
-        "dataset_name": dataset_name,
-        "run_name": run_name,
-        "results_prefix": run_name,
-        "expt_id": expt_id,
-        "timestep_microsec": timestep_microsec,
-        "smooth": smooth,
-        "select_gain_1": select_gain_1,
-        "n_times": n_times,
-        "embedding_dim": embedding_dim,
-        "distortion_amp": distortion_amp,
-        "noise_var": noise_var,
-        # Parameters fixed across runs (unique value depending on dataset_name):
-        "manifold_dim": default_config.manifold_dim[dataset_name],
-        "latent_dim": default_config.latent_dim[dataset_name],
-        "posterior_type": default_config.posterior_type[dataset_name],
-        "distortion_func": default_config.distortion_func[dataset_name],
-        "n_wiggles": default_config.n_wiggles[dataset_name],
-        "radius": default_config.radius[dataset_name],
-        "major_radius": default_config.major_radius[dataset_name],
-        "minor_radius": default_config.minor_radius[dataset_name],
-        "synthetic_rotation": default_config.synthetic_rotation[dataset_name],
-        # Else:
-        "device": default_config.device,
-        "log_interval": default_config.log_interval,
-        "checkpt_interval": default_config.checkpt_interval,
-        "scheduler": default_config.scheduler,
-        "n_epochs": default_config.n_epochs,
-        "beta": default_config.beta,
-        "gamma": default_config.gamma,
-        "sftbeta": default_config.sftbeta,
-        "gen_likelihood_type": default_config.gen_likelihood_type,
-    }
 
     sweep_config = {
         "method": "bayes",
@@ -190,43 +154,84 @@ def main_sweep(
             },
         },
     }
-
-    # The try/except syntax allows continuing experiments even if one run fails
-    # try:
     sweep_id = wandb.sweep(sweep=sweep_config, project=default_config.project)
+    sweep_name = sweep_prefix + "_sweep_" + sweep_id
 
-    def _main_run(config):
-        # Load data, labels
-        dataset, labels, train_loader, test_loader = datasets.utils.load(config)
-        data_n_times, data_dim = dataset.shape
-        config.update(
-            {
-                "data_n_times": data_n_times,
-                "data_dim": data_dim,
-            }
-        )
-        # FIXME: loaders might not go on GPUs
-        dataset = dataset.to(config.device)  # dataset.to(config.device)
-
-        train_losses, test_losses, model = create_model_and_train_test(
-            config, train_loader, test_loader
-        )
-        logging.info(f"---> Done training for run: {config.run_name}.")
-
-        training_plot_and_log(config, dataset, labels, train_losses, test_losses, model)
-        logging.info(f"---> Done training's plots and logs for run: {config.run_name}.")
-
-        curvature_compute_plot_and_log(config, dataset, model)
-        logging.info(
-            f"---> Done curvature's computations, plots and logs for run: {config.run_name}."
-        )
-        logging.info(f"\n------> COMPLETED run: {config.run_name}.\n")
+    fixed_config = {
+        # Parameters constant across runs of the sweep (unique value):
+        "dataset_name": dataset_name,
+        "sweep_name": sweep_name,
+        "expt_id": expt_id,
+        "timestep_microsec": timestep_microsec,
+        "smooth": smooth,
+        "select_gain_1": select_gain_1,
+        "n_times": n_times,
+        "embedding_dim": embedding_dim,
+        "distortion_amp": distortion_amp,
+        "noise_var": noise_var,
+        # Parameters fixed across runs and sweeps (unique value depending on dataset_name):
+        "manifold_dim": default_config.manifold_dim[dataset_name],
+        "latent_dim": default_config.latent_dim[dataset_name],
+        "posterior_type": default_config.posterior_type[dataset_name],
+        "distortion_func": default_config.distortion_func[dataset_name],
+        "n_wiggles": default_config.n_wiggles[dataset_name],
+        "radius": default_config.radius[dataset_name],
+        "major_radius": default_config.major_radius[dataset_name],
+        "minor_radius": default_config.minor_radius[dataset_name],
+        "synthetic_rotation": default_config.synthetic_rotation[dataset_name],
+        # Else:
+        "device": default_config.device,
+        "log_interval": default_config.log_interval,
+        "checkpt_interval": default_config.checkpt_interval,
+        "scheduler": default_config.scheduler,
+        "n_epochs": default_config.n_epochs,
+        "beta": default_config.beta,
+        "gamma": default_config.gamma,
+        "sftbeta": default_config.sftbeta,
+        "gen_likelihood_type": default_config.gen_likelihood_type,
+    }
 
     def main_run():
-        with wandb.init(
-            project=default_config.project, config=CONFIG, dir=tempfile.gettempdir()
-        ):
-            _main_run(wandb.config)
+        wandb.init(config=fixed_config, dir=tempfile.gettempdir())
+        config = wandb.config
+        run_name = sweep_prefix + "_run_" + wandb.run.id
+
+        # The try/except syntax allows continuing experiments even if one run fails
+        try:
+            # Load data, labels
+            dataset, labels, train_loader, test_loader = datasets.utils.load(config)
+            data_n_times, data_dim = dataset.shape
+            config.update(
+                {
+                    "run_name": run_name,
+                    "results_prefix": run_name,
+                    "data_n_times": data_n_times,
+                    "data_dim": data_dim,
+                }
+            )
+            # FIXME: loaders might not go on GPUs
+            dataset = dataset.to(config.device)
+            train_losses, test_losses, model = create_model_and_train_test(
+                config, train_loader, test_loader
+            )
+            logging.info(f"Done: training for {run_name}")
+
+            training_plot_log(config, dataset, labels, train_losses, test_losses, model)
+            logging.info(f"Done: training's plot & log for {run_name}")
+
+            curvature_compute_plot_log(config, dataset, model)
+            logging.info(f"Done: curvature's compute, plot & log for {run_name}")
+            logging.info(f"\n------> COMPLETED run: {run_name}\n")
+
+            wandb.finish()
+        except Exception:
+            # Note: print() might not print within the try/except syntax
+            # --> Consider commenting out try/except for debug
+            logging.info(f"\n------> FAILED run: {run_name}.\n")
+            traceback.print_exc()
+            # Note: exit_code different from 0 marks run as failed
+            wandb.finish(exit_code=1)
+            pass
 
     wandb.agent(
         sweep_id=sweep_id,
@@ -235,16 +240,7 @@ def main_sweep(
         count=default_config.n_runs_per_sweep,
     )
 
-    # except Exception:
-    #     # Note: print() might not print within the try/except syntax
-    #     logging.info(f"\n------> FAILED run: {config.run_name}.\n")
-    #     traceback.print_exc()
-    #     # Note: exit_code different from 0 marks run as failed
-    #     wandb.finish(exit_code=1)
-    #     pass
-
-    #
-    logging.info(f"\n------> COMPLETED SWEEP: {sweep_id}.\n")
+    logging.info(f"\n------> COMPLETED SWEEP: {sweep_name}.\n")
 
 
 def create_model_and_train_test(config, train_loader, test_loader):
@@ -302,7 +298,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
     return train_losses, test_losses, best_model
 
 
-def training_plot_and_log(config, dataset, labels, train_losses, test_losses, model):
+def training_plot_log(config, dataset, labels, train_losses, test_losses, model):
     """Plot and log training results."""
     # Plot
     fig_loss = viz.plot_loss(train_losses, test_losses, config)
@@ -321,7 +317,7 @@ def training_plot_and_log(config, dataset, labels, train_losses, test_losses, mo
     plt.close("all")
 
 
-def curvature_compute_plot_and_log(config, dataset, model):
+def curvature_compute_plot_log(config, dataset, model):
     """Compute, plot and log curvature results."""
     # Compute
     print("Computing learned curvature...")
