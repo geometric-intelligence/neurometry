@@ -202,16 +202,16 @@ def plot_latent_space(model, dataset_torch, labels, config):
     return fig
 
 
-def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
+def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type):
     fig = plt.figure(figsize=(24, 12))
     colormap = plt.get_cmap("hsv")
     if norm_val is not None:
         color_norm = mpl.colors.Normalize(0.0, norm_val)
     else:
-        color_norm = mpl.colors.Normalize(0.0, max(mean_curvature_norms))
+        color_norm = mpl.colors.Normalize(0.0, max(curvature_norms))
     if config.dataset_name in ("s1_synthetic", "experimental"):
         ax1 = fig.add_subplot(121)
-        ax1.plot(angles, mean_curvature_norms)
+        ax1.plot(angles, curvature_norms)
         ax1.set_xlabel("angle", fontsize=30)
         ax1.set_ylabel("mean curvature norm", fontsize=30)
 
@@ -219,7 +219,7 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
         sc = ax2.scatter(
             angles,
             np.ones_like(angles),
-            c=mean_curvature_norms,
+            c=curvature_norms,
             s=20,
             cmap=colormap,
             norm=color_norm,
@@ -237,7 +237,7 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
         y = config.radius * [np.sin(angle[0]) * np.sin(angle[1]) for angle in angles]
         z = config.radius * [np.cos(angle[0]) for angle in angles]
         sc = ax.scatter3D(
-            x, y, z, s=30, c=mean_curvature_norms, cmap="Spectral", norm=color_norm
+            x, y, z, s=30, c=curvature_norms, cmap="Spectral", norm=color_norm
         )
         plt.colorbar(sc)
         ax.set_title(f"{profile_type} mean curvature norm profile", fontsize=30)
@@ -255,7 +255,7 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
         ]
         z = [config.minor_radius * np.sin(angle[0]) for angle in angles]
         sc = ax.scatter3D(
-            x, y, z, s=30, c=mean_curvature_norms, cmap="Spectral", norm=color_norm
+            x, y, z, s=30, c=curvature_norms, cmap="Spectral", norm=color_norm
         )
         plt.colorbar(sc)
         ax.set_title(f"{profile_type} mean curvature norm profile", fontsize=30)
@@ -287,14 +287,14 @@ def plot_curv(angles, mean_curvature_norms, config, norm_val, profile_type):
     return fig
 
 
-def plot_comparison(
-    angles, mean_curvature_norms_analytic, mean_curvature_norms, error, config
+def plot_comparison_curvature_norms(
+    angles, curvature_norms_true, curvature_norms_learned, error, config
 ):
 
     if config.dataset_name == "s1_synthetic":
         fig, ax = plt.subplots(figsize=(20, 20))
-        ax.plot(angles, mean_curvature_norms_analytic, "--", label="analytic")
-        ax.plot(angles, mean_curvature_norms, label="learned")
+        ax.plot(angles, curvature_norms_true, "--", label="true")
+        ax.plot(angles, curvature_norms_learned, label="learned")
         ax.set_xlabel("angle", fontsize=40)
         ax.legend(prop={"size": 40}, loc="upper right")
         ax.set_title("Error = " + "%.3f" % error, fontsize=30)
@@ -307,8 +307,8 @@ def plot_comparison(
         x = [np.sin(angle[0]) * np.cos(angle[1]) for angle in angles]
         y = [np.sin(angle[0]) * np.sin(angle[1]) for angle in angles]
         z = [np.cos(angle[0]) for angle in angles]
-        ax_analytic.scatter3D(x, y, z, s=5, c=mean_curvature_norms_analytic)
-        ax_learned.scatter3D(x, y, z, s=5, c=mean_curvature_norms)
+        ax_analytic.scatter3D(x, y, z, s=5, c=curvature_norms_true)
+        ax_learned.scatter3D(x, y, z, s=5, c=curvature_norms_learned)
 
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.png"))
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))

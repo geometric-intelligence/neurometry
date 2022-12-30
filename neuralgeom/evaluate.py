@@ -2,6 +2,8 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
+import time
+
 import geomstats.backend as gs
 import numpy as np
 import torch
@@ -11,8 +13,7 @@ from datasets.synthetic import (
     get_t2_synthetic_immersion,
 )
 from geomstats.geometry.pullback_metric import PullbackMetric
-
-import time
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
 
 def get_learned_immersion(model, config):
@@ -37,9 +38,11 @@ def get_learned_immersion(model, config):
             phi = angle[1]
             z = gs.array(
                 [
-                    (config.major_radius - config.minor_radius*gs.cos(theta)) * gs.cos(phi),
-                    (config.major_radius - config.minor_radius*gs.cos(theta)) * gs.sin(phi),
-                    config.minor_radius*gs.sin(theta),
+                    (config.major_radius - config.minor_radius * gs.cos(theta))
+                    * gs.cos(phi),
+                    (config.major_radius - config.minor_radius * gs.cos(theta))
+                    * gs.sin(phi),
+                    config.minor_radius * gs.sin(theta),
                 ]
             )
 
@@ -52,6 +55,9 @@ def get_learned_immersion(model, config):
 
 
 def get_true_immersion(config):
+    rot = torch.eye(n=config.embedding_dim)
+    if config.synthetic_rotation == "random":
+        rot = SpecialOrthogonal(n=config.embedding_dim).random_point()
     if config.dataset_name == "s1_synthetic":
         immersion = get_s1_synthetic_immersion(
             distortion_func=config.distortion_func,
@@ -59,14 +65,14 @@ def get_true_immersion(config):
             n_wiggles=config.n_wiggles,
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
-            rot=config.synthetic_rotation,
+            rot=rot,
         )
     elif config.dataset_name == "s2_synthetic":
         immersion = get_s2_synthetic_immersion(
             radius=config.radius,
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
-            rot=config.synthetic_rotation,
+            rot=rot,
         )
     elif config.dataset_name == "t2_synthetic":
         immersion = get_t2_synthetic_immersion(
@@ -74,12 +80,12 @@ def get_true_immersion(config):
             minor_radius=config.minor_radius,
             distortion_amp=config.distortion_amp,
             embedding_dim=config.embedding_dim,
-            rot=config.synthetic_rotation,
+            rot=rot,
         )
     return immersion
 
 
-def get_z_grid(config, num_points): 
+def get_z_grid(config, num_points):
     if config.dataset_name in ("s1_synthetic", "experimental"):
         z_grid = torch.linspace(0, 2 * gs.pi, num_points)
     elif config.dataset_name == "s2_synthetic":
@@ -93,8 +99,8 @@ def get_z_grid(config, num_points):
     return z_grid
 
 
-# Compute mean curvature vector at each point, along with their corresponding magnitudes using Geomstats
-def _compute_mean_curvature(z_grid, immersion, dim, embedding_dim):
+def _compute_curvature(z_grid, immersion, dim, embedding_dim):
+    """Compute mean curvature vector and its norm at each point."""
     neural_metric = PullbackMetric(
         dim=dim, embedding_dim=embedding_dim, immersion=immersion
     )
@@ -113,12 +119,12 @@ def _compute_mean_curvature(z_grid, immersion, dim, embedding_dim):
     return curv, curv_norm
 
 
-# Uses _compute_mean_curvature to find mean curvature profile from true expression of the immersion
-def compute_mean_curvature_learned(model, config, num_points, emb_dim):
+def compute_curvature_learned(model, config, num_points, emb_dim):
+    """Use _compute_curvature to find mean curvature profile from learned immersion"""
     z_grid = get_z_grid(config, num_points)
     immersion = get_learned_immersion(model, config)
     start_time = time.time()
-    curv, curv_norm = _compute_mean_curvature(
+    curv, curv_norm = _compute_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
@@ -129,13 +135,12 @@ def compute_mean_curvature_learned(model, config, num_points, emb_dim):
     return z_grid, curv, curv_norm
 
 
-
-# Uses compute_mean_curvature to find mean curvature profile from true expression of the immersion
-def compute_mean_curvature_true(config):
+def compute_curvature_true(config):
+    """Use compute_mean_curvature to find mean curvature profile from true immersion"""
     z_grid = get_z_grid(config, config.n_times)
     immersion = get_true_immersion(config)
     start_time = time.time()
-    curv, curv_norm = _compute_mean_curvature(
+    curv, curv_norm = _compute_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
@@ -146,8 +151,8 @@ def compute_mean_curvature_true(config):
     return z_grid, curv, curv_norm
 
 
-# Computes "error" of learned curvature profile given true profile, for S^1
-def _compute_error_s1(thetas, curv_norms_learned, curv_norms_true):
+def _compute_curvature_error_s1(thetas, curv_norms_learned, curv_norms_true):
+    """Compute "error" of learned curvature profile given true profile for S1."""
     curv_norms_learned = np.array(curv_norms_learned)
     curv_norms_true = np.array(curv_norms_true)
     diff = np.trapz((curv_norms_learned - curv_norms_true) ** 2, thetas)
@@ -158,8 +163,11 @@ def _compute_error_s1(thetas, curv_norms_learned, curv_norms_true):
     return diff / normalization
 
 
-# Helper function for compute_error_s2, integrates over S^2
 def _integrate_s2(thetas, phis, h):
+    """Helper function for compute_curvature_error_s2.
+
+    This function integrates over S^2.
+    """
     sum_phis = torch.zeros_like(thetas)
     for t, theta in enumerate(thetas):
         sum_phis[t] = torch.trapz(
@@ -169,8 +177,8 @@ def _integrate_s2(thetas, phis, h):
     return integral
 
 
-# Computes "error" of learned curvature profile given true profile, for S^2
-def _compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true):
+def _compute_curvature_error_s2(thetas, phis, curv_norms_learned, curv_norms_true):
+    """Compute "error" of learned curvature profile given true profile for S2."""
     diff = _integrate_s2(thetas, phis, (curv_norms_learned - curv_norms_true) ** 2)
     normalization = _integrate_s2(
         thetas, phis, (curv_norms_learned) ** 2 + (curv_norms_true) ** 2
@@ -183,23 +191,31 @@ def _integrate_t2(thetas, phis, h):
     return 0
 
 
-def _compute_error_t2(thetas, phis, curv_norms_learned, curv_norms_true):
+def _compute_curvature_error_t2(thetas, phis, curv_norms_learned, curv_norms_true):
     # TODO
     return 0
 
 
-def compute_error(
+def compute_curvature_error(
     z_grid, curv_norms_learned, curv_norms_true, config
 ):  # Calculate method error
+    start_time = time.time()
+
     if config.dataset_name == "s1_synthetic":
         thetas = z_grid
-        error = _compute_error_s1(thetas, curv_norms_learned, curv_norms_true)
+        error = _compute_curvature_error_s1(thetas, curv_norms_learned, curv_norms_true)
     elif config.dataset_name == "s2_synthetic":
         thetas = z_grid[:, 0]
         phis = z_grid[:, 1]
-        error = _compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true)
+        error = _compute_curvature_error_s2(
+            thetas, phis, curv_norms_learned, curv_norms_true
+        )
     elif config.dataset_name == "t2_synthetic":
         thetas = z_grid[:, 0]
         phis = z_grid[:, 1]
-        error = _compute_error_s2(thetas, phis, curv_norms_learned, curv_norms_true)
+        error = _compute_curvature_error_s2(
+            thetas, phis, curv_norms_learned, curv_norms_true
+        )
+    end_time = time.time()
+    print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return error
