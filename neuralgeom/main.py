@@ -4,11 +4,10 @@ import itertools
 import logging
 import os
 import tempfile
+import time
 import traceback
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import time
-
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"  # NOQA
 import datasets.utils
 import default_config
 import evaluate
