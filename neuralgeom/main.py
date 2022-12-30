@@ -37,8 +37,16 @@ def main():
     """
     for dataset_name in default_config.dataset_name:
         if dataset_name == "experimental":
-            for expt_id, select_first_gain in itertools.product(
-                default_config.expt_id, default_config.select_first_gain
+            for (
+                expt_id,
+                timestep_microsec,
+                smooth,
+                select_first_gain,
+            ) in itertools.product(
+                default_config.expt_id,
+                default_config.timestep_microsec,
+                default_config.smooth,
+                default_config.select_first_gain,
             ):
                 run_name = f"{default_config.now}_{dataset_name}"
                 if select_first_gain:
@@ -51,6 +59,8 @@ def main():
                     run_name=run_name,
                     dataset_name=dataset_name,
                     expt_id=expt_id,
+                    timestep_microsec=timestep_microsec,
+                    smooth=smooth,
                     select_first_gain=select_first_gain,
                 )
         else:
@@ -59,6 +69,11 @@ def main():
                 default_config.distortion_amp,
                 default_config.noise_var,
             ):
+                if (
+                    dataset_name in ["s2_synthetic", "t2_synthetic"]
+                    and embedding_dim <= 2
+                ):
+                    continue
                 run_name = f"{default_config.now}_{dataset_name}"
                 run_name += f"_embedding_dim_{embedding_dim}"
                 run_name += f"_distortion_amp_{distortion_amp}_noise_var_{noise_var}"

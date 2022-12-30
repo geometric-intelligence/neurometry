@@ -91,6 +91,7 @@ def load(config):
         dataset = dataset.astype(np.float32)
     elif config.dataset_name == "s1_synthetic":
         dataset, labels = datasets.synthetic.load_s1_synthetic(
+            synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
             n_wiggles=config.n_wiggles,
@@ -98,11 +99,10 @@ def load(config):
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
             distortion_func=config.distortion_func,
-            rot=config.synthetic_rotation,
         )
     elif config.dataset_name == "s2_synthetic":
         dataset, labels = datasets.synthetic.load_s2_synthetic(
-            rot=config.synthetic_rotation,
+            synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
             distortion_amp=config.distortion_amp,
@@ -111,7 +111,7 @@ def load(config):
         )
     elif config.dataset_name == "t2_synthetic":
         dataset, labels = datasets.synthetic.load_t2_synthetic(
-            rot=config.synthetic_rotation,
+            synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             major_radius=config.major_radius,
             minor_radius=config.minor_radius,
