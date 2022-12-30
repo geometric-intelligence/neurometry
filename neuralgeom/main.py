@@ -1,6 +1,7 @@
 """Main script."""
 
 import itertools
+import json
 import logging
 import os
 import tempfile
@@ -24,6 +25,9 @@ import wandb
 # Note: this is required to make matplotlib figures in threads.
 matplotlib.use("Agg")
 
+CONFIGS = "results/configs"
+if not os.path.exists(CONFIGS):
+    os.makedirs(CONFIGS)
 TRAINED_MODELS = "results/trained_models/"
 if not os.path.exists(TRAINED_MODELS):
     os.makedirs(TRAINED_MODELS)
@@ -210,6 +214,11 @@ def main_sweep(
                     "data_dim": data_dim,
                 }
             )
+
+            # Save config for easy access from notebooks
+            with open(os.path.join(CONFIGS, run_name + ".json"), "w") as config_file:
+                json.dump(dict(config), config_file)
+
             # FIXME: loaders might not go on GPUs
             dataset = dataset.to(config.device)
             train_losses, test_losses, model = create_model_and_train_test(
