@@ -28,6 +28,7 @@ if not os.path.exists(TRAINED_MODELS):
 
 def main():
     """Parse the default_config file and runs all experiments.
+
     This launches experiments with wandb with different config parameters.
 
     For each set of experiment parameters:
@@ -198,7 +199,7 @@ def main_run(
             f"---> Done curvature's computations, plots and logs for run: {config.run_name}."
         )
 
-    except Exception as err:
+    except Exception:
         # Note: print() might not print within the try/except syntax
         logging.info(f"\n------> FAILED run: {config.run_name}.\n")
         traceback.print_exc()
@@ -268,6 +269,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
 
 
 def training_plot_and_log(config, dataset, labels, train_losses, test_losses, model):
+    """Plot and log training results."""
     # Plot
     fig_loss = viz.plot_loss(train_losses, test_losses, config)
     fig_latent = viz.plot_latent_space(model, dataset, labels, config)
@@ -286,6 +288,7 @@ def training_plot_and_log(config, dataset, labels, train_losses, test_losses, mo
 
 
 def curvature_compute_plot_and_log(config, dataset, model):
+    """Compute, plot and log curvature results."""
     # Compute
     print("Computing learned curvature...")
     start_time = time.time()
