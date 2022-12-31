@@ -35,7 +35,6 @@ def load(config):
         dataset, labels = datasets.experimental.load_place_cells(
             expt_id=config.expt_id, timestep_microsec=config.timestep_microsec
         )
-        print(labels)
         dataset = dataset[labels["velocities"] > 5]
         labels = labels[labels["velocities"] > 5]
         dataset = np.log(dataset.astype(np.float32) + 1)

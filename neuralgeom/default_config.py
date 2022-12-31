@@ -14,6 +14,19 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 with open("api_key.txt") as f:
     api_key = f.read()
 
+work_dir = os.getcwd()
+
+configs_dir = os.path.join(work_dir, "results/configs")
+if not os.path.exists(configs_dir):
+    os.makedirs(configs_dir)
+trained_models_dir = os.path.join(work_dir, "results/trained_models")
+if not os.path.exists(trained_models_dir):
+    os.makedirs(trained_models_dir)
+ray_sweep_dir = os.path.join(work_dir, "results/ray_sweep")
+
+# Hardware
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
 
@@ -106,10 +119,10 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Ignored if dataset_name != "experimental"
-expt_id = ["41", "34"]  # hd: with head direction
+expt_id = ["41"]  # hd: with head direction
 timestep_microsec = [int(1e6)]
 smooth = [True]
-select_gain_1 = [True, False]
+select_gain_1 = [True]
 
 # Ignored if dataset_name == "experimental"
 n_times = [10]  # actual number of times is sqrt_ntimes ** 2
@@ -130,15 +143,22 @@ sftbeta = 4.5
 beta = 0.03  # 0.03  # weight for KL term
 gamma = 20  # 20  # weight for latent loss term
 
-### Sweep hyperparameters ###
+### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
-# Except for n_runs_per_sweep, lr_min and lr_max which are constants
-
-n_runs_per_sweep = 2
+# Except for lr_min and lr_max which are floats
 lr_min = 0.00001
 lr_max = 0.1
-batch_size = [20, 50]
+batch_size = [20]
 encoder_width = [100]
 encoder_depth = [4]
-decoder_width = [100, 300]
+decoder_width = [100]
 decoder_depth = [3, 6]
+
+# Number of times to sample from the
+# hyperparameter space. Defaults to 1. If `grid_search` is
+# provided as an argument, the grid will be repeated
+# `num_samples` of times. If this is -1, (virtually) infinite
+# samples are generated until a stopping condition is met.
+num_samples = 3
+# Doc on tune.run:
+# https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

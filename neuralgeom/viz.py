@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-FIGURES = "results/figures/"
+FIGURES = os.path.join(os.getcwd(), "results/figures/")
 if not os.path.exists(FIGURES):
     os.makedirs(FIGURES)
 
