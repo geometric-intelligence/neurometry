@@ -35,6 +35,7 @@ if not os.path.exists(TRAINED_MODELS):
 
 CUDA = torch.cuda.is_available()
 
+
 def main():
     """Parse the default_config file and launch all experiments.
 
