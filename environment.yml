@@ -17,5 +17,6 @@ dependencies:
     - pandas
     - pre-commit
     - pytest
+    - ray[tune]
     - torch
     - wandb

@@ -89,7 +89,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["s1_synthetic", "experimental"]
+dataset_name = ["experimental"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -100,10 +100,10 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Ignored if dataset_name != "experimental"
-expt_id = ["41"]  # hd: with head direction
+expt_id = ["41", "34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]
 smooth = [True]
-select_gain_1 = [True]
+select_gain_1 = [True, False]
 
 # Ignored if dataset_name == "experimental"
 n_times = [10]  # actual number of times is sqrt_ntimes ** 2
@@ -132,7 +132,7 @@ n_runs_per_sweep = 2
 lr_min = 0.00001
 lr_max = 0.1
 batch_size = [20, 50]
-encoder_width = [6]
+encoder_width = [100]
 encoder_depth = [4]
-decoder_width = [4, 8]
+decoder_width = [100, 300]
 decoder_depth = [3, 6]

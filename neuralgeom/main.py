@@ -23,7 +23,7 @@ import train
 import viz
 import wandb
 
-# Note: this is required to make matplotlib figures in threads.
+# Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
 
 CONFIGS = "results/configs"
