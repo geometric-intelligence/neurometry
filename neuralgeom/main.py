@@ -223,9 +223,9 @@ def main_sweep(
         # Wandb records a run as finished even if it has failed.
         wandb.finish()
 
-    hyperopt_search = HyperOptSearch(sweep_config, metric="test_recon_loss", mode="min")
+    sweep_search = HyperOptSearch(sweep_config, metric="test_recon_loss", mode="min")
 
-    hyperband_scheduler = AsyncHyperBandScheduler(
+    sweep_scheduler = AsyncHyperBandScheduler(
         time_attr="training_iteration",
         metric="test_recon_loss",
         brackets=1,
@@ -239,8 +239,8 @@ def main_sweep(
         local_dir=default_config.ray_sweep_dir,
         raise_on_failed_trial=False,
         num_samples=default_config.num_samples,
-        scheduler=hyperband_scheduler,
-        search_alg=hyperopt_search,
+        scheduler=sweep_scheduler,
+        search_alg=sweep_search,
         resources_per_trial={"cpu": 4, "gpu": 1},
     )
 
