@@ -22,6 +22,8 @@ import torch
 import train
 import viz
 import wandb
+from ray import tune
+from ray.tune.integration.wandb import WandbLogger, wandb_mixin
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -135,34 +137,20 @@ def main_sweep(
     noise_var : float (optional, only for synthetic)
         Variance of the noise.
     """
-
-    sweep_config = {
-        "method": "bayes",
-        "name": "sweep",
-        "metric": {"goal": "minimize", "name": "test_loss"},
-        "early_terminate": {"type": "hyperband", "min_iter": 3},
-        "parameters": {
-            "lr": {
-                "min": default_config.lr_min,
-                "max": default_config.lr_max,
-            },
-            "batch_size": {"values": default_config.batch_size},
-            "encoder_width": {
-                "values": default_config.encoder_width,
-            },
-            "encoder_depth": {
-                "values": default_config.encoder_depth,
-            },
-            "decoder_width": {
-                "values": default_config.decoder_width,
-            },
-            "decoder_depth": {
-                "values": default_config.decoder_depth,
-            },
+    search_space = {
+        "lr": tune.loguniform(default_config.lr_min, default_config.lr_max),
+        "batch_size": tune.grid_search(default_config.batch_size),
+        "encoder_width": tune.grid_search(default_config.encoder_width),
+        "encoder_depth": tune.grid_search(default_config.encoder_depth),
+        "decoder_width": tune.grid_search(default_config.decoder_width),
+        "decoder_depth": tune.grid_search(default_config.decoder_depth),
+        "wandb": {
+            "project": default_config.project,
+            "api_key": default_config.api_key,
         },
     }
-    sweep_id = wandb.sweep(sweep=sweep_config, project=default_config.project)
-    sweep_name = sweep_prefix + "_sweep_" + sweep_id
+    # sweep_id = wandb.sweep(sweep=sweep_config, project=default_config.project)
+    sweep_name = sweep_prefix  # + "_sweep_" + sweep_id
 
     fixed_config = {
         # Parameters constant across runs of the sweep (unique value):
@@ -197,9 +185,10 @@ def main_sweep(
         "gen_likelihood_type": default_config.gen_likelihood_type,
     }
 
-    def main_run():
+    @wandb_mixin
+    def main_run(config):
         wandb.init(config=fixed_config, dir=tempfile.gettempdir())
-        config = wandb.config
+        wandb_config = wandb.config
         run_name = sweep_prefix + "_run_" + wandb.run.id
         wandb.run.name = run_name
 
@@ -211,9 +200,11 @@ def main_sweep(
         # The try/except syntax allows continuing experiments even if one run fails
         try:
             # Load data, labels
-            dataset, labels, train_loader, test_loader = datasets.utils.load(config)
+            dataset, labels, train_loader, test_loader = datasets.utils.load(
+                wandb_config
+            )
             data_n_times, data_dim = dataset.shape
-            config.update(
+            wandb_config.update(
                 {
                     "device": device,
                     "run_name": run_name,
@@ -222,22 +213,26 @@ def main_sweep(
                     "data_dim": data_dim,
                 }
             )
+            # Update wandb config with ray tune's config
+            wandb_config.update(config)
 
             # Save config for easy access from notebooks
             with open(os.path.join(CONFIGS, run_name + ".json"), "w") as config_file:
-                json.dump(dict(config), config_file)
+                json.dump(dict(wandb_config), config_file)
 
             # Note: loaders put data on GPU during each epoch
-            dataset = dataset.to(config.device)
+            dataset = dataset.to(wandb_config.device)
             train_losses, test_losses, model = create_model_and_train_test(
-                config, train_loader, test_loader
+                wandb_config, train_loader, test_loader
             )
             logging.info(f"Done: training for {run_name}")
 
-            training_plot_log(config, dataset, labels, train_losses, test_losses, model)
+            training_plot_log(
+                wandb_config, dataset, labels, train_losses, test_losses, model
+            )
             logging.info(f"Done: training's plot & log for {run_name}")
 
-            curvature_compute_plot_log(config, dataset, model)
+            curvature_compute_plot_log(wandb_config, dataset, model)
             logging.info(f"Done: curvature's compute, plot & log for {run_name}")
             logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -251,14 +246,21 @@ def main_sweep(
             wandb.finish(exit_code=1)
             pass
 
-    wandb.agent(
-        sweep_id=sweep_id,
-        project=default_config.project,
-        function=main_run,
-        count=default_config.n_runs_per_sweep,
+    tune.run(
+        main_run,
+        config=ray_search_space,
+        resources_per_trial={"gpu": 1},
+        loggers=[WandbLogger],
     )
 
-    logging.info(f"\n------> COMPLETED SWEEP: {sweep_name}.\n")
+    # wandb.agent(
+    #     sweep_id=sweep_id,
+    #     project=default_config.project,
+    #     function=main_run,
+    #     count=default_config.n_runs_per_sweep,
+    # )
+
+    logging.info(f"\n------> COMPLETED RAY SWEEP: {sweep_name}.\n")
 
 
 def create_model_and_train_test(config, train_loader, test_loader):

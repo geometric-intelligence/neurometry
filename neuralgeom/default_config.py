@@ -8,6 +8,12 @@ import torch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
+# WANDB API KEY
+# Find it here: https://wandb.ai/authorize
+# Story it in file: api_key.txt (without extra line break)
+with open("api_key.txt") as f:
+    api_key = f.read()
+
 # Can be replaced by logging.DEBUG or logging.WARNING
 logging.basicConfig(level=logging.INFO)
 
