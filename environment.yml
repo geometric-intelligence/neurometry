@@ -11,6 +11,7 @@ dependencies:
     - flake8
     - flake8-docstrings
     - git+https://github.com/geomstats/geomstats.git
+    - hyperopt==0.2.5
     - isort
     - jupyter
     - jupyterlab-code-formatter
