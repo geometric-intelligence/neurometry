@@ -17,6 +17,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import models.neural_vae
 import models.toroidal_vae
+import numpy as np
 import torch
 import train
 import viz
@@ -32,6 +33,7 @@ TRAINED_MODELS = "results/trained_models/"
 if not os.path.exists(TRAINED_MODELS):
     os.makedirs(TRAINED_MODELS)
 
+CUDA = torch.cuda.is_available()
 
 def main():
     """Parse the default_config file and launch all experiments.
@@ -184,7 +186,6 @@ def main_sweep(
         "minor_radius": default_config.minor_radius[dataset_name],
         "synthetic_rotation": default_config.synthetic_rotation[dataset_name],
         # Else:
-        "device": default_config.device,
         "log_interval": default_config.log_interval,
         "checkpt_interval": default_config.checkpt_interval,
         "scheduler": default_config.scheduler,
@@ -201,6 +202,11 @@ def main_sweep(
         run_name = sweep_prefix + "_run_" + wandb.run.id
         wandb.run.name = run_name
 
+        device = "cpu"
+        if CUDA:
+            gpu_id = np.random.choice(default_config.gpu_ids)
+            device = f"cuda:{gpu_id}"
+
         # The try/except syntax allows continuing experiments even if one run fails
         try:
             # Load data, labels
@@ -208,6 +214,7 @@ def main_sweep(
             data_n_times, data_dim = dataset.shape
             config.update(
                 {
+                    "device": device,
                     "run_name": run_name,
                     "results_prefix": run_name,
                     "data_n_times": data_n_times,
@@ -219,7 +226,7 @@ def main_sweep(
             with open(os.path.join(CONFIGS, run_name + ".json"), "w") as config_file:
                 json.dump(dict(config), config_file)
 
-            # FIXME: loaders might not go on GPUs
+            # Note: loaders put data on GPU during each epoch
             dataset = dataset.to(config.device)
             train_losses, test_losses, model = create_model_and_train_test(
                 config, train_loader, test_loader
