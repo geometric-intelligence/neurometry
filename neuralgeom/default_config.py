@@ -138,7 +138,7 @@ checkpt_interval = 20
 n_epochs = 150  # 240  #
 sftbeta = 4.5
 beta = 0.03  # 0.03  # weight for KL term
-gamma = 20  # 20  # weight for latent loss term
+gamma = 30  # 20  # weight for latent loss term
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
@@ -148,14 +148,14 @@ lr_max = 0.1
 batch_size = [8, 32]
 encoder_width = [100]
 encoder_depth = [4]
-decoder_width = [100]
-decoder_depth = [3, 6, 10]
+decoder_width = [100, 200, 300]
+decoder_depth = [5, 10, 50, 100]
 
 # Number of times to sample from the
 # hyperparameter space. Defaults to 1. If `grid_search` is
 # provided as an argument, the grid will be repeated
 # `num_samples` of times. If this is -1, (virtually) infinite
 # samples are generated until a stopping condition is met.
-num_samples = 5
+num_samples = 20
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html
