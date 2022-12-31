@@ -24,6 +24,8 @@ import viz
 import wandb
 from ray import tune
 from ray.tune.integration.wandb import wandb_mixin
+from ray.tune.schedulers import AsyncHyperBandScheduler
+from ray.tune.search.hyperopt import HyperOptSearch
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -51,11 +53,11 @@ def main():
                 default_config.smooth,
                 default_config.select_gain_1,
             ):
-                sweep_name = f"{default_config.now}_{dataset_name}"
+                sweep_name = f"{dataset_name}_{expt_id}"
                 if select_gain_1:
-                    sweep_name += f"_{expt_id}_gain_1"
+                    sweep_name += f"_gain_1"
                 else:
-                    sweep_name += f"_{expt_id}_other_gain"
+                    sweep_name += f"_other_gain"
 
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
                 main_sweep(
@@ -79,7 +81,7 @@ def main():
                     and embedding_dim <= 2
                 ):
                     continue
-                sweep_name = f"{default_config.now}_{dataset_name}"
+                sweep_name = f"{dataset_name}_noise_var_{noise_var}_embedding_dim_{embedding_dim}"
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
                 main_sweep(
                     sweep_name=sweep_name,
@@ -130,11 +132,11 @@ def main_sweep(
     """
     sweep_config = {
         "lr": tune.loguniform(default_config.lr_min, default_config.lr_max),
-        "batch_size": tune.grid_search(default_config.batch_size),
-        "encoder_width": tune.grid_search(default_config.encoder_width),
-        "encoder_depth": tune.grid_search(default_config.encoder_depth),
-        "decoder_width": tune.grid_search(default_config.decoder_width),
-        "decoder_depth": tune.grid_search(default_config.decoder_depth),
+        "batch_size": tune.choice(default_config.batch_size),
+        "encoder_width": tune.choice(default_config.encoder_width),
+        "encoder_depth": tune.choice(default_config.encoder_depth),
+        "decoder_width": tune.choice(default_config.decoder_width),
+        "decoder_depth": tune.choice(default_config.decoder_depth),
         "wandb": {
             "project": default_config.project,
             "api_key": default_config.api_key,
@@ -221,13 +223,24 @@ def main_sweep(
         # Wandb records a run as finished even if it has failed.
         wandb.finish()
 
-    tune.run(
+    sweep_search = HyperOptSearch(sweep_config, metric="test_recon_loss", mode="min")
+
+    sweep_scheduler = AsyncHyperBandScheduler(
+        time_attr="training_iteration",
+        metric="test_recon_loss",
+        brackets=1,
+        reduction_factor=8,
+        mode="min",
+    )
+
+    analysis = tune.run(
         main_run,
         name=sweep_name,
         local_dir=default_config.ray_sweep_dir,
         raise_on_failed_trial=False,
-        config=sweep_config,  # input to main_run()
         num_samples=default_config.num_samples,
+        scheduler=sweep_scheduler,
+        search_alg=sweep_search,
         resources_per_trial={"cpu": 4, "gpu": 1},
     )
 

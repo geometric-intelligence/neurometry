@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 
 import torch
+from ray.tune.search.hyperopt import HyperOptSearch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
@@ -32,7 +33,6 @@ logging.basicConfig(level=logging.INFO)
 
 # Results
 project = "neuralgeom"
-now = str(datetime.now().replace(second=0, microsecond=0))
 trained_model_path = None
 
 ### Fixed experiment parameters ###
@@ -135,7 +135,7 @@ gen_likelihood_type = "gaussian"
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 150  # 240  #
+n_epochs = 80  # 240
 sftbeta = 4.5
 beta = 0.03  # 0.03  # weight for KL term
 gamma = 30  # 20  # weight for latent loss term
@@ -145,7 +145,7 @@ gamma = 30  # 20  # weight for latent loss term
 # Except for lr_min and lr_max which are floats
 lr_min = 0.00001
 lr_max = 0.1
-batch_size = [8, 32]
+batch_size = [32]
 encoder_width = [100]
 encoder_depth = [4]
 decoder_width = [100, 200, 300]
