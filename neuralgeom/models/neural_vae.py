@@ -4,8 +4,8 @@ This file gathers deep learning models related to G-manifold learning.
 """
 
 import torch
-from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
-from torch.distributions.normal import Normal as Normal
+from hyperspherical.distributions import VonMisesFisher
+from torch.distributions.normal import Normal
 from torch.nn import functional as F
 
 

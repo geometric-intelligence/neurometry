@@ -8,11 +8,27 @@ import torch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
-# Can be replaced by logging.DEBUG or logging.WARNING
-logging.basicConfig(level=logging.INFO)
+# WANDB API KEY
+# Find it here: https://wandb.ai/authorize
+# Story it in file: api_key.txt (without extra line break)
+with open("api_key.txt") as f:
+    api_key = f.read()
+
+# Directories
+work_dir = os.getcwd()
+configs_dir = os.path.join(work_dir, "results/configs")
+if not os.path.exists(configs_dir):
+    os.makedirs(configs_dir)
+trained_models_dir = os.path.join(work_dir, "results/trained_models")
+if not os.path.exists(trained_models_dir):
+    os.makedirs(trained_models_dir)
+ray_sweep_dir = os.path.join(work_dir, "results/ray_sweep")
 
 # Hardware
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Can be replaced by logging.DEBUG or logging.WARNING
+logging.basicConfig(level=logging.INFO)
 
 # Results
 project = "neuralgeom"
@@ -89,7 +105,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["s1_synthetic", "experimental"]
+dataset_name = ["experimental"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -100,7 +116,7 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Ignored if dataset_name != "experimental"
-expt_id = ["41"]  # hd: with head direction
+expt_id = ["34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]
 smooth = [True]
 select_gain_1 = [True]
@@ -119,20 +135,27 @@ gen_likelihood_type = "gaussian"
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 2  # 240  #
+n_epochs = 150  # 240  #
 sftbeta = 4.5
 beta = 0.03  # 0.03  # weight for KL term
 gamma = 20  # 20  # weight for latent loss term
 
-### Sweep hyperparameters ###
+### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
-# Except for n_runs_per_sweep, lr_min and lr_max which are constants
-
-n_runs_per_sweep = 5
+# Except for lr_min and lr_max which are floats
 lr_min = 0.00001
 lr_max = 0.1
-batch_size = [20, 50]
-encoder_width = [6]
+batch_size = [8, 32]
+encoder_width = [100]
 encoder_depth = [4]
-decoder_width = [4, 8]
-decoder_depth = [3, 6]
+decoder_width = [100]
+decoder_depth = [3, 6, 10]
+
+# Number of times to sample from the
+# hyperparameter space. Defaults to 1. If `grid_search` is
+# provided as an argument, the grid will be repeated
+# `num_samples` of times. If this is -1, (virtually) infinite
+# samples are generated until a stopping condition is met.
+num_samples = 5
+# Doc on tune.run:
+# https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

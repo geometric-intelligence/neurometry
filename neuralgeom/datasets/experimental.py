@@ -10,8 +10,9 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation as R
 
-RAW_DIR = "data/raw"
-BINNED_DIR = "data/binned"
+WORK_DIR = os.getcwd()
+RAW_DIR = os.path.join(WORK_DIR, "data/raw")
+BINNED_DIR = os.path.join(WORK_DIR, "data/binned")
 
 
 def load_place_cells(expt_id=34, timestep_microsec=1000000):

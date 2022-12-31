@@ -5,6 +5,7 @@ dependencies:
   - pip
   - python=3.8
   - scikit-image>=0.19.2
+  - pandas
   - pip:
     - black
     - flake8
@@ -14,8 +15,9 @@ dependencies:
     - jupyter
     - jupyterlab-code-formatter
     - mat73
-    - pandas
     - pre-commit
     - pytest
+    - ray
+    - ray[tune]
     - torch
     - wandb
