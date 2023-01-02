@@ -13,8 +13,8 @@ if not os.path.exists(FIGURES):
 def plot_loss(train_losses, test_losses, config):
     fig, ax = plt.subplots(figsize=(20, 20))
     epochs = [epoch for epoch in range(1, config.n_epochs + 1)]
-    ax.plot(epochs, train_losses, label="train")
-    ax.plot(epochs, test_losses, label="test")
+    ax.plot(epochs, train_losses, linewidth=10, label="train")
+    ax.plot(epochs, test_losses, linewidth=10, label="test")
     ax.set_title("Losses", fontsize=40)
     ax.set_xlabel("epoch", fontsize=40)
     ax.legend(prop={"size": 40})
@@ -39,12 +39,14 @@ def plot_recon(model, dataset_torch, labels, config):
         y_rec = rec[:, 1]
         y_rec = [y.item() for y in y_rec]
         ax_data.set_title("Synthetic data", fontsize=40)
-        sc_data = ax_data.scatter(x_data, y_data, c=labels["angles"], cmap=colormap)
+        sc_data = ax_data.scatter(
+            x_data, y_data, s=400, c=labels["angles"], cmap=colormap
+        )
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
         ax_rec = fig.add_subplot(1, 2, 2)
         ax_rec.set_title("Reconstruction", fontsize=40)
-        sc_rec = ax_rec.scatter(x_rec, y_rec, c=labels["angles"], cmap=colormap)
+        sc_rec = ax_rec.scatter(x_rec, y_rec, s=400, c=labels["angles"], cmap=colormap)
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
         # plt.colorbar(sc_rec)
@@ -64,12 +66,12 @@ def plot_recon(model, dataset_torch, labels, config):
         z_rec = [z.item() for z in z_rec]
 
         ax_data.set_title("Synthetic data", fontsize=40)
-        ax_data.scatter3D(x_data, y_data, z_data, s=5, c=norms_data)
+        ax_data.scatter3D(x_data, y_data, z_data, s=400, c=norms_data)
         plt.axis("off")
         # ax_data.view_init(elev=60, azim=45, roll=0)
         ax_rec = fig.add_subplot(1, 2, 2, projection="3d")
         ax_rec.set_title("Reconstruction", fontsize=40)
-        ax_rec.scatter3D(x_rec, y_rec, z_rec, s=5, c=norms_rec)
+        ax_rec.scatter3D(x_rec, y_rec, z_rec, s=400, c=norms_rec)
         plt.axis("off")
         if config.dataset_name == "t2_synthetic":
             ax_data.set_xlim(
@@ -162,7 +164,7 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z0 = [_.item() for _ in z0]
         z1 = z[:, 1]
         z1 = [_.item() for _ in z1]
-        sc = ax.scatter(z0, z1, c=labels["angles"], s=10, cmap=colormap)
+        sc = ax.scatter(z0, z1, c=labels["angles"], s=400, cmap=colormap)
         ax.set_xlim(-1.2, 1.2)
         ax.set_ylim(-1.2, 1.2)
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
@@ -174,7 +176,7 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z1 = [_.item() for _ in z1]
         z2 = z[:, 2]
         z2 = [_.item() for _ in z2]
-        sc = ax.scatter3D(z0, z1, z2)
+        sc = ax.scatter3D(z0, z1, z2, s=400)
         ax.view_init(elev=60, azim=45, roll=0)
         if config.dataset_name == "t2_synthetic":
             ax.set_xlim(
@@ -211,7 +213,7 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
         color_norm = mpl.colors.Normalize(0.0, max(curvature_norms))
     if config.dataset_name in ("s1_synthetic", "experimental"):
         ax1 = fig.add_subplot(121)
-        ax1.plot(angles, curvature_norms)
+        ax1.plot(angles, curvature_norms, linewidth=10)
         ax1.set_xlabel("angle", fontsize=30)
         ax1.set_ylabel("mean curvature norm", fontsize=30)
 
@@ -220,7 +222,7 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
             angles,
             np.ones_like(angles),
             c=curvature_norms,
-            s=20,
+            s=400,
             cmap=colormap,
             norm=color_norm,
             linewidths=0,
@@ -237,7 +239,7 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
         y = config.radius * [np.sin(angle[0]) * np.sin(angle[1]) for angle in angles]
         z = config.radius * [np.cos(angle[0]) for angle in angles]
         sc = ax.scatter3D(
-            x, y, z, s=30, c=curvature_norms, cmap="Spectral", norm=color_norm
+            x, y, z, s=400, c=curvature_norms, cmap="Spectral", norm=color_norm
         )
         plt.colorbar(sc)
         ax.set_title(f"{profile_type} mean curvature norm profile", fontsize=30)
@@ -255,7 +257,7 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
         ]
         z = [config.minor_radius * np.sin(angle[0]) for angle in angles]
         sc = ax.scatter3D(
-            x, y, z, s=30, c=curvature_norms, cmap="Spectral", norm=color_norm
+            x, y, z, s=400, c=curvature_norms, cmap="Spectral", norm=color_norm
         )
         plt.colorbar(sc)
         ax.set_title(f"{profile_type} mean curvature norm profile", fontsize=30)

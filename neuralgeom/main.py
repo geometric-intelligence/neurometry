@@ -182,7 +182,7 @@ def main_sweep(
         wandb.init(dir=tempfile.gettempdir())
         wandb_config = wandb.config
         wandb_config.update(fixed_config)
-        run_name = sweep_name + "_run_" + wandb.run.id
+        run_name = "run_" + wandb.run.id + "_" + sweep_name
         wandb.run.name = run_name
 
         # Load data, labels
@@ -223,11 +223,16 @@ def main_sweep(
         # Wandb records a run as finished even if it has failed.
         wandb.finish()
 
-    sweep_search = HyperOptSearch(sweep_config, metric="test_recon_loss", mode="min")
+        # Returns metrics to log into ray tune sweep
+        return {"test_loss": np.min(test_losses)}
+
+    sweep_search = HyperOptSearch(
+        sweep_config, metric=default_config.sweep_metric, mode="min"
+    )
 
     sweep_scheduler = AsyncHyperBandScheduler(
         time_attr="training_iteration",
-        metric="test_recon_loss",
+        metric=default_config.sweep_metric,
         brackets=1,
         reduction_factor=8,
         mode="min",
