@@ -105,7 +105,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["s1_synthetic"]  # "experimental"]
+dataset_name = ["experimental"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -116,7 +116,7 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Ignored if dataset_name != "experimental"
-expt_id = ["41"]  # hd: with head direction
+expt_id = ["34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]  # , int(1e5)]
 smooth = [True]
 # Note: if there is only one gain (gain 1), it will be selected
@@ -125,7 +125,7 @@ select_gain_1 = [True]  # , False]
 
 # Ignored if dataset_name == "experimental"
 n_times = [1000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [3]  # , 5, 8, 10, 20, 50]
+embedding_dim = [50]  # , 5, 8, 10, 20, 50]
 distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
@@ -137,7 +137,7 @@ gen_likelihood_type = "gaussian"
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 150  # 240
+n_epochs = 2  # 150  # 240
 sftbeta = 4.5
 beta = 0.03  # 0.03  # weight for KL term
 gamma = 30  # 20  # weight for latent loss term
