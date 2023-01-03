@@ -105,7 +105,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental"]
+dataset_name = ["s1_synthetic"]  # "experimental"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -124,10 +124,10 @@ smooth = [True]
 select_gain_1 = [True]  # , False]
 
 # Ignored if dataset_name == "experimental"
-n_times = [1000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [2, 3]
+n_times = [1000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
+embedding_dim = [3]  # , 5, 8, 10, 20, 50]
 distortion_amp = [0.4]
-noise_var = [1e-3]
+noise_var = [1e-3]  # , 1e-2, 1e-1]
 
 # Models
 model_type = "neural_vae"
@@ -147,7 +147,7 @@ gamma = 30  # 20  # weight for latent loss term
 # Except for lr_min and lr_max which are floats
 lr_min = 0.00001
 lr_max = 0.1
-batch_size = [8, 16, 32]
+batch_size = [8]  # , 16, 32]
 encoder_width = [100]
 encoder_depth = [4]
 decoder_width = [50]  # , 100, 200, 300]
@@ -160,7 +160,7 @@ decoder_depth = [5]  # , 10, 20, 50, 100]
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 2
+num_samples = 1
 sweep_metric = "test_loss"
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html
