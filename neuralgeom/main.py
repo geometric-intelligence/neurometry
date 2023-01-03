@@ -312,7 +312,10 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
     # Plot
     fig_loss = viz.plot_loss(train_losses, test_losses, config)
     fig_latent = viz.plot_latent_space(model, dataset, labels, config)
-    fig_recon = viz.plot_recon(model, dataset, labels, config)
+    fig_recon_per_angle = viz.plot_recon_per_positional_angle(
+        model, dataset, labels, config
+    )
+    fig_recon_per_time = viz.plot_recon_per_time(model, dataset, labels, config)
 
     # Log
     model_path = os.path.join(
@@ -323,7 +326,8 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
         {
             "fig_loss": wandb.Image(fig_loss),
             "fig_latent": wandb.Image(fig_latent),
-            "fig_recon": wandb.Image(fig_recon),
+            "fig_recon": wandb.Image(fig_recon_per_angle),
+            "fig_recon_per_time": wandb.Image(fig_recon_per_time),
         }
     )
     plt.close("all")

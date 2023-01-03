@@ -25,7 +25,38 @@ def plot_loss(train_losses, test_losses, config):
     return fig
 
 
-def plot_recon(model, dataset_torch, labels, config):
+def plot_recon_per_time(model, dataset_torch, labels, config):
+
+    if config.dataset_name in ["s1_synthetic", "experimental"]:
+        fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(24, 12))
+    else:
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(24, 12))
+
+    _, recon, _ = model(dataset_torch)
+
+    dataset = dataset_torch.cpu().detach().cpu().numpy()
+    recon = recon.cpu().detach().cpu().numpy()
+
+    axes[0].imshow(dataset[:1000, :].T, aspect=10)
+    axes[0].set_xlabel("Times", fontsize=16)
+    axes[0].set_ylabel("Neurons", fontsize=16)
+    axes[1].imshow(recon[:1000, :].T, aspect=10)
+    axes[1].set_xlabel("Times", fontsize=16)
+    axes[1].set_ylabel("Neurons", fontsize=16)
+
+    if config.dataset_name in ["s1_synthetic", "experimental"]:
+        angles = np.array(labels["angles"])
+        axes[2].plot(angles[:1000], linewidth=10)
+        axes[2].set_xlabel("Times", fontsize=16)
+        axes[2].set_ylabel("Angles", fontsize=16)
+        axes[2].set_xlim(xmin=0)
+
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.png"))
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.svg"))
+    return fig
+
+
+def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
     fig = plt.figure(figsize=(24, 12))
 
     if config.dataset_name == "s1_synthetic":
