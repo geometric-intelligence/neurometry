@@ -8,6 +8,7 @@ neuralgeom/data/raw/*.mat
 neuralgeom/data/binned/*.txt
 neuralgeom/data/binned/*.npy
 neuralgeom/data/data.zip
+neuralgeom/data/old_data.zip
 
 # Wandb files
 neuralgeom/wandb/*
