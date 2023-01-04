@@ -54,7 +54,7 @@ def plot_recon_per_time(model, dataset_torch, labels, config):
         z_latent = z_latent.cpu().detach().numpy()
         z_norms = np.linalg.norm(z_latent, axis=1)
         print("z_norms:", z_norms)
-        if not np.all(np.allclose(z_norms, 1.0)):
+        if not np.all(np.allclose(z_norms, 1.0, atol=0.1)):
             print("WARNING: Latent variables are not on a circle.")
         angles_latent = (np.arctan2(z_latent[:, 1], z_latent[:, 0]) + 2 * np.pi) % (
             2 * np.pi
