@@ -117,11 +117,11 @@ for one_dataset_name in dataset_name:
 
 # Ignored if dataset_name != "experimental"
 expt_id = ["34"]  # hd: with head direction
-timestep_microsec = [int(1e6)]  # , int(1e5)]
-smooth = [True]
+timestep_microsec = [int(1e5), int(1e6)]  # , int(1e5)]
+smooth = [True, False]
 # Note: if there is only one gain (gain 1), it will be selected
 # even if select gain 1 is false
-select_gain_1 = [True]  # , False]
+select_gain_1 = [True, False]  # , False]
 
 # Ignored if dataset_name == "experimental"
 n_times = [1000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
@@ -137,21 +137,21 @@ gen_likelihood_type = "gaussian"
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 2  # 150  # 240
+n_epochs = 200  # 150  # 240
 sftbeta = 4.5
 beta = 0.03  # 0.03  # weight for KL term
-gamma = 30  # 20  # weight for latent loss term
+gamma = 0.0  # 30  # 20  # weight for latent loss term
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
 # Except for lr_min and lr_max which are floats
 lr_min = 0.00001
 lr_max = 0.1
-batch_size = [8]  # , 16, 32]
-encoder_width = [100]
-encoder_depth = [4]
-decoder_width = [50]  # , 100, 200, 300]
-decoder_depth = [5]  # , 10, 20, 50, 100]
+batch_size = [8, 16, 32, 64]
+encoder_width = [50, 100, 200, 300]
+encoder_depth = [5, 10, 20, 50, 100]
+decoder_width = [50, 100, 200, 300]
+decoder_depth = [5, 10, 20, 50, 100]
 
 # Number of times to sample from the
 # hyperparameter space. Defaults to 1. If `grid_search` is
