@@ -28,29 +28,43 @@ def plot_loss(train_losses, test_losses, config):
 def plot_recon_per_time(model, dataset_torch, labels, config):
 
     if config.dataset_name in ["s1_synthetic", "experimental"]:
-        fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(24, 12))
+        fig, axes = plt.subplots(nrows=4, ncols=1, figsize=(24, 12), sharex=True)
     else:
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(24, 12))
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(24, 12), sharex=True)
 
-    _, recon, _ = model(dataset_torch)
+    z_latent, recon, _ = model(dataset_torch)
 
-    dataset = dataset_torch.cpu().detach().cpu().numpy()
-    recon = recon.cpu().detach().cpu().numpy()
+    dataset = dataset_torch.cpu().detach().numpy()
+    recon = recon.cpu().detach().numpy()
 
-    axes[0].imshow(dataset[:1000, :].T, aspect=10)
+    axes[0].imshow(dataset[:1000, :].T, aspect="auto")
     axes[0].set_xlabel("Times", fontsize=16)
-    axes[0].set_ylabel("Neurons", fontsize=16)
-    axes[1].imshow(recon[:1000, :].T, aspect=10)
+    axes[0].set_ylabel("True Neurons", fontsize=16)
+    axes[1].imshow(recon[:1000, :].T, aspect="auto")
     axes[1].set_xlabel("Times", fontsize=16)
-    axes[1].set_ylabel("Neurons", fontsize=16)
+    axes[1].set_ylabel("Recon Neurons", fontsize=16)
 
     if config.dataset_name in ["s1_synthetic", "experimental"]:
         angles = np.array(labels["angles"])
         axes[2].plot(angles[:1000], linewidth=10)
         axes[2].set_xlabel("Times", fontsize=16)
-        axes[2].set_ylabel("Angles", fontsize=16)
+        axes[2].set_ylabel("True Lab Angles", fontsize=16)
         axes[2].set_xlim(xmin=0)
 
+        z_latent = z_latent.cpu().detach().numpy()
+        z_norms = np.linalg.norm(z_latent, axis=1)
+        print("z_norms:", z_norms)
+        if not np.all(np.allclose(z_norms, 1.0)):
+            print("WARNING: Latent variables are not on a circle.")
+        angles_latent = (np.arctan2(z_latent[:, 1], z_latent[:, 0]) + 2 * np.pi) % (
+            2 * np.pi
+        )
+        axes[3].plot(angles_latent[:1000], linewidth=10)
+        axes[3].set_xlabel("Times", fontsize=16)
+        axes[3].set_ylabel("Latent Angles", fontsize=16)
+        axes[3].set_xlim(xmin=0)
+
+    plt.tight_layout()
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.png"))
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.svg"))
     return fig

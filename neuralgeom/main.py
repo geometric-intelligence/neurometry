@@ -216,7 +216,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        curvature_compute_plot_log(wandb_config, dataset, model)
+        # curvature_compute_plot_log(wandb_config, dataset, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -315,6 +315,9 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
     fig_recon_per_angle = viz.plot_recon_per_positional_angle(
         model, dataset, labels, config
     )
+    print("\nHELLO\n")
+    print(len(dataset))
+    print(len(labels))
     fig_recon_per_time = viz.plot_recon_per_time(model, dataset, labels, config)
 
     # Log
