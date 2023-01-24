@@ -24,3 +24,27 @@ We recommend using Anaconda for easy installation and use of the method. To crea
 conda env create -f environment.yml
 conda activate neuralgeom
 ```
+
+## 🌎 Bibtex ##
+
+If this code is useful to your research, please cite:
+
+```
+@misc{https://doi.org/10.48550/arxiv.2212.10414,
+  doi = {10.48550/ARXIV.2212.10414},
+  
+  url = {https://arxiv.org/abs/2212.10414},
+  
+  author = {Acosta, Francisco E. and Sanborn, Sophia and Duc, Khanh Dao and Madhav, Manu and Miolane, Nina},
+  
+  keywords = {Neurons and Cognition (q-bio.NC), FOS: Biological sciences, FOS: Biological sciences},
+  
+  title = {Quantifying Local Extrinsic Curvature in Neural Manifolds},
+  
+  publisher = {arXiv},
+  
+  year = {2022},
+  
+  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}
+}
+```
