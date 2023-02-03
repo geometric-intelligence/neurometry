@@ -120,7 +120,7 @@ for one_dataset_name in dataset_name:
 
 # Ignored if dataset_name != "experimental"
 expt_id = ["41", "34"]  # hd: with head direction
-timestep_microsec = [int(1e5)]  # , int(1e6)]  # , int(1e5)]
+timestep_microsec = [int(1e5), int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
 # even if select gain 1 is false

@@ -172,6 +172,7 @@ def main_sweep(
         "checkpt_interval": default_config.checkpt_interval,
         "scheduler": default_config.scheduler,
         "n_epochs": default_config.n_epochs,
+        "alpha": default_config.alpha,
         "beta": default_config.beta,
         "gamma": default_config.gamma,
         "sftbeta": default_config.sftbeta,
