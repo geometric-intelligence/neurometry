@@ -19,7 +19,7 @@ def test_latent_regularization_loss():
             [np.cos(np.pi / 7), np.sin(np.pi / 7)],
         ]
     )
-    labels = torch.tensor([[180 / 3], [180 / 5], [180 / 7]])
+    labels = torch.tensor([180 / 3, 180 / 5, 180 / 7])
     print(z.shape)
     print(labels.shape)
     loss = latent_regularization_loss(labels, z, config).numpy()
