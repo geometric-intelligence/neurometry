@@ -24,6 +24,9 @@ trained_models_dir = os.path.join(work_dir, "results/trained_models")
 if not os.path.exists(trained_models_dir):
     os.makedirs(trained_models_dir)
 ray_sweep_dir = os.path.join(work_dir, "results/ray_sweep")
+curvature_profiles_dir = os.path.join(os.getcwd(), "results/curvature_profiles/")
+if not os.path.exists(curvature_profiles_dir):
+    os.makedirs(curvature_profiles_dir)
 
 # Hardware
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -116,12 +119,12 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Ignored if dataset_name != "experimental"
-expt_id = ["34"]  # hd: with head direction
+expt_id = ["41", "34"]  # hd: with head direction
 timestep_microsec = [int(1e5), int(1e6)]  # , int(1e5)]
-smooth = [True, False]
+smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
 # even if select gain 1 is false
-select_gain_1 = [True, False]  # , False]
+select_gain_1 = [True]  # , False]  # , False]
 
 # Ignored if dataset_name == "experimental"
 n_times = [1000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
@@ -137,17 +140,18 @@ gen_likelihood_type = "gaussian"
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 200  # 150  # 240
+n_epochs = 150  # 200  # 150  # 240
 sftbeta = 4.5
+alpha = 1.0  # weight for the reconstruction term
 beta = 0.03  # 0.03  # weight for KL term
-gamma = 0.0  # 30  # 20  # weight for latent loss term
+gamma = 30  # 20  # weight for latent loss term
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
 # Except for lr_min and lr_max which are floats
-lr_min = 0.00001
+lr_min = 0.000001
 lr_max = 0.1
-batch_size = [8, 16, 32, 64]
+batch_size = [4, 8, 16, 32, 64, 128]
 encoder_width = [50, 100, 200, 300]
 encoder_depth = [5, 10, 20, 50, 100]
 decoder_width = [50, 100, 200, 300]
@@ -160,7 +164,7 @@ decoder_depth = [5, 10, 20, 50, 100]
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 64
+num_samples = 256
 sweep_metric = "test_loss"
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

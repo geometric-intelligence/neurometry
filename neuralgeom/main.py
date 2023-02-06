@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import models.neural_vae
 import models.toroidal_vae
 import numpy as np
+import pandas as pd
 import torch
 import train
 import viz
@@ -171,6 +172,7 @@ def main_sweep(
         "checkpt_interval": default_config.checkpt_interval,
         "scheduler": default_config.scheduler,
         "n_epochs": default_config.n_epochs,
+        "alpha": default_config.alpha,
         "beta": default_config.beta,
         "gamma": default_config.gamma,
         "sftbeta": default_config.sftbeta,
@@ -216,7 +218,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        # curvature_compute_plot_log(wandb_config, dataset, model)
+        curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -315,9 +317,6 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
     fig_recon_per_angle = viz.plot_recon_per_positional_angle(
         model, dataset, labels, config
     )
-    print("\nHELLO\n")
-    print(len(dataset))
-    print(len(labels))
     fig_recon_per_time = viz.plot_recon_per_time(model, dataset, labels, config)
 
     # Log
@@ -336,7 +335,7 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
     plt.close("all")
 
 
-def curvature_compute_plot_log(config, dataset, model):
+def curvature_compute_plot_log(config, dataset, labels, model):
     """Compute, plot and log curvature results."""
     # Compute
     print("Computing learned curvature...")
@@ -344,6 +343,43 @@ def curvature_compute_plot_log(config, dataset, model):
     z_grid, _, curv_norms_learned = evaluate.compute_curvature_learned(
         model, config, dataset.shape[0], dataset.shape[1]
     )
+    print("Saving + logging learned curvature profile...")
+    curv_norm_learned_profile = pd.DataFrame(
+        {"z_grid": z_grid, "curv_norm_learned": curv_norms_learned}
+    )
+    mean_velocities = []
+    median_velocities = []
+    std_velocities = []
+    min_velocities = []
+    max_velocities = []
+    for one_z_grid in curv_norm_learned_profile["z_grid"]:
+        selected_labels = labels[
+            np.abs((one_z_grid - labels["angles"]) % 2 * np.pi) < 0.2
+        ]
+        mean_velocities.append(np.nanmean(selected_labels["velocities"]))
+        median_velocities.append(np.nanmedian(selected_labels["velocities"]))
+        std_velocities.append(np.nanstd(selected_labels["velocities"]))
+        if len(selected_labels) == 0:
+            min_velocities.append(-1)
+            max_velocities.append(-1)
+        else:
+            min_velocities.append(np.nanmin(selected_labels["velocities"]))
+            max_velocities.append(np.nanmax(selected_labels["velocities"]))
+
+    curv_norm_learned_profile["mean_velocities"] = mean_velocities
+    curv_norm_learned_profile["median_velocities"] = median_velocities
+    curv_norm_learned_profile["std_velocities"] = std_velocities
+    curv_norm_learned_profile["min_velocities"] = min_velocities
+    curv_norm_learned_profile["max_velocities"] = max_velocities
+
+    curv_norm_learned_profile.to_csv(
+        os.path.join(
+            default_config.curvature_profiles_dir,
+            f"{config.results_prefix}_curv_norm_learned_profile.csv",
+        )
+    )
+    wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
+
     comp_time_learned = time.time() - start_time
 
     norm_val = None
@@ -375,7 +411,17 @@ def curvature_compute_plot_log(config, dataset, model):
             norm_val=None,
             profile_type="true",
         )
-
+    elif config.dataset_name == "experimental":
+        # HACK ALERT: Remove large curvatures
+        # Note that the full curvature profile is saved in csv
+        # The large curvatures are only removed for the plot
+        median = curv_norm_learned_profile["curv_norm_learned"].median()
+        filtered = curv_norm_learned_profile[
+            curv_norm_learned_profile["curv_norm_learned"] < 8 * median
+        ]
+        fig_curv_norms_learned_velocities = viz.plot_curvature_velocities(
+            curv_norm_learned_profile=filtered, config=config, labels=labels
+        )
     # Log
     wandb.log(
         {
@@ -395,7 +441,14 @@ def curvature_compute_plot_log(config, dataset, model):
                 "fig_curv_norms_true": wandb.Image(fig_curv_norms_true),
             }
         )
-
+    elif config.dataset_name == "experimental":
+        wandb.log(
+            {
+                "fig_curv_norms_learned_velocities": wandb.Image(
+                    fig_curv_norms_learned_velocities
+                ),
+            }
+        )
     plt.close("all")
 
 
