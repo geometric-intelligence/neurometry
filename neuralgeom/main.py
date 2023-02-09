@@ -341,36 +341,38 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     print("Computing learned curvature...")
     start_time = time.time()
     z_grid, _, curv_norms_learned = evaluate.compute_curvature_learned(
-        model, config, dataset.shape[0], dataset.shape[1]
+        model=model, config=config, embedding_dim=dataset.shape[1]
     )
     print("Saving + logging learned curvature profile...")
     curv_norm_learned_profile = pd.DataFrame(
         {"z_grid": z_grid, "curv_norm_learned": curv_norms_learned}
     )
-    mean_velocities = []
-    median_velocities = []
-    std_velocities = []
-    min_velocities = []
-    max_velocities = []
-    for one_z_grid in curv_norm_learned_profile["z_grid"]:
-        selected_labels = labels[
-            np.abs((one_z_grid - labels["angles"]) % 2 * np.pi) < 0.2
-        ]
-        mean_velocities.append(np.nanmean(selected_labels["velocities"]))
-        median_velocities.append(np.nanmedian(selected_labels["velocities"]))
-        std_velocities.append(np.nanstd(selected_labels["velocities"]))
-        if len(selected_labels) == 0:
-            min_velocities.append(-1)
-            max_velocities.append(-1)
-        else:
-            min_velocities.append(np.nanmin(selected_labels["velocities"]))
-            max_velocities.append(np.nanmax(selected_labels["velocities"]))
 
-    curv_norm_learned_profile["mean_velocities"] = mean_velocities
-    curv_norm_learned_profile["median_velocities"] = median_velocities
-    curv_norm_learned_profile["std_velocities"] = std_velocities
-    curv_norm_learned_profile["min_velocities"] = min_velocities
-    curv_norm_learned_profile["max_velocities"] = max_velocities
+    if config.dataset_name == "experimental":
+        mean_velocities = []
+        median_velocities = []
+        std_velocities = []
+        min_velocities = []
+        max_velocities = []
+        for one_z_grid in curv_norm_learned_profile["z_grid"]:
+            selected_labels = labels[
+                np.abs((one_z_grid - labels["angles"]) % 2 * np.pi) < 0.2
+            ]
+            mean_velocities.append(np.nanmean(selected_labels["velocities"]))
+            median_velocities.append(np.nanmedian(selected_labels["velocities"]))
+            std_velocities.append(np.nanstd(selected_labels["velocities"]))
+            if len(selected_labels) == 0:
+                min_velocities.append(-1)
+                max_velocities.append(-1)
+            else:
+                min_velocities.append(np.nanmin(selected_labels["velocities"]))
+                max_velocities.append(np.nanmax(selected_labels["velocities"]))
+
+        curv_norm_learned_profile["mean_velocities"] = mean_velocities
+        curv_norm_learned_profile["median_velocities"] = median_velocities
+        curv_norm_learned_profile["std_velocities"] = std_velocities
+        curv_norm_learned_profile["min_velocities"] = min_velocities
+        curv_norm_learned_profile["max_velocities"] = max_velocities
 
     curv_norm_learned_profile.to_csv(
         os.path.join(

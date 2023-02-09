@@ -85,16 +85,16 @@ def get_true_immersion(config):
     return immersion
 
 
-def get_z_grid(config, num_points):
+def get_z_grid(config, n_grid_points=50):
     if config.dataset_name in ("s1_synthetic", "experimental"):
-        z_grid = torch.linspace(0, 2 * gs.pi, num_points)
+        z_grid = torch.linspace(0, 2 * gs.pi, n_grid_points)
     elif config.dataset_name == "s2_synthetic":
-        thetas = gs.linspace(0.01, gs.pi, config.n_times)
-        phis = gs.linspace(0, 2 * gs.pi, config.n_times)
+        thetas = gs.linspace(0.01, gs.pi, n_grid_points)
+        phis = gs.linspace(0, 2 * gs.pi, n_grid_points)
         z_grid = torch.cartesian_prod(thetas, phis)
     elif config.dataset_name == "t2_synthetic":
-        thetas = gs.linspace(0, 2 * gs.pi, config.n_times)
-        phis = gs.linspace(0, 2 * gs.pi, config.n_times)
+        thetas = gs.linspace(0, 2 * gs.pi, n_grid_points)
+        phis = gs.linspace(0, 2 * gs.pi, n_grid_points)
         z_grid = torch.cartesian_prod(thetas, phis)
     return z_grid
 
@@ -119,25 +119,25 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     return curv, curv_norm
 
 
-def compute_curvature_learned(model, config, num_points, emb_dim):
+def compute_curvature_learned(model, config, embedding_dim, n_grid_points=50):
     """Use _compute_curvature to find mean curvature profile from learned immersion"""
-    z_grid = get_z_grid(config, num_points)
+    z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_learned_immersion(model, config)
     start_time = time.time()
     curv, curv_norm = _compute_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
-        embedding_dim=emb_dim,
+        embedding_dim=embedding_dim,
     )
     end_time = time.time()
     print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return z_grid, curv, curv_norm
 
 
-def compute_curvature_true(config):
+def compute_curvature_true(config, n_grid_points=50):
     """Use compute_mean_curvature to find mean curvature profile from true immersion"""
-    z_grid = get_z_grid(config, config.n_times)
+    z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_true_immersion(config)
     start_time = time.time()
     curv, curv_norm = _compute_curvature(
