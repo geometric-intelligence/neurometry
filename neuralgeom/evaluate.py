@@ -85,7 +85,7 @@ def get_true_immersion(config):
     return immersion
 
 
-def get_z_grid(config, n_grid_points=30):
+def get_z_grid(config, n_grid_points=100):
     if config.dataset_name in ("s1_synthetic", "experimental"):
         z_grid = torch.linspace(0, 2 * gs.pi, n_grid_points)
     elif config.dataset_name == "s2_synthetic":
@@ -112,8 +112,11 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
             # TODO(nina): Vectorize in geomstats to avoid this for loop
             z = torch.unsqueeze(z, dim=0)
             curv[i_z, :] = neural_metric.mean_curvature_vector(z)
-            if i_z > 1:
-                geodesic_dist[i_z] = neural_metric.dist(z0, z)
+            # Note: these lines are commented out (see PR description)
+            # as it makes the computations extremely long.
+            # Recommendation: compute these offline in a notebook
+            # if i_z > 1:
+            #     geodesic_dist[i_z] = neural_metric.dist(z0, z)
     else:
         curv = neural_metric.mean_curvature_vector(z_grid)
 
@@ -123,7 +126,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     return geodesic_dist, curv, curv_norm
 
 
-def compute_curvature_learned(model, config, embedding_dim, n_grid_points=30):
+def compute_curvature_learned(model, config, embedding_dim, n_grid_points=100):
     """Use _compute_curvature to find mean curvature profile from learned immersion"""
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_learned_immersion(model, config)
@@ -139,7 +142,7 @@ def compute_curvature_learned(model, config, embedding_dim, n_grid_points=30):
     return z_grid, geodesic_dist, curv, curv_norm
 
 
-def compute_curvature_true(config, n_grid_points=30):
+def compute_curvature_true(config, n_grid_points=100):
     """Use compute_mean_curvature to find mean curvature profile from true immersion"""
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_true_immersion(config)

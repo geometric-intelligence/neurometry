@@ -354,10 +354,22 @@ def plot_neural_manifold_learned(curv_norm_learned_profile, config, labels):
         for i_stat, stat_velocities in enumerate(stats):
             ax = axes[i_stat]
             ax.scatter(
-                filtered["geodesic_dist"],
-                1 / filtered["curv_norm_learned"],
-                c=filtered[stat_velocities],
+                # Note: using the geodesic distance makes the plot
+                # reparameterization invariant.
+                # However, the computation is extremely slow, thus
+                # we recommend using z_grid for the main pipeline
+                # and computing geodesic_dist in a notebook after having selected
+                # a run.
+                # curv_norm_learned_profile["geodesic_dist"],
+                curv_norm_learned_profile["z_grid"],
+                1 / curv_norm_learned_profile["curv_norm_learned"],
+                c=curv_norm_learned_profile[stat_velocities],
                 cmap=cmaps[i_stat],
+            )
+            ax.plot(
+                curv_norm_learned_profile["z_grid"],
+                1 / curv_norm_learned_profile["curv_norm_learned"],
+                c="black",
             )
             ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
             ax.grid(True)
@@ -369,8 +381,20 @@ def plot_neural_manifold_learned(curv_norm_learned_profile, config, labels):
         )
 
         ax.scatter(
-            filtered["geodesic_dist"],
-            1 / filtered["curv_norm_learned"],
+            # Note: using the geodesic distance makes the plot
+            # reparameterization invariant.
+            # However, the computation is extremely slow, thus
+            # we recommend using z_grid for the main pipeline
+            # and computing geodesic_dist in a notebook after having selected
+            # a run.
+            # curv_norm_learned_profile["geodesic_dist"],
+            curv_norm_learned_profile["z_grid"],
+            1 / curv_norm_learned_profile["curv_norm_learned"],
+        )
+        ax.plot(
+            curv_norm_learned_profile["z_grid"],
+            1 / curv_norm_learned_profile["curv_norm_learned"],
+            c="black",
         )
         ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
         ax.grid(True)
