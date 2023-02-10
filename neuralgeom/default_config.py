@@ -119,16 +119,16 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Ignored if dataset_name != "experimental"
-expt_id = ["41", "34"]  # hd: with head direction
-timestep_microsec = [int(1e5), int(1e6)]  # , int(1e5)]
+expt_id = ["41"]  # , "34"]  # hd: with head direction
+timestep_microsec = [int(1e5)]  # , int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
 # even if select gain 1 is false
 select_gain_1 = [True]  # , False]  # , False]
 
 # Ignored if dataset_name == "experimental"
-n_times = [1000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [50]  # , 5, 8, 10, 20, 50]
+n_times = [100]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
+embedding_dim = [5]  # , 5, 8, 10, 20, 50]
 distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
@@ -140,7 +140,7 @@ gen_likelihood_type = "gaussian"
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 150  # 200  # 150  # 240
+n_epochs = 1  # 50  # 200  # 150  # 240
 sftbeta = 4.5
 alpha = 1.0  # weight for the reconstruction term
 beta = 0.03  # 0.03  # weight for KL term
@@ -164,7 +164,7 @@ decoder_depth = [5, 10, 20, 50, 100]
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 256
+num_samples = 1
 sweep_metric = "test_loss"
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

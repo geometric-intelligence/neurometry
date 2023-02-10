@@ -32,7 +32,7 @@ def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
 
         test_losses.append(test_loss)
 
-        if test_loss < lowest_test_loss:
+        if epoch == 1 or test_loss < lowest_test_loss:
             lowest_test_loss = test_loss
             best_model = copy.deepcopy(model)
 

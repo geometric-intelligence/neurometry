@@ -340,37 +340,43 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     # Compute
     print("Computing learned curvature...")
     start_time = time.time()
-    z_grid, _, curv_norms_learned = evaluate.compute_curvature_learned(
-        model, config, dataset.shape[0], dataset.shape[1]
+    z_grid, geodesic_dist, _, curv_norms_learned = evaluate.compute_curvature_learned(
+        model=model, config=config, embedding_dim=dataset.shape[1]
     )
     print("Saving + logging learned curvature profile...")
     curv_norm_learned_profile = pd.DataFrame(
-        {"z_grid": z_grid, "curv_norm_learned": curv_norms_learned}
+        {
+            "z_grid": z_grid,
+            "geodesic_dist": geodesic_dist,
+            "curv_norm_learned": curv_norms_learned,
+        }
     )
-    mean_velocities = []
-    median_velocities = []
-    std_velocities = []
-    min_velocities = []
-    max_velocities = []
-    for one_z_grid in curv_norm_learned_profile["z_grid"]:
-        selected_labels = labels[
-            np.abs((one_z_grid - labels["angles"]) % 2 * np.pi) < 0.2
-        ]
-        mean_velocities.append(np.nanmean(selected_labels["velocities"]))
-        median_velocities.append(np.nanmedian(selected_labels["velocities"]))
-        std_velocities.append(np.nanstd(selected_labels["velocities"]))
-        if len(selected_labels) == 0:
-            min_velocities.append(-1)
-            max_velocities.append(-1)
-        else:
-            min_velocities.append(np.nanmin(selected_labels["velocities"]))
-            max_velocities.append(np.nanmax(selected_labels["velocities"]))
 
-    curv_norm_learned_profile["mean_velocities"] = mean_velocities
-    curv_norm_learned_profile["median_velocities"] = median_velocities
-    curv_norm_learned_profile["std_velocities"] = std_velocities
-    curv_norm_learned_profile["min_velocities"] = min_velocities
-    curv_norm_learned_profile["max_velocities"] = max_velocities
+    if config.dataset_name == "experimental":
+        mean_velocities = []
+        median_velocities = []
+        std_velocities = []
+        min_velocities = []
+        max_velocities = []
+        for one_z_grid in curv_norm_learned_profile["z_grid"]:
+            selected_labels = labels[
+                np.abs((one_z_grid - labels["angles"]) % 2 * np.pi) < 0.2
+            ]
+            mean_velocities.append(np.nanmean(selected_labels["velocities"]))
+            median_velocities.append(np.nanmedian(selected_labels["velocities"]))
+            std_velocities.append(np.nanstd(selected_labels["velocities"]))
+            if len(selected_labels) == 0:
+                min_velocities.append(-1)
+                max_velocities.append(-1)
+            else:
+                min_velocities.append(np.nanmin(selected_labels["velocities"]))
+                max_velocities.append(np.nanmax(selected_labels["velocities"]))
+
+        curv_norm_learned_profile["mean_velocities"] = mean_velocities
+        curv_norm_learned_profile["median_velocities"] = median_velocities
+        curv_norm_learned_profile["std_velocities"] = std_velocities
+        curv_norm_learned_profile["min_velocities"] = min_velocities
+        curv_norm_learned_profile["max_velocities"] = max_velocities
 
     curv_norm_learned_profile.to_csv(
         os.path.join(
@@ -411,17 +417,17 @@ def curvature_compute_plot_log(config, dataset, labels, model):
             norm_val=None,
             profile_type="true",
         )
-    elif config.dataset_name == "experimental":
-        # HACK ALERT: Remove large curvatures
-        # Note that the full curvature profile is saved in csv
-        # The large curvatures are only removed for the plot
-        median = curv_norm_learned_profile["curv_norm_learned"].median()
-        filtered = curv_norm_learned_profile[
-            curv_norm_learned_profile["curv_norm_learned"] < 8 * median
-        ]
-        fig_curv_norms_learned_velocities = viz.plot_curvature_velocities(
-            curv_norm_learned_profile=filtered, config=config, labels=labels
-        )
+
+    # HACK ALERT: Remove large curvatures
+    # Note that the full curvature profile is saved in csv
+    # The large curvatures are only removed for the plot
+    median = curv_norm_learned_profile["curv_norm_learned"].median()
+    filtered = curv_norm_learned_profile[
+        curv_norm_learned_profile["curv_norm_learned"] < 8 * median
+    ]
+    fig_neural_manifold_learned = viz.plot_neural_manifold_learned(
+        curv_norm_learned_profile=filtered, config=config, labels=labels
+    )
     # Log
     wandb.log(
         {
@@ -444,9 +450,7 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     elif config.dataset_name == "experimental":
         wandb.log(
             {
-                "fig_curv_norms_learned_velocities": wandb.Image(
-                    fig_curv_norms_learned_velocities
-                ),
+                "fig_neural_manifold_learned": wandb.Image(fig_neural_manifold_learned),
             }
         )
     plt.close("all")

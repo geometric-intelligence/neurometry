@@ -333,31 +333,78 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
     return fig
 
 
-def plot_curvature_velocities(curv_norm_learned_profile, config, labels):
-    stats = [
-        "mean_velocities",
-        "median_velocities",
-        "std_velocities",
-        "min_velocities",
-        "max_velocities",
-    ]
-    cmaps = ["viridis", "viridis", "magma", "Blues", "Reds"]
-    fig, axes = plt.subplots(nrows=1, ncols=len(stats), figsize=(20, 4))
-    for i_stat, stat_velocities in enumerate(stats):
-        curv_norm_learned_profile.plot.scatter(
-            x="z_grid",
-            y="curv_norm_learned",
-            c=stat_velocities,
-            ax=axes[i_stat],
-            cmap=cmaps[i_stat],
+def plot_neural_manifold_learned(curv_norm_learned_profile, config, labels):
+
+    if config.dataset_name == "experimental":
+        stats = [
+            "mean_velocities",
+            "median_velocities",
+            "std_velocities",
+            "min_velocities",
+            "max_velocities",
+        ]
+        cmaps = ["viridis", "viridis", "magma", "Blues", "Reds"]
+
+        fig, axes = plt.subplots(
+            nrows=1,
+            ncols=len(stats),
+            figsize=(20, 4),
+            subplot_kw={"projection": "polar"},
         )
-    fig.tight_layout()
+        for i_stat, stat_velocities in enumerate(stats):
+            ax = axes[i_stat]
+            ax.scatter(
+                # Note: using the geodesic distance makes the plot
+                # reparameterization invariant.
+                # However, the computation is extremely slow, thus
+                # we recommend using z_grid for the main pipeline
+                # and computing geodesic_dist in a notebook after having selected
+                # a run.
+                # curv_norm_learned_profile["geodesic_dist"],
+                curv_norm_learned_profile["z_grid"],
+                1 / curv_norm_learned_profile["curv_norm_learned"],
+                c=curv_norm_learned_profile[stat_velocities],
+                cmap=cmaps[i_stat],
+            )
+            ax.plot(
+                curv_norm_learned_profile["z_grid"],
+                1 / curv_norm_learned_profile["curv_norm_learned"],
+                c="black",
+            )
+            ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+            ax.grid(True)
+            ax.set_title("Color: " + stat_velocities, va="bottom")
+            fig.tight_layout()
+    else:
+        fig, ax = plt.subplots(
+            nrows=1, ncols=1, figsize=(20, 4), subplot_kw={"projection": "polar"}
+        )
+
+        ax.scatter(
+            # Note: using the geodesic distance makes the plot
+            # reparameterization invariant.
+            # However, the computation is extremely slow, thus
+            # we recommend using z_grid for the main pipeline
+            # and computing geodesic_dist in a notebook after having selected
+            # a run.
+            # curv_norm_learned_profile["geodesic_dist"],
+            curv_norm_learned_profile["z_grid"],
+            1 / curv_norm_learned_profile["curv_norm_learned"],
+        )
+        ax.plot(
+            curv_norm_learned_profile["z_grid"],
+            1 / curv_norm_learned_profile["curv_norm_learned"],
+            c="black",
+        )
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.grid(True)
+        fig.tight_layout()
 
     plt.savefig(
-        os.path.join(FIGURES, f"{config.results_prefix}_curvature_velocities.png")
+        os.path.join(FIGURES, f"{config.results_prefix}_neural_manifold_learned.png")
     )
     plt.savefig(
-        os.path.join(FIGURES, f"{config.results_prefix}_curvature_velocities.svg")
+        os.path.join(FIGURES, f"{config.results_prefix}_neural_manifold_learned.svg")
     )
 
     return fig
