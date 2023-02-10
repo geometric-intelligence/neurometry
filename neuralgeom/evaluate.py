@@ -60,17 +60,17 @@ def get_true_immersion(config):
         rot = SpecialOrthogonal(n=config.embedding_dim).random_point()
     if config.dataset_name == "s1_synthetic":
         immersion = get_s1_synthetic_immersion(
-            distortion_func=config.distortion_func,
+            geodesic_distortion_func=config.geodesic_distortion_func,
             radius=config.radius,
             n_wiggles=config.n_wiggles,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             rot=rot,
         )
     elif config.dataset_name == "s2_synthetic":
         immersion = get_s2_synthetic_immersion(
             radius=config.radius,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             rot=rot,
         )
@@ -78,7 +78,7 @@ def get_true_immersion(config):
         immersion = get_t2_synthetic_immersion(
             major_radius=config.major_radius,
             minor_radius=config.minor_radius,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             rot=rot,
         )
@@ -104,19 +104,23 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     neural_metric = PullbackMetric(
         dim=dim, embedding_dim=embedding_dim, immersion=immersion
     )
+    z0 = torch.unsqueeze(z_grid[0], dim=0)
     if dim == 1:
         curv = gs.zeros(len(z_grid), embedding_dim)
-        for _, z in enumerate(z_grid):
+        geodesic_dist = gs.zeros(len(z_grid))
+        for i_z, z in enumerate(z_grid):
             # TODO(nina): Vectorize in geomstats to avoid this for loop
             z = torch.unsqueeze(z, dim=0)
-            curv[_, :] = neural_metric.mean_curvature_vector(z)
+            curv[i_z, :] = neural_metric.mean_curvature_vector(z)
+            if i_z > 1:
+                geodesic_dist[i_z] = neural_metric.dist(z0, z)
     else:
         curv = neural_metric.mean_curvature_vector(z_grid)
 
     curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True)
     curv_norm = gs.array([norm.item() for norm in curv_norm])
 
-    return curv, curv_norm
+    return geodesic_dist, curv, curv_norm
 
 
 def compute_curvature_learned(model, config, embedding_dim, n_grid_points=50):
@@ -124,7 +128,7 @@ def compute_curvature_learned(model, config, embedding_dim, n_grid_points=50):
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_learned_immersion(model, config)
     start_time = time.time()
-    curv, curv_norm = _compute_curvature(
+    geodesic_dist, curv, curv_norm = _compute_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
@@ -132,7 +136,7 @@ def compute_curvature_learned(model, config, embedding_dim, n_grid_points=50):
     )
     end_time = time.time()
     print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
-    return z_grid, curv, curv_norm
+    return z_grid, geodesic_dist, curv, curv_norm
 
 
 def compute_curvature_true(config, n_grid_points=50):
@@ -140,7 +144,7 @@ def compute_curvature_true(config, n_grid_points=50):
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_true_immersion(config)
     start_time = time.time()
-    curv, curv_norm = _compute_curvature(
+    geodesic_dist, curv, curv_norm = _compute_curvature(
         z_grid=z_grid,
         immersion=immersion,
         dim=config.manifold_dim,
@@ -148,7 +152,7 @@ def compute_curvature_true(config, n_grid_points=50):
     )
     end_time = time.time()
     print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
-    return z_grid, curv, curv_norm
+    return z_grid, geodesic_dist, curv, curv_norm
 
 
 def _compute_curvature_error_s1(thetas, curv_norms_learned, curv_norms_true):
