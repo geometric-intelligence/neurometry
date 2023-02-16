@@ -14,6 +14,7 @@ from datasets.synthetic import (
 )
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
+import gph 
 
 
 def get_learned_immersion(model, config):
@@ -226,3 +227,10 @@ def compute_curvature_error(
     end_time = time.time()
     print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return error
+
+
+def compute_persistence_diagrams(point_cloud, maxdim=2):
+    pers = gph.ripser_parallel(X=point_cloud, maxdim=maxdim)
+    diagrams = pers["dgms"]
+
+    return diagrams

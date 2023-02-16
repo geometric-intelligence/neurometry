@@ -436,3 +436,20 @@ def plot_comparison_curvature_norms(
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.png"))
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))
     return fig
+
+def plot_persistence_diagrams(diagrams):
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    ax.set_xlabel("Birth")
+    ax.set_ylabel("Death")
+    ax.set_title("Persistence Diagram")
+    for n, H_n in enumerate(diagrams):
+        birth_n = H_n[:, 0]
+        death_n = H_n[:, 1]
+        ax.scatter(birth_n, death_n, s=10, label="H_" + str(n))
+        ax.plot([0, 1], [0, 1], transform=ax.transAxes, c="gray", ls="--")
+
+    ax.legend(loc="lower right")
+    
+    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
+
