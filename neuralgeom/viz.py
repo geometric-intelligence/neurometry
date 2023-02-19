@@ -451,5 +451,5 @@ def plot_persistence_diagrams(diagrams):
 
     ax.legend(loc="lower right")
     
-    plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
+    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
 
