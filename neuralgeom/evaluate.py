@@ -229,8 +229,8 @@ def compute_curvature_error(
     return error
 
 
-def compute_persistence_diagrams(point_cloud, maxdim=2):
-    pers = gph.ripser_parallel(X=point_cloud, maxdim=maxdim)
+def compute_persistence_diagrams(point_cloud, maxdim=2, n_threads=-1):
+    pers = gph.ripser_parallel(X=point_cloud, maxdim=maxdim, n_threads=n_threads)
     diagrams = pers["dgms"]
 
     return diagrams
