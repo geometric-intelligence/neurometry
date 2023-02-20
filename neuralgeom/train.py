@@ -56,6 +56,7 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
     train_loss = 0
     for batch_idx, batch_data in enumerate(train_loader):
         data, labels = batch_data
+        print("one batch, data.shape", data.shape)
 
         labels = labels  # .float()
         data = data.to(config.device)

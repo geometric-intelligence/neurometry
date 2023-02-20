@@ -138,6 +138,8 @@ def main_sweep(
         "encoder_depth": tune.choice(default_config.encoder_depth),
         "decoder_width": tune.choice(default_config.decoder_width),
         "decoder_depth": tune.choice(default_config.decoder_depth),
+        "use_batch_norm": tune.choice(default_config.use_batch_norm),
+        "drop_out_p": tune.choice(default_config.drop_out_p),
         "wandb": {
             "project": default_config.project,
             "api_key": default_config.api_key,
@@ -177,8 +179,6 @@ def main_sweep(
         "beta": default_config.beta,
         "gamma": default_config.gamma,
         "sftbeta": default_config.sftbeta,
-        "use_batch_norm": default_config.use_batch_norm,
-        "drop_out_p": default_config.drop_out_p,
         "gen_likelihood_type": default_config.gen_likelihood_type,
     }
 

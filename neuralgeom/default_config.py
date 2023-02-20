@@ -146,8 +146,6 @@ sftbeta = 4.5
 alpha = 1.0  # weight for the reconstruction term
 beta = 0.03  # 0.03  # weight for KL term
 gamma = 30  # 20  # weight for latent loss term
-use_batch_norm = False
-drop_out_p = 0.0  # put probability p at 0. for no drop out
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
@@ -159,6 +157,10 @@ encoder_width = [50, 100, 200, 300]
 encoder_depth = [5, 10, 20, 50, 100]
 decoder_width = [50, 100, 200, 300]
 decoder_depth = [5, 10, 20, 50, 100]
+use_batch_norm = [True]
+drop_out_p = [0.0, 0.2, 0.25, 0.3, 0.4, 0.5]  # put probability p at 0. for no drop out
+for p in drop_out_p:
+    assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
 # Number of times to sample from the
 # hyperparameter space. Defaults to 1. If `grid_search` is
