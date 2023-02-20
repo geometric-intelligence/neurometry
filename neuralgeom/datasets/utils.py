@@ -131,10 +131,12 @@ def load(config):
     train_num = int(round(0.7 * len(dataset)))  # 70% training
     indices = np.arange(len(dataset))
 
-    # Note: this breaks the temporal ordering.
-    train_indices = np.random.choice(indices, train_num, replace=False)
-    test_indices = np.delete(indices, train_indices)
+    train_indices = np.arange(train_num)
+    if config.shuffle:
+        # Note: this breaks the temporal ordering.
+        train_indices = np.random.choice(indices, train_num, replace=False)
 
+    test_indices = np.delete(indices, train_indices)
     train_dataset = dataset[train_indices]
     train_labels = labels.iloc[train_indices]
 

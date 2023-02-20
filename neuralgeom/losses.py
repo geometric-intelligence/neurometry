@@ -5,7 +5,8 @@ from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
 
 
 def elbo(x, x_mu, posterior_params, z, labels, config):
-    """Compute VAE elbo loss.
+    """Compute the ELBO for the VAE loss.
+
     The VAE elbo loss is defined as:
     = reconstruction loss + Kl divergence
     over all elements and batch
@@ -19,7 +20,6 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
 
     Parameters
     ----------
-
     x : array-like, shape=[batch_size, data_dim]
         Input data.
     gen_likelihood_params : tuple
@@ -70,7 +70,25 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
 
 
 def latent_regularization_loss(labels, z, config):
+    """Compute squared geodesic distance between outside and inside's variables.
 
+    For example, this computes the squared difference in angles between the lab's
+    angle and the latent angle.
+
+    Parameters
+    ----------
+    labels : array-like, shape=[batch_size, latent_dim]
+        Task variables recorded.
+    z : array-like, shape=[batch_size, latent_dim]
+        Latent variables on the template manifold.
+    config : object-like
+        Configuration of the experiment in wandb format.
+
+    Returns
+    -------
+    _ : array-like, shape=[batch_size, 1]
+        Squared geodesic distance, i.e. the loss.
+    """
     if config.dataset_name == "s1_synthetic":
         latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
         angle_loss = torch.mean(1 - torch.cos(latent_angles - labels))
@@ -102,3 +120,18 @@ def latent_regularization_loss(labels, z, config):
         latent_loss = thetas_loss + phis_loss
 
     return latent_loss**2
+
+
+def dynamic_loss(labels, z, config):
+    """Compute distance between two consecutive latent variables.
+
+    Parameters
+    ----------
+    """
+    if config.dataset_name not in ("s1_synthetic", "experimental"):
+        raise ValueError("Dynamic loss only implemented for template manifold S1.")
+    latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
+    diff = latent_angles[1:, :] - latent_angles[:-1, :]
+
+    angular_velocity = 0.0  # placeholder
+    return 0.0

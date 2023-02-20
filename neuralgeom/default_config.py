@@ -120,7 +120,7 @@ for one_dataset_name in dataset_name:
 
 # Ignored if dataset_name != "experimental"
 expt_id = ["41"]  # , "34"]  # hd: with head direction
-timestep_microsec = [int(1e5)]  # , int(1e6)]  # , int(1e5)]
+timestep_microsec = [int(1e6)]  # , int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
 # even if select gain 1 is false
@@ -137,10 +137,11 @@ model_type = "neural_vae"
 gen_likelihood_type = "gaussian"
 
 # Training
+batch_shuffle = False  # do not shuffle train/test set when dynamic loss is used
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 100  # 50  # 200  # 150  # 240
+n_epochs = 1  # 50  # 200  # 150  # 240
 sftbeta = 4.5
 alpha = 1.0  # weight for the reconstruction term
 beta = 0.03  # 0.03  # weight for KL term
@@ -164,7 +165,7 @@ decoder_depth = [5, 10, 20, 50, 100]
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 256
+num_samples = 1
 sweep_metric = "test_loss"
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html
