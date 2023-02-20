@@ -132,7 +132,7 @@ def load(config):
     indices = np.arange(len(dataset))
 
     train_indices = np.arange(train_num)
-    if config.shuffle:
+    if config.batch_shuffle:
         # Note: this breaks the temporal ordering.
         train_indices = np.random.choice(indices, train_num, replace=False)
 

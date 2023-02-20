@@ -170,12 +170,15 @@ def main_sweep(
         "device": default_config.device,
         "log_interval": default_config.log_interval,
         "checkpt_interval": default_config.checkpt_interval,
+        "batch_shuffle": default_config.batch_shuffle,
         "scheduler": default_config.scheduler,
         "n_epochs": default_config.n_epochs,
         "alpha": default_config.alpha,
         "beta": default_config.beta,
         "gamma": default_config.gamma,
         "sftbeta": default_config.sftbeta,
+        "use_batch_norm": default_config.use_batch_norm,
+        "drop_out_p": default_config.drop_out_p,
         "gen_likelihood_type": default_config.gen_likelihood_type,
     }
 
@@ -276,6 +279,8 @@ def create_model_and_train_test(config, train_loader, test_loader):
             decoder_width=config.decoder_width,
             decoder_depth=config.decoder_depth,
             posterior_type=config.posterior_type,
+            use_batch_norm=config.use_batch_norm,
+            drop_out_p=config.drop_out_p,
         ).to(config.device)
     elif config.posterior_type == "toroidal":
         model = models.toroidal_vae.ToroidalVAE(

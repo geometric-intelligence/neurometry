@@ -33,7 +33,7 @@ class NeuralVAE(torch.nn.Module):
         decoder_depth=2,
         posterior_type="gaussian",
         use_batch_norm=False,
-        use_drop_out=False,
+        drop_out_p=False,
     ):
         super(NeuralVAE, self).__init__()
         self.data_dim = data_dim
@@ -41,7 +41,7 @@ class NeuralVAE(torch.nn.Module):
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
         self.use_batch_norm = use_batch_norm
-        self.use_drop_out = use_drop_out
+        self.drop_out_p = drop_out_p
 
         decoder_width = encoder_width
         decoder_depth = encoder_depth
@@ -85,6 +85,9 @@ class NeuralVAE(torch.nn.Module):
 
         self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
 
+        if self.drop_out_p != 0.0:
+            self.drop_out = torch.nn.drop_out(p=self.drop_out_p)
+
     def encode(self, x):
         """Encode input into mean and log-variance.
 
@@ -109,6 +112,8 @@ class NeuralVAE(torch.nn.Module):
         h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
 
         for i_layer, layer in enumerate(self.encoder_linears):
+            if self.drop_out_p != 0.0:
+                h = self.drop_out(h)
             h = layer(h)
             if self.use_batch_norm:
                 h = self.encoder_batch_norms[i_layer](h)
@@ -173,6 +178,8 @@ class NeuralVAE(torch.nn.Module):
         h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
 
         for i_layer, layer in enumerate(self.decoder_linears):
+            if self.drop_out_p != 0.0:
+                h = self.drop_out(h)
             h = layer(h)
             if self.use_batch_norm:
                 h = self.decoder_batch_norms[i_layer](h)

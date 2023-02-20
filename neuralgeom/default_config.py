@@ -147,7 +147,7 @@ alpha = 1.0  # weight for the reconstruction term
 beta = 0.03  # 0.03  # weight for KL term
 gamma = 30  # 20  # weight for latent loss term
 use_batch_norm = False
-use_drop_out = False
+drop_out_p = 0.0  # put probability p at 0. for no drop out
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
