@@ -158,7 +158,7 @@ encoder_depth = [5, 10, 20, 50, 100]
 decoder_width = [50, 100, 200, 300]
 decoder_depth = [5, 10, 20, 50, 100]
 use_batch_norm = [False]  # Batch norm does not work yet
-drop_out_p = [0.0]  # put probability p at 0. for no drop out
+drop_out_p = [0.25]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
