@@ -69,7 +69,7 @@ def main():
                     smooth=smooth,
                     select_gain_1=select_gain_1,
                 )
-        elif dataset_name in ["s1_synthetic","s2_synthetic","t2_synthetic"]:
+        elif dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]:
             # Variable experiments parameters (synthetic datasets):
             for n_times, embedding_dim, distortion_amp, noise_var in itertools.product(
                 default_config.n_times,
@@ -92,8 +92,37 @@ def main():
                     distortion_amp=distortion_amp,
                     noise_var=noise_var,
                 )
-        elif dataset_name == "gridcells":
-            
+        elif dataset_name == "grid_cells":
+            for (
+                grid_scale,
+                arena_dims,
+                n_cells,
+                grid_orientation_mean,
+                grid_orientation_std,
+                field_width,
+                resolution,
+            ) in itertools.product(
+                default_config.grid_scale,
+                default_config.arena_dims,
+                default_config.n_cells,
+                default_config.grid_orientation_mean,
+                default_config.grid_orientation_std,
+                default_config.field_width,
+                default_config.resolution,
+            ):
+                sweep_name = f"{dataset_name}_orientation_std_{grid_orientation_std}_ncells_{n_cells}"
+                logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
+                main_sweep(
+                    sweep_name=sweep_name,
+                    dataset_name=dataset_name,
+                    grid_scale=grid_scale,
+                    arena_dims=arena_dims,
+                    n_cells=n_cells,
+                    grid_orientation_mean=grid_orientation_mean,
+                    grid_orientation_std=grid_orientation_std,
+                    field_width=field_width,
+                    resolution=resolution,
+                )
 
 
 def main_sweep(
@@ -107,6 +136,13 @@ def main_sweep(
     embedding_dim=None,
     distortion_amp=None,
     noise_var=None,
+    grid_scale=None,
+    arena_dims=None,
+    n_cells=None,
+    grid_orientation_mean=None,
+    grid_orientation_std=None,
+    field_width=None,
+    resolution=None,
 ):
     """Run a single experiment, possibly with a ray tune sweep.
 
@@ -158,6 +194,13 @@ def main_sweep(
         "embedding_dim": embedding_dim,
         "distortion_amp": distortion_amp,
         "noise_var": noise_var,
+        "grid_scale": grid_scale,
+        "arena_dims": arena_dims,
+        "n_cells": n_cells,
+        "grid_orientation_mean": grid_orientation_mean,
+        "grid_orientation_std": grid_orientation_std,
+        "field_width": field_width,
+        "resolution": resolution,
         # Parameters fixed across runs and sweeps (unique value depending on dataset_name):
         "manifold_dim": default_config.manifold_dim[dataset_name],
         "latent_dim": default_config.latent_dim[dataset_name],

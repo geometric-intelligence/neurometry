@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 # TODO
@@ -20,7 +21,7 @@ def load_grid_cells_synthetic(
     rate_maps = create_rate_maps(grids, field_width, arena_dims, resolution)
     neural_activity = get_neural_activity(rate_maps)
 
-    labels = None
+    labels = 
 
     return neural_activity, labels
 
