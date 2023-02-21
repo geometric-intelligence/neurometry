@@ -181,8 +181,9 @@ class NeuralVAE(torch.nn.Module):
             h = layer(h)
             # if h.ndim == 1:
             #     h = h.view((1, -1))
-            # if self.use_batch_norm and len(h) > 1:
-            #     h = self.decoder_batch_norms[i_layer](h)
+            print("h.shape", h.shape)
+            if self.use_batch_norm and h.ndim > 1 and len(h) > 1:
+                h = self.decoder_batch_norms[i_layer](h)
             h = F.softplus(h, beta=self.sftbeta)
 
         x_mu = self.fc_x_mu(h)
