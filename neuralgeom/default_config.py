@@ -184,7 +184,7 @@ decoder_depth = [5, 10, 20, 50, 100]
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 16
+num_samples = 1
 sweep_metric = "test_loss"
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html
