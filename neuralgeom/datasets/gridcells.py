@@ -21,7 +21,7 @@ def load_grid_cells_synthetic(
     rate_maps = create_rate_maps(grids, field_width, arena_dims, resolution)
     neural_activity = get_neural_activity(rate_maps)
 
-    labels = 
+    labels = None
 
     return neural_activity, labels
 
