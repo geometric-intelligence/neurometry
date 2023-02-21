@@ -36,7 +36,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 logging.basicConfig(level=logging.INFO)
 
 # Results
-project = "neuralgeom"
+project = "gridcells"
 trained_model_path = None
 
 ### Fixed experiment parameters ###
@@ -118,7 +118,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental"]
+dataset_name = ["grid_cells"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -145,13 +145,13 @@ distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
 # Only used if dataset_name == "grid_cells"
-grid_scale = 1.0
-arena_dims = np.array([8, 8])
-n_cells = 12
-grid_orientation_mean = 0.0
-grid_orientation_std = 6.0
-field_width = 0.05
-resolution = 50
+grid_scale = [1.0]
+arena_dims = [np.array([8, 8])]
+n_cells = [100]
+grid_orientation_mean = [0.0]
+grid_orientation_std = [0.0]
+field_width = [0.05]
+resolution = [40]
 
 # Models
 gen_likelihood_type = "gaussian"
@@ -184,7 +184,7 @@ decoder_depth = [5, 10, 20, 50, 100]
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 256
+num_samples = 16
 sweep_metric = "test_loss"
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html
