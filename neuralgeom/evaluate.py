@@ -113,6 +113,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
             # TODO(nina): Vectorize in geomstats to avoid this for loop
             z = torch.unsqueeze(z, dim=0)
             print("evaluate: z.shape", z.shape)
+            # gives when it works: evaluate: z.shape torch.Size([1])
             curv[i_z, :] = neural_metric.mean_curvature_vector(z)
             # Note: these lines are commented out (see PR description)
             # as it makes the computations extremely long.
