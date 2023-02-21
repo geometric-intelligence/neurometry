@@ -5,6 +5,7 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import time
 
 import geomstats.backend as gs
+import gph
 import numpy as np
 import torch
 from datasets.synthetic import (
@@ -14,7 +15,6 @@ from datasets.synthetic import (
 )
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
-import gph 
 
 
 def get_learned_immersion(model, config):
@@ -112,6 +112,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
         for i_z, z in enumerate(z_grid):
             # TODO(nina): Vectorize in geomstats to avoid this for loop
             z = torch.unsqueeze(z, dim=0)
+            print("evaluate: z.shape", z.shape)
             curv[i_z, :] = neural_metric.mean_curvature_vector(z)
             # Note: these lines are commented out (see PR description)
             # as it makes the computations extremely long.

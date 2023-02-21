@@ -152,13 +152,13 @@ gamma = 30  # 20  # weight for latent loss term
 # Except for lr_min and lr_max which are floats
 lr_min = 0.000001
 lr_max = 0.1
-batch_size = [4, 8, 16, 32, 64, 128]
+batch_size = [4]
 encoder_width = [50, 100, 200, 300]
 encoder_depth = [5, 10, 20, 50, 100]
 decoder_width = [50, 100, 200, 300]
 decoder_depth = [5, 10, 20, 50, 100]
-use_batch_norm = [True]
-drop_out_p = [0.0, 0.2, 0.25, 0.3, 0.4, 0.5]  # put probability p at 0. for no drop out
+use_batch_norm = [False]  # Batch norm does not work yet
+drop_out_p = [0.0]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 

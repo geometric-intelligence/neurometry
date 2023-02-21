@@ -115,9 +115,7 @@ class NeuralVAE(torch.nn.Module):
             if self.drop_out_p != 0.0:
                 h = self.drop_out(h)
             h = layer(h)
-            if self.use_batch_norm:
-                print("self.encoder_width", self.encoder_width)
-                print("h.shape", h.shape)
+            if self.use_batch_norm and len(h) > 1:
                 h = self.encoder_batch_norms[i_layer](h)
             h = F.softplus(h, beta=self.sftbeta)
 
@@ -183,7 +181,9 @@ class NeuralVAE(torch.nn.Module):
             if self.drop_out_p != 0.0:
                 h = self.drop_out(h)
             h = layer(h)
-            if self.use_batch_norm:
+            if h.ndim == 1:
+                h = h.view((1, -1))
+            if self.use_batch_norm and len(h) > 1:
                 h = self.decoder_batch_norms[i_layer](h)
             h = F.softplus(h, beta=self.sftbeta)
 
