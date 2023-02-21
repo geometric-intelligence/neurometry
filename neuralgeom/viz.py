@@ -437,6 +437,8 @@ def plot_comparison_curvature_norms(
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))
     return fig
 
+
+
 def plot_persistence_diagrams(diagrams):
     fig = plt.figure()
     ax = fig.add_subplot()
@@ -450,6 +452,33 @@ def plot_persistence_diagrams(diagrams):
         ax.plot([0, 1], [0, 1], transform=ax.transAxes, c="gray", ls="--")
 
     ax.legend(loc="lower right")
-    
-    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
 
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
+
+
+def plot_grids(grids, arena_dims):
+    """Visualize the the firing lattices for all grid cells."""
+    colormap = plt.get_cmap("hsv")
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111)
+    ax.set_aspect("equal")
+    ax.set_facecolor("darkblue")
+    ax.set_xlim(-arena_dims[0] / 2 - 0.5, arena_dims[0] / 2 + 0.5)
+    ax.set_ylim(-arena_dims[1] / 2 - 0.5, arena_dims[1] / 2 + 0.5)
+    ax.set_title("Hexagonal grids")
+    ax.set_xlabel("x-position")
+    ax.set_ylabel("y-position")
+    for lattice in grids:
+        plt.scatter(lattice[:, 0], lattice[:, 1])
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_grid_lattices.png"))
+
+
+def plot_grid_rate_maps(rate_maps):
+    fig = plt.figure(figsize=(15, 12))
+    n_cells = rate_maps.shape[0]
+    for cell_index in range(n_cells):
+        ax = fig.add_subplot(int(np.ceil(n_cells / 2)), 2, cell_index + 1)
+        img = ax.imshow(rate_maps[cell_index])
+        plt.colorbar(img, label="Relative Firing Rate")
+        ax.set_title("Grid Cell #" + str(cell_index + 1) + " Firing Rate Map")
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_grid_rate_maps.png"))

@@ -2,7 +2,6 @@ from evaluate import compute_persistence_diagrams
 from viz import plot_persistence_diagrams
 from datasets import experimental
 from datasets import utils
-print("hello!")
 
 timestep = int(1e6)
 
