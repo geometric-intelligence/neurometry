@@ -138,7 +138,6 @@ def main_sweep(
         "encoder_depth": tune.choice(default_config.encoder_depth),
         "decoder_width": tune.choice(default_config.decoder_width),
         "decoder_depth": tune.choice(default_config.decoder_depth),
-        "use_batch_norm": tune.choice(default_config.use_batch_norm),
         "drop_out_p": tune.choice(default_config.drop_out_p),
         "wandb": {
             "project": default_config.project,
@@ -279,7 +278,6 @@ def create_model_and_train_test(config, train_loader, test_loader):
             decoder_width=config.decoder_width,
             decoder_depth=config.decoder_depth,
             posterior_type=config.posterior_type,
-            use_batch_norm=config.use_batch_norm,
             drop_out_p=config.drop_out_p,
         ).to(config.device)
     elif config.posterior_type == "toroidal":

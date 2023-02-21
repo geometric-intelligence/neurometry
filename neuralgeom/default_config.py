@@ -142,10 +142,11 @@ scheduler = False
 log_interval = 20
 checkpt_interval = 20
 n_epochs = 1  # 50  # 200  # 150  # 240
-sftbeta = 4.5
-alpha = 1.0  # weight for the reconstruction term
-beta = 0.03  # 0.03  # weight for KL term
-gamma = 30  # 20  # weight for latent loss term
+sftbeta = 4.5  # beta parameter for softplus
+alpha = 1.0  # weight for the reconstruction loss
+beta = 0.03  # 0.03  # weight for KL loss
+gamma = 30  # 20  # weight for latent regularization loss
+delta = 1  # weight for dynamic loss
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
@@ -157,7 +158,6 @@ encoder_width = [50, 100, 200, 300]
 encoder_depth = [5, 10, 20, 50, 100]
 decoder_width = [50, 100, 200, 300]
 decoder_depth = [5, 10, 20, 50, 100]
-use_batch_norm = [False]  # Batch norm does not work yet
 drop_out_p = [0.25]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"

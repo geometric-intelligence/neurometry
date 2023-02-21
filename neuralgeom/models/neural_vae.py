@@ -32,7 +32,6 @@ class NeuralVAE(torch.nn.Module):
         decoder_width=400,
         decoder_depth=2,
         posterior_type="gaussian",
-        use_batch_norm=False,
         drop_out_p=0.0,
     ):
         super(NeuralVAE, self).__init__()
@@ -40,7 +39,6 @@ class NeuralVAE(torch.nn.Module):
         self.sftbeta = sftbeta
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
-        self.use_batch_norm = use_batch_norm
         self.drop_out_p = drop_out_p
 
         decoder_width = encoder_width
@@ -53,13 +51,6 @@ class NeuralVAE(torch.nn.Module):
                 for _ in range(encoder_depth)
             ]
         )
-        if use_batch_norm:
-            self.encoder_batch_norms = torch.nn.ModuleList(
-                [
-                    torch.nn.BatchNorm1d(num_features=encoder_width)
-                    for _ in range(encoder_depth)
-                ]
-            )
 
         if posterior_type == "gaussian":
             self.fc_z_mu = torch.nn.Linear(encoder_width, self.latent_dim)
@@ -75,13 +66,6 @@ class NeuralVAE(torch.nn.Module):
                 for _ in range(decoder_depth)
             ]
         )
-        if use_batch_norm:
-            self.decoder_batch_norms = torch.nn.ModuleList(
-                [
-                    torch.nn.BatchNorm1d(num_features=decoder_width)
-                    for _ in range(decoder_depth)
-                ]
-            )
 
         self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
 
@@ -111,11 +95,8 @@ class NeuralVAE(torch.nn.Module):
         h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
 
         for i_layer, layer in enumerate(self.encoder_linears):
-            # if self.drop_out_p != 0.0:
             h = self.drop_out(h)
             h = layer(h)
-            # if self.use_batch_norm and len(h) > 1:
-            #     h = self.encoder_batch_norms[i_layer](h)
             h = F.softplus(h, beta=self.sftbeta)
 
         if self.posterior_type == "gaussian":
@@ -179,11 +160,6 @@ class NeuralVAE(torch.nn.Module):
         for i_layer, layer in enumerate(self.decoder_linears):
             h = self.drop_out(h)
             h = layer(h)
-            # if h.ndim == 1:
-            #     h = h.view((1, -1))
-            print("h.shape", h.shape)
-            if self.use_batch_norm and h.ndim > 1 and len(h) > 1:
-                h = self.decoder_batch_norms[i_layer](h)
             h = F.softplus(h, beta=self.sftbeta)
 
         x_mu = self.fc_x_mu(h)
