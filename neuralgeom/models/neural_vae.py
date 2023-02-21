@@ -33,7 +33,7 @@ class NeuralVAE(torch.nn.Module):
         decoder_depth=2,
         posterior_type="gaussian",
         use_batch_norm=False,
-        drop_out_p=False,
+        drop_out_p=0.0,
     ):
         super(NeuralVAE, self).__init__()
         self.data_dim = data_dim
