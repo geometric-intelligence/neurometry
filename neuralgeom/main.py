@@ -69,7 +69,7 @@ def main():
                     smooth=smooth,
                     select_gain_1=select_gain_1,
                 )
-        else:
+        elif dataset_name in ["s1_synthetic","s2_synthetic","t2_synthetic"]:
             # Variable experiments parameters (synthetic datasets):
             for n_times, embedding_dim, distortion_amp, noise_var in itertools.product(
                 default_config.n_times,
@@ -92,6 +92,8 @@ def main():
                     distortion_amp=distortion_amp,
                     noise_var=noise_var,
                 )
+        elif dataset_name == "gridcells":
+            
 
 
 def main_sweep(

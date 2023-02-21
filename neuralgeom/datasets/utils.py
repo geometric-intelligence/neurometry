@@ -119,7 +119,16 @@ def load(config):
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
         )
-
+    elif config.dataset_name == "grid_cells":
+        dataset, labels = datasets.gridcells.load_grid_cells_synthetic(
+            grid_scale=config.grid_scale,
+            arena_dims=config.arena_dims,
+            n_cells=config.n_cells,
+            grid_orientation_mean=config.grid_orientation_mean,
+            grid_orientation_std=config.grid_orientation_std,
+            field_width=config.field_width,
+            resolution=config.resolution,
+        )
     print(f"Dataset shape: {dataset.shape}.")
     if type(dataset) == np.ndarray:
         dataset_torch = torch.from_numpy(dataset)

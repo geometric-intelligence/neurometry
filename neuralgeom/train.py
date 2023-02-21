@@ -1,6 +1,3 @@
-"""Fit a VAE to place cells."""
-
-
 import copy
 
 import losses
