@@ -62,7 +62,7 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
         optimizer.zero_grad()
         z_batch, x_mu_batch, posterior_params = model(data)
 
-        elbo_loss, recon_loss, kld, latent_loss = losses.elbo(
+        elbo_loss, recon_loss, kld, latent_loss, moving_forward_loss = losses.elbo(
             data, x_mu_batch, posterior_params, z_batch, labels, config
         )
 
@@ -88,6 +88,8 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
             "train_recon_loss": recon_loss / len(train_loader.dataset),
             "train_kld": kld / len(train_loader.dataset),
             "train_latent_loss": latent_loss / len(train_loader.dataset),
+            "train_moving_forward_loss": moving_forward_loss
+            / len(train_loader.dataset),
         },
         step=epoch,
     )
@@ -121,7 +123,7 @@ def test_one_epoch(epoch, model, test_loader, config):
             labels = labels.to(config.device)
             z_batch, x_mu_batch, posterior_params = model(data)
 
-            elbo_loss, recon_loss, kld, latent_loss = losses.elbo(
+            elbo_loss, recon_loss, kld, latent_loss, moving_forward_loss = losses.elbo(
                 data, x_mu_batch, posterior_params, z_batch, labels, config
             )
             test_loss += elbo_loss.item()
@@ -133,6 +135,7 @@ def test_one_epoch(epoch, model, test_loader, config):
             "test_recon_loss": recon_loss / len(test_loader.dataset),
             "test_kld": kld / len(test_loader.dataset),
             "test_latent_loss": latent_loss / len(test_loader.dataset),
+            "test_moving_forward_loss": moving_forward_loss / len(test_loader.dataset),
         },
         step=epoch,
     )

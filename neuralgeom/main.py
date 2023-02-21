@@ -177,6 +177,8 @@ def main_sweep(
         "alpha": default_config.alpha,
         "beta": default_config.beta,
         "gamma": default_config.gamma,
+        "gamma_moving": default_config.gamma_moving,
+        "gamma_dynamic": default_config.gamma_dynamic,
         "sftbeta": default_config.sftbeta,
         "gen_likelihood_type": default_config.gen_likelihood_type,
     }

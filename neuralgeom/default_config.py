@@ -146,7 +146,8 @@ sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
 beta = 0.03  # 0.03  # weight for KL loss
 gamma = 30  # 20  # weight for latent regularization loss
-delta = 1  # weight for dynamic loss
+gamma_moving = 0  # weight for moving forward loss, put 0. if unused
+gamma_dynamic = 0  # weight for dynamic loss - TODO
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter

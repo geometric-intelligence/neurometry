@@ -62,11 +62,15 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
         recon_loss = recon_loss / (config.radius**2)
 
     latent_loss = latent_regularization_loss(labels, z, config)
+    moving_loss = moving_forward_loss(z, config)
 
     elbo_loss = (
-        config.alpha * recon_loss + config.beta * kld + config.gamma * latent_loss
+        config.alpha * recon_loss
+        + config.beta * kld
+        + config.gamma * latent_loss
+        + config.gamma_moving * moving_loss
     )
-    return elbo_loss, recon_loss, kld, latent_loss
+    return elbo_loss, recon_loss, kld, latent_loss, moving_loss
 
 
 def latent_regularization_loss(labels, z, config):
@@ -122,8 +126,38 @@ def latent_regularization_loss(labels, z, config):
     return latent_loss**2
 
 
+def moving_forward_loss(z, config):
+    """Compute difference between two consecutive z's.
+
+    This loss will enforce that the latent variable (the angles) only increase
+    when the rat moves forward.
+
+    In order to enforce increasing values of z's, the loss is not squared.
+    minimizing -(z_t+1 - z_t) will force it to be negative, i.e. z_t+1 > z_t.
+
+    We remove the situation where the rat crosses the angles 360 --> 0.
+    Note that atol=0.089 radians corresponds to 5 degrees, which is the max degree
+    difference observed in the rat's labelled lab angles.
+
+    Parameters
+    ----------
+    """
+    if config.dataset_name not in ("s1_synthetic", "experimental"):
+        print("WARNING: Dynamic loss only implemented for template manifold S1.")
+        return torch.zeros(1).to(config.device)
+    latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
+    diff = latent_angles[1:] - latent_angles[:-1]
+    # only keep angles where the rat is not crossing 360 --> 0
+    mask = ~torch.isclose(
+        2 * torch.pi - latent_angles[:-1], torch.tensor(0.0), atol=0.089
+    )
+    return torch.mean(-diff[mask])
+
+
 def dynamic_loss(labels, z, config):
-    """Compute distance between two consecutive latent variables.
+    """Compute distance between two consecutive z's using angular velocity.
+
+    TODO.
 
     Parameters
     ----------
@@ -133,5 +167,5 @@ def dynamic_loss(labels, z, config):
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
     diff = latent_angles[1:, :] - latent_angles[:-1, :]
 
-    angular_velocity = 0.0  # placeholder
+    angular_velocity = 0.0  # placeholder: needs to get it from labels
     return 0.0
