@@ -62,7 +62,7 @@ posterior_type = {
     "t2_synthetic": "toroidal",
 }
 
-distortion_func = {
+geodesic_distortion_func = {
     "experimental": None,
     "s1_synthetic": "bump",
     "s2_synthetic": None,
@@ -108,7 +108,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental"]
+dataset_name = ["s2_synthetic", "t2_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -127,9 +127,9 @@ smooth = [True]  # , False]
 select_gain_1 = [True]  # , False]  # , False]
 
 # Ignored if dataset_name == "experimental"
-n_times = [100]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [5]  # , 5, 8, 10, 20, 50]
-distortion_amp = [0.4]
+n_times = [10]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
+embedding_dim = [4]  # , 5, 8, 10, 20, 50]
+geodesic_distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
 # Models
@@ -137,7 +137,9 @@ model_type = "neural_vae"
 gen_likelihood_type = "gaussian"
 
 # Training
-batch_shuffle = False  # do not shuffle train/test set when dynamic loss is used
+batch_shuffle = (
+    False  # do not shuffle train/test set when moving forward or dynamic loss are used
+)
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
@@ -155,10 +157,10 @@ gamma_dynamic = 0  # weight for dynamic loss - TODO
 lr_min = 0.000001
 lr_max = 0.1
 batch_size = [4]
-encoder_width = [50, 100, 200, 300]
-encoder_depth = [5, 10, 20, 50, 100]
-decoder_width = [50, 100, 200, 300]
-decoder_depth = [5, 10, 20, 50, 100]
+encoder_width = [50]  # , 100, 200, 300]
+encoder_depth = [5]  # , 10, 20, 50, 100]
+decoder_width = [50]  # , 100, 200, 300]
+decoder_depth = [5]  # , 10, 20, 50, 100]
 drop_out_p = [0.25]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"

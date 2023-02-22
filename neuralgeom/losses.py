@@ -142,8 +142,8 @@ def moving_forward_loss(z, config):
     Parameters
     ----------
     """
-    if config.dataset_name not in ("s1_synthetic", "experimental"):
-        print("WARNING: Dynamic loss only implemented for template manifold S1.")
+    if config.dataset_name != "experimental":
+        print("WARNING: Dynamic loss only implemented for experimental data.")
         return torch.zeros(1).to(config.device)
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
     diff = latent_angles[1:] - latent_angles[:-1]
@@ -162,8 +162,9 @@ def dynamic_loss(labels, z, config):
     Parameters
     ----------
     """
-    if config.dataset_name not in ("s1_synthetic", "experimental"):
-        raise ValueError("Dynamic loss only implemented for template manifold S1.")
+    if config.dataset_name != "experimental":
+        print("WARNING: Dynamic loss only implemented for experimental data.")
+        return torch.zeros(1).to(config.device)
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
     diff = latent_angles[1:, :] - latent_angles[:-1, :]
 

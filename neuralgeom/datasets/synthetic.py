@@ -214,10 +214,10 @@ def load_s1_synthetic(
     n_times=1500,
     radius=1,
     n_wiggles=6,
-    distortion_amp=0.4,
+    geodesic_distortion_amp=0.4,
     embedding_dim=10,
     noise_var=0.01,
-    distortion_func="wiggles",
+    geodesic_distortion_func="wiggles",
 ):
     """Create "wiggly" circles with noise.
 
@@ -248,10 +248,10 @@ def load_s1_synthetic(
         rot = SpecialOrthogonal(n=embedding_dim).random_point()
 
     immersion = get_s1_synthetic_immersion(
-        distortion_func=distortion_func,
+        geodesic_distortion_func=geodesic_distortion_func,
         radius=radius,
         n_wiggles=n_wiggles,
-        distortion_amp=distortion_amp,
+        geodesic_distortion_amp=geodesic_distortion_amp,
         embedding_dim=embedding_dim,
         rot=rot,
     )
@@ -280,13 +280,20 @@ def load_s1_synthetic(
 
 
 def load_s2_synthetic(
-    synthetic_rotation, n_times, radius, distortion_amp, embedding_dim, noise_var
+    synthetic_rotation,
+    n_times,
+    radius,
+    geodesic_distortion_amp,
+    embedding_dim,
+    noise_var,
 ):
     rot = torch.eye(n=embedding_dim)
     if synthetic_rotation == "random":
         rot = SpecialOrthogonal(n=embedding_dim).random_point()
 
-    immersion = get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot)
+    immersion = get_s2_synthetic_immersion(
+        radius, geodesic_distortion_amp, embedding_dim, rot
+    )
 
     sqrt_ntimes = int(gs.sqrt(n_times))
     thetas = gs.linspace(0.01, gs.pi, sqrt_ntimes)
@@ -318,7 +325,7 @@ def load_t2_synthetic(
     n_times,
     major_radius,
     minor_radius,
-    distortion_amp,
+    geodesic_distortion_amp,
     embedding_dim,
     noise_var,
 ):
@@ -327,7 +334,7 @@ def load_t2_synthetic(
         rot = SpecialOrthogonal(n=embedding_dim).random_point()
 
     immersion = get_t2_synthetic_immersion(
-        major_radius, minor_radius, distortion_amp, embedding_dim, rot
+        major_radius, minor_radius, geodesic_distortion_amp, embedding_dim, rot
     )
     sqrt_ntimes = int(gs.sqrt(n_times))
 
@@ -355,7 +362,12 @@ def load_t2_synthetic(
 
 
 def get_s1_synthetic_immersion(
-    distortion_func, radius, n_wiggles, distortion_amp, embedding_dim, rot
+    geodesic_distortion_func,
+    radius,
+    n_wiggles,
+    geodesic_distortion_amp,
+    embedding_dim,
+    rot,
 ):
     """Creates function whose image is "wiggly" circles in high-dim space.
 
@@ -399,13 +411,15 @@ def get_s1_synthetic_immersion(
         padded_point : array-like, shape=[embedding_dim, ]
             Yiels an embedding_dim-dimensional point making up wiggly circle
         """
-        if distortion_func == "wiggles":
-            amplitude = radius * (1 + distortion_amp * gs.cos(n_wiggles * angle))
-        elif distortion_func == "bump":
+        if geodesic_distortion_func == "wiggles":
+            amplitude = radius * (
+                1 + geodesic_distortion_amp * gs.cos(n_wiggles * angle)
+            )
+        elif geodesic_distortion_func == "bump":
             amplitude = radius * (
                 1
-                + distortion_amp * gs.exp(-5 * (angle - gs.pi / 2) ** 2)
-                + distortion_amp * gs.exp(-5 * (angle - 3 * gs.pi / 2) ** 2)
+                + geodesic_distortion_amp * gs.exp(-5 * (angle - gs.pi / 2) ** 2)
+                + geodesic_distortion_amp * gs.exp(-5 * (angle - 3 * gs.pi / 2) ** 2)
             )
         else:
             raise NotImplementedError
@@ -419,7 +433,7 @@ def get_s1_synthetic_immersion(
     return synth_immersion
 
 
-def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
+def get_s2_synthetic_immersion(radius, geodesic_distortion_amp, embedding_dim, rot):
     def spherical(theta, phi):
         x = gs.sin(theta) * gs.cos(phi)
         y = gs.sin(theta) * gs.sin(phi)
@@ -432,8 +446,8 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
 
         amplitude = radius * (
             1
-            + distortion_amp * gs.exp(-5 * theta**2)
-            + distortion_amp * gs.exp(-5 * (theta - gs.pi) ** 2)
+            + geodesic_distortion_amp * gs.exp(-5 * theta**2)
+            + geodesic_distortion_amp * gs.exp(-5 * (theta - gs.pi) ** 2)
         )
 
         point = amplitude * spherical(theta, phi)
@@ -447,7 +461,7 @@ def get_s2_synthetic_immersion(radius, distortion_amp, embedding_dim, rot):
 
 
 def get_t2_synthetic_immersion(
-    major_radius, minor_radius, distortion_amp, embedding_dim, rot
+    major_radius, minor_radius, geodesic_distortion_amp, embedding_dim, rot
 ):
     def torus_proj(theta, phi):
         x = (major_radius - minor_radius * gs.cos(theta)) * gs.cos(phi)
@@ -461,10 +475,10 @@ def get_t2_synthetic_immersion(
         phi = angle_pair[1]
         amplitude = (
             1
-            + distortion_amp
+            + geodesic_distortion_amp
             * gs.exp(-2 * (phi - gs.pi / 2) ** 2)
             * gs.exp(-2 * (theta - gs.pi) ** 2)
-            + distortion_amp
+            + geodesic_distortion_amp
             * gs.exp(-2 * (phi - 3 * gs.pi / 2) ** 2)
             * gs.exp(-2 * (theta - gs.pi) ** 2)
         )

@@ -71,10 +71,15 @@ def main():
                 )
         else:
             # Variable experiments parameters (synthetic datasets):
-            for n_times, embedding_dim, distortion_amp, noise_var in itertools.product(
+            for (
+                n_times,
+                embedding_dim,
+                geodesic_distortion_amp,
+                noise_var,
+            ) in itertools.product(
                 default_config.n_times,
                 default_config.embedding_dim,
-                default_config.distortion_amp,
+                default_config.geodesic_distortion_amp,
                 default_config.noise_var,
             ):
                 if (
@@ -89,7 +94,7 @@ def main():
                     dataset_name=dataset_name,
                     n_times=n_times,
                     embedding_dim=embedding_dim,
-                    distortion_amp=distortion_amp,
+                    geodesic_distortion_amp=geodesic_distortion_amp,
                     noise_var=noise_var,
                 )
 
@@ -103,7 +108,7 @@ def main_sweep(
     select_gain_1=None,
     n_times=None,
     embedding_dim=None,
-    distortion_amp=None,
+    geodesic_distortion_amp=None,
     noise_var=None,
 ):
     """Run a single experiment, possibly with a ray tune sweep.
@@ -126,7 +131,7 @@ def main_sweep(
         Number of times.
     embedding_dim : int (optional, only for synthetic)
         Dimension of the embedding space.
-    distortion_amp : float (optional, only for synthetic)
+    geodesic_distortion_amp : float (optional, only for synthetic)
         Amplitude of the distortion.
     noise_var : float (optional, only for synthetic)
         Variance of the noise.
@@ -155,13 +160,15 @@ def main_sweep(
         "select_gain_1": select_gain_1,
         "n_times": n_times,
         "embedding_dim": embedding_dim,
-        "distortion_amp": distortion_amp,
+        "geodesic_distortion_amp": geodesic_distortion_amp,
         "noise_var": noise_var,
         # Parameters fixed across runs and sweeps (unique value depending on dataset_name):
         "manifold_dim": default_config.manifold_dim[dataset_name],
         "latent_dim": default_config.latent_dim[dataset_name],
         "posterior_type": default_config.posterior_type[dataset_name],
-        "distortion_func": default_config.distortion_func[dataset_name],
+        "geodesic_distortion_func": default_config.geodesic_distortion_func[
+            dataset_name
+        ],
         "n_wiggles": default_config.n_wiggles[dataset_name],
         "radius": default_config.radius[dataset_name],
         "major_radius": default_config.major_radius[dataset_name],
@@ -397,7 +404,9 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
         print("Computing true curvature for synthetic data...")
         start_time = time.time()
-        z_grid, _, curv_norms_true = evaluate.compute_curvature_true(config)
+        z_grid, geodesic_dist, _, curv_norms_true = evaluate.compute_curvature_true(
+            config
+        )
         comp_time_true = time.time() - start_time
         print("Computing curvature error for synthetic data...")
 

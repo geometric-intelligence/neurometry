@@ -95,17 +95,17 @@ def load(config):
             n_times=config.n_times,
             radius=config.radius,
             n_wiggles=config.n_wiggles,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
-            distortion_func=config.distortion_func,
+            geodesic_distortion_func=config.geodesic_distortion_func,
         )
     elif config.dataset_name == "s2_synthetic":
         dataset, labels = datasets.synthetic.load_s2_synthetic(
             synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
         )
@@ -115,7 +115,7 @@ def load(config):
             n_times=config.n_times,
             major_radius=config.major_radius,
             minor_radius=config.minor_radius,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
         )
