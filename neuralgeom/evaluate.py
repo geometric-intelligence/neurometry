@@ -1,4 +1,3 @@
-import logging
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
@@ -91,12 +90,12 @@ def get_z_grid(config, n_grid_points=100):
     if config.dataset_name in ("s1_synthetic", "experimental"):
         z_grid = torch.linspace(0, 2 * gs.pi, n_grid_points)
     elif config.dataset_name == "s2_synthetic":
-        thetas = gs.linspace(0.01, gs.pi, n_grid_points)
-        phis = gs.linspace(0, 2 * gs.pi, n_grid_points)
+        thetas = gs.linspace(0.01, gs.pi, int(np.sqrt(n_grid_points)))
+        phis = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         z_grid = torch.cartesian_prod(thetas, phis)
     elif config.dataset_name == "t2_synthetic":
-        thetas = gs.linspace(0, 2 * gs.pi, n_grid_points)
-        phis = gs.linspace(0, 2 * gs.pi, n_grid_points)
+        thetas = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
+        phis = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         z_grid = torch.cartesian_prod(thetas, phis)
     return z_grid
 
@@ -110,10 +109,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     if dim == 1:
         curv = gs.zeros(len(z_grid), embedding_dim)
         geodesic_dist = gs.zeros(len(z_grid))
-
         for i_z, z in enumerate(z_grid):
-            logging.info(f"len(zgrid): {len(z_grid)}")
-            logging.info(f"iz/len(zgrid): {i_z / len(z_grid)}")
             # TODO(nina): Vectorize in geomstats to
             # - avoid this for loop
             # - be able to use batch normalization (needs batch's len > 1)
@@ -125,6 +121,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
             # if i_z > 1:
             #     geodesic_dist[i_z] = neural_metric.dist(z0, z)
     else:
+        geodesic_dist = gs.zeros(len(z_grid))
         curv = neural_metric.mean_curvature_vector(z_grid)
 
     curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True)
@@ -138,7 +135,6 @@ def compute_curvature_learned(model, config, embedding_dim, n_grid_points=100):
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_learned_immersion(model, config)
     start_time = time.time()
-    logging.info("ACTUALLY START")
     geodesic_dist, curv, curv_norm = _compute_curvature(
         z_grid=z_grid,
         immersion=immersion,

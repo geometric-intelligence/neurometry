@@ -108,7 +108,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental"]
+dataset_name = ["t2_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -174,5 +174,6 @@ for p in drop_out_p:
 # We choose a multiple of 8.
 num_samples = 1
 sweep_metric = "test_loss"
+n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

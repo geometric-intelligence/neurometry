@@ -188,6 +188,7 @@ def main_sweep(
         "gamma_dynamic": default_config.gamma_dynamic,
         "sftbeta": default_config.sftbeta,
         "gen_likelihood_type": default_config.gen_likelihood_type,
+        "n_grid_points": default_config.n_grid_points,
     }
 
     @wandb_mixin
@@ -353,7 +354,10 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     print("Computing learned curvature...")
     start_time = time.time()
     z_grid, geodesic_dist, _, curv_norms_learned = evaluate.compute_curvature_learned(
-        model=model, config=config, embedding_dim=dataset.shape[1]
+        model=model,
+        config=config,
+        embedding_dim=dataset.shape[1],
+        n_grid_points=config.n_grid_points,
     )
     print("Saving + logging learned curvature profile...")
     curv_norm_learned_profile = pd.DataFrame(
@@ -405,7 +409,7 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         print("Computing true curvature for synthetic data...")
         start_time = time.time()
         z_grid, geodesic_dist, _, curv_norms_true = evaluate.compute_curvature_true(
-            config
+            config, n_grid_points=config.n_grid_points
         )
         comp_time_true = time.time() - start_time
         print("Computing curvature error for synthetic data...")

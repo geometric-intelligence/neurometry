@@ -1,7 +1,5 @@
 """Losses."""
 
-import logging
-
 import torch
 from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
 
