@@ -112,8 +112,8 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
         geodesic_dist = gs.zeros(len(z_grid))
 
         for i_z, z in enumerate(z_grid):
-            logging.info("len(zgrid)", len(zgrid))
-            logging.info("iz/len(zgrid):", i_z / len(z_grid))
+            logging.info(f"len(zgrid): {len(z_grid)}")
+            logging.info(f"iz/len(zgrid): {i_z / len(z_grid)}")
             # TODO(nina): Vectorize in geomstats to
             # - avoid this for loop
             # - be able to use batch normalization (needs batch's len > 1)

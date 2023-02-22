@@ -1,7 +1,7 @@
 """Fit a VAE to place cells."""
 
-
 import copy
+import logging
 
 import losses
 import torch
@@ -65,6 +65,7 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
         elbo_loss, recon_loss, kld, latent_loss, moving_forward_loss = losses.elbo(
             data, x_mu_batch, posterior_params, z_batch, labels, config
         )
+        logging.info(f"FIXXX: moving_forward: {moving_forward_loss}")
 
         elbo_loss.backward()
         train_loss += elbo_loss.item()
@@ -80,6 +81,7 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
                 )
             )
 
+    logging.info(f"FIXXX: len(train): {len(train_loader.dataset)}")
     train_loss /= len(train_loader.dataset)
 
     wandb.log(

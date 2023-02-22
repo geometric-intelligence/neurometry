@@ -1,5 +1,7 @@
 """Losses."""
 
+import logging
+
 import torch
 from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
 
@@ -145,13 +147,19 @@ def moving_forward_loss(z, config):
     if config.dataset_name != "experimental":
         print("WARNING: Dynamic loss only implemented for experimental data.")
         return torch.zeros(1).to(config.device)
+    if len(z) == 1:
+        return torch.zeros(1).to(config.device)
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
     diff = latent_angles[1:] - latent_angles[:-1]
     # only keep angles where the rat is not crossing 360 --> 0
     mask = ~torch.isclose(
         2 * torch.pi - latent_angles[:-1], torch.tensor(0.0), atol=0.089
     )
-    return torch.mean(-diff[mask])
+    loss = -diff[mask]
+    if len(loss) == 0:
+        return torch.zeros(1).to(config.device)
+    mean_loss = torch.mean(loss)
+    return mean_loss
 
 
 def dynamic_loss(labels, z, config):
