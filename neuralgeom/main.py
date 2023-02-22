@@ -359,14 +359,14 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         embedding_dim=dataset.shape[1],
         n_grid_points=config.n_grid_points,
     )
-    print("Saving + logging learned curvature profile...")
-    curv_norm_learned_profile = pd.DataFrame(
-        {
-            "z_grid": z_grid,
-            "geodesic_dist": geodesic_dist,
-            "curv_norm_learned": curv_norms_learned,
-        }
-    )
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        curv_norm_learned_profile = pd.DataFrame(
+            {
+                "z_grid": z_grid,
+                "geodesic_dist": geodesic_dist,
+                "curv_norm_learned": curv_norms_learned,
+            }
+        )
 
     if config.dataset_name == "experimental":
         mean_velocities = []
@@ -394,13 +394,14 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         curv_norm_learned_profile["min_velocities"] = min_velocities
         curv_norm_learned_profile["max_velocities"] = max_velocities
 
-    curv_norm_learned_profile.to_csv(
-        os.path.join(
-            default_config.curvature_profiles_dir,
-            f"{config.results_prefix}_curv_norm_learned_profile.csv",
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        curv_norm_learned_profile.to_csv(
+            os.path.join(
+                default_config.curvature_profiles_dir,
+                f"{config.results_prefix}_curv_norm_learned_profile.csv",
+            )
         )
-    )
-    wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
+        wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
 
     comp_time_learned = time.time() - start_time
 
@@ -436,16 +437,17 @@ def curvature_compute_plot_log(config, dataset, labels, model):
             profile_type="true",
         )
 
-    # HACK ALERT: Remove large curvatures
-    # Note that the full curvature profile is saved in csv
-    # The large curvatures are only removed for the plot
-    median = curv_norm_learned_profile["curv_norm_learned"].median()
-    filtered = curv_norm_learned_profile[
-        curv_norm_learned_profile["curv_norm_learned"] < 8 * median
-    ]
-    fig_neural_manifold_learned = viz.plot_neural_manifold_learned(
-        curv_norm_learned_profile=filtered, config=config, labels=labels
-    )
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        # HACK ALERT: Remove large curvatures
+        # Note that the full curvature profile is saved in csv
+        # The large curvatures are only removed for the plot
+        median = curv_norm_learned_profile["curv_norm_learned"].median()
+        filtered = curv_norm_learned_profile[
+            curv_norm_learned_profile["curv_norm_learned"] < 8 * median
+        ]
+        fig_neural_manifold_learned = viz.plot_neural_manifold_learned(
+            curv_norm_learned_profile=filtered, config=config, labels=labels
+        )
     # Log
     wandb.log(
         {
