@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 
 import torch
+import numpy as np
 from ray.tune.search.hyperopt import HyperOptSearch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
@@ -35,7 +36,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 logging.basicConfig(level=logging.INFO)
 
 # Results
-project = "neuralgeom"
+project = "gridcells"
 trained_model_path = None
 
 ### Fixed experiment parameters ###
@@ -46,13 +47,15 @@ manifold_dim = {
     "s1_synthetic": 1,
     "s2_synthetic": 2,
     "t2_synthetic": 2,
+    "grid_cells": 2,
 }
 
 latent_dim = {
     "experimental": 2,
     "s1_synthetic": 2,
     "s2_synthetic": 3,
-    "t2_synthetic": 2,
+    "t2_synthetic": 3,
+    "grid_cells": 3,
 }
 
 posterior_type = {
@@ -60,6 +63,7 @@ posterior_type = {
     "s1_synthetic": "hyperspherical",
     "s2_synthetic": "hyperspherical",
     "t2_synthetic": "toroidal",
+    "grid_cells": "toroidal",
 }
 
 geodesic_distortion_func = {
@@ -67,6 +71,7 @@ geodesic_distortion_func = {
     "s1_synthetic": "bump",
     "s2_synthetic": None,
     "t2_synthetic": None,
+    "grid_cells": None,
 }
 
 n_wiggles = {
@@ -74,6 +79,7 @@ n_wiggles = {
     "s1_synthetic": 3,
     "s2_synthetic": None,
     "t2_synthetic": None,
+    "grid_cells": None,
 }
 
 radius = {
@@ -81,6 +87,7 @@ radius = {
     "s1_synthetic": 1,
     "s2_synthetic": 1,
     "t2_synthetic": None,
+    "grid_cells": None,
 }
 
 major_radius = {
@@ -88,6 +95,7 @@ major_radius = {
     "s1_synthetic": None,
     "s2_synthetic": None,
     "t2_synthetic": 2,
+    "grid_cells": 1,
 }
 
 minor_radius = {
@@ -95,6 +103,7 @@ minor_radius = {
     "s1_synthetic": None,
     "s2_synthetic": None,
     "t2_synthetic": 1,
+    "grid_cells": 1,
 }
 
 synthetic_rotation = {
@@ -102,23 +111,25 @@ synthetic_rotation = {
     "s1_synthetic": "identity",  # or "random"
     "s2_synthetic": "identity",  # or "random"
     "t2_synthetic": "identity",  # or "random"
+    "grid_cells": None,
 }
 
 ### Variable experiment parameters ###
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["s2_synthetic"]
+dataset_name = ["grid_cells"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
         "s2_synthetic",
         "t2_synthetic",
         "experimental",
+        "grid_cells",
     ]:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
-# Ignored if dataset_name != "experimental"
+# Only used if dataset_name == "experimental"
 expt_id = ["41"]  # , "34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]  # , int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
@@ -126,14 +137,23 @@ smooth = [True]  # , False]
 # even if select gain 1 is false
 select_gain_1 = [True]  # , False]  # , False]
 
-# Ignored if dataset_name == "experimental"
+
+# Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
 n_times = [10]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
 embedding_dim = [4]  # , 5, 8, 10, 20, 50]
 geodesic_distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
+# Only used if dataset_name == "grid_cells"
+grid_scale = [1.0]
+arena_dims = [np.array([8, 8])]
+n_cells = [100]
+grid_orientation_mean = [0.0]
+grid_orientation_std = [0.0]
+field_width = [0.05]
+resolution = [40]
+
 # Models
-model_type = "neural_vae"
 gen_likelihood_type = "gaussian"
 
 # Training

@@ -17,6 +17,19 @@ from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
 
+def timer_func(func):
+    # This function shows the execution time of
+    # the function object passed
+    def wrap_func(*args, **kwargs):
+        t1 = time.time()
+        result = func(*args, **kwargs)
+        t2 = time.time()
+        print(f"Function {func.__name__!r} executed in {(t2-t1):.4f}s")
+        return result
+
+    return wrap_func
+
+
 def get_learned_immersion(model, config):
     """Define immersion from latent angles to neural manifold."""
 
@@ -34,7 +47,7 @@ def get_learned_immersion(model, config):
                     gs.cos(theta),
                 ]
             )
-        elif config.dataset_name == "t2_synthetic":
+        elif config.dataset_name in ("t2_synthetic", "grid_cells"):
             theta = angle[0]
             phi = angle[1]
             z = gs.array(
@@ -93,7 +106,7 @@ def get_z_grid(config, n_grid_points=100):
         thetas = gs.linspace(0.01, gs.pi, int(np.sqrt(n_grid_points)))
         phis = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         z_grid = torch.cartesian_prod(thetas, phis)
-    elif config.dataset_name == "t2_synthetic":
+    elif config.dataset_name in ("t2_synthetic", "grid_cells"):
         thetas = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         phis = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         z_grid = torch.cartesian_prod(thetas, phis)
@@ -232,6 +245,7 @@ def compute_curvature_error(
     return error
 
 
+@timer_func
 def compute_persistence_diagrams(point_cloud, maxdim=2, n_threads=-1):
     pers = gph.ripser_parallel(X=point_cloud, maxdim=maxdim, n_threads=n_threads)
     diagrams = pers["dgms"]
