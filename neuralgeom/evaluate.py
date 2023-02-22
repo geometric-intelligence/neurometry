@@ -5,6 +5,7 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import time
 
 import geomstats.backend as gs
+import gph
 import numpy as np
 import torch
 from datasets.synthetic import (
@@ -14,8 +15,6 @@ from datasets.synthetic import (
 )
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
-import gph
-import time
 
 
 def timer_func(func):
@@ -104,12 +103,12 @@ def get_z_grid(config, n_grid_points=100):
     if config.dataset_name in ("s1_synthetic", "experimental"):
         z_grid = torch.linspace(0, 2 * gs.pi, n_grid_points)
     elif config.dataset_name == "s2_synthetic":
-        thetas = gs.linspace(0.01, gs.pi, n_grid_points)
-        phis = gs.linspace(0, 2 * gs.pi, n_grid_points)
+        thetas = gs.linspace(0.01, gs.pi, int(np.sqrt(n_grid_points)))
+        phis = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         z_grid = torch.cartesian_prod(thetas, phis)
-    elif config.dataset_name in ("t2_synthetic","grid_cells"):
-        thetas = gs.linspace(0, 2 * gs.pi, n_grid_points)
-        phis = gs.linspace(0, 2 * gs.pi, n_grid_points)
+    elif config.dataset_name in ("t2_synthetic", "grid_cells"):
+        thetas = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
+        phis = gs.linspace(0, 2 * gs.pi, int(np.sqrt(n_grid_points)))
         z_grid = torch.cartesian_prod(thetas, phis)
     return z_grid
 
@@ -124,7 +123,9 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
         curv = gs.zeros(len(z_grid), embedding_dim)
         geodesic_dist = gs.zeros(len(z_grid))
         for i_z, z in enumerate(z_grid):
-            # TODO(nina): Vectorize in geomstats to avoid this for loop
+            # TODO(nina): Vectorize in geomstats to
+            # - avoid this for loop
+            # - be able to use batch normalization (needs batch's len > 1)
             z = torch.unsqueeze(z, dim=0)
             curv[i_z, :] = neural_metric.mean_curvature_vector(z)
             # Note: these lines are commented out (see PR description)
@@ -133,6 +134,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
             # if i_z > 1:
             #     geodesic_dist[i_z] = neural_metric.dist(z0, z)
     else:
+        geodesic_dist = gs.zeros(len(z_grid))
         curv = neural_metric.mean_curvature_vector(z_grid)
 
     curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True)

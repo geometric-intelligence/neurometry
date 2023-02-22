@@ -66,7 +66,7 @@ posterior_type = {
     "grid_cells": "toroidal",
 }
 
-distortion_func = {
+geodesic_distortion_func = {
     "experimental": None,
     "s1_synthetic": "bump",
     "s2_synthetic": None,
@@ -131,17 +131,17 @@ for one_dataset_name in dataset_name:
 
 # Only used if dataset_name == "experimental"
 expt_id = ["41"]  # , "34"]  # hd: with head direction
-timestep_microsec = [int(1e5)]  # , int(1e6)]  # , int(1e5)]
+timestep_microsec = [int(1e6)]  # , int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
 # even if select gain 1 is false
 select_gain_1 = [True]  # , False]  # , False]
 
 
-# Only used if dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
-n_times = [100]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [5]  # , 5, 8, 10, 20, 50]
-distortion_amp = [0.4]
+# Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
+n_times = [10]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
+embedding_dim = [4]  # , 5, 8, 10, 20, 50]
+geodesic_distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
 # Only used if dataset_name == "grid_cells"
@@ -157,25 +157,33 @@ resolution = [40]
 gen_likelihood_type = "gaussian"
 
 # Training
+batch_shuffle = (
+    False  # do not shuffle train/test set when moving forward or dynamic loss are used
+)
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 100  # 50  # 200  # 150  # 240
-sftbeta = 4.5
-alpha = 1.0  # weight for the reconstruction term
-beta = 0.03  # 0.03  # weight for KL term
-gamma = 30  # 20  # weight for latent loss term
+n_epochs = 1  # 50  # 200  # 150  # 240
+sftbeta = 4.5  # beta parameter for softplus
+alpha = 1.0  # weight for the reconstruction loss
+beta = 0.03  # 0.03  # weight for KL loss
+gamma = 30  # 20  # weight for latent regularization loss
+gamma_moving = 0  # weight for moving forward loss, put 0. if unused
+gamma_dynamic = 0  # weight for dynamic loss - TODO
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
 # Except for lr_min and lr_max which are floats
 lr_min = 0.000001
 lr_max = 0.1
-batch_size = [4, 8, 16, 32, 64, 128]
-encoder_width = [50, 100, 200, 300]
-encoder_depth = [5, 10, 20, 50, 100]
-decoder_width = [50, 100, 200, 300]
-decoder_depth = [5, 10, 20, 50, 100]
+batch_size = [4]
+encoder_width = [50]  # , 100, 200, 300]
+encoder_depth = [5]  # , 10, 20, 50, 100]
+decoder_width = [50]  # , 100, 200, 300]
+decoder_depth = [5]  # , 10, 20, 50, 100]
+drop_out_p = [0.25]  # put probability p at 0. for no drop out
+for p in drop_out_p:
+    assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
 # Number of times to sample from the
 # hyperparameter space. Defaults to 1. If `grid_search` is
@@ -186,5 +194,6 @@ decoder_depth = [5, 10, 20, 50, 100]
 # We choose a multiple of 8.
 num_samples = 1
 sweep_metric = "test_loss"
+n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

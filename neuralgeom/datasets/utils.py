@@ -95,17 +95,17 @@ def load(config):
             n_times=config.n_times,
             radius=config.radius,
             n_wiggles=config.n_wiggles,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
-            distortion_func=config.distortion_func,
+            geodesic_distortion_func=config.geodesic_distortion_func,
         )
     elif config.dataset_name == "s2_synthetic":
         dataset, labels = datasets.synthetic.load_s2_synthetic(
             synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
         )
@@ -115,7 +115,7 @@ def load(config):
             n_times=config.n_times,
             major_radius=config.major_radius,
             minor_radius=config.minor_radius,
-            distortion_amp=config.distortion_amp,
+            geodesic_distortion_amp=config.geodesic_distortion_amp,
             embedding_dim=config.embedding_dim,
             noise_var=config.noise_var,
         )
@@ -140,10 +140,12 @@ def load(config):
     train_num = int(round(0.7 * len(dataset)))  # 70% training
     indices = np.arange(len(dataset))
 
-    # Note: this breaks the temporal ordering.
-    train_indices = np.random.choice(indices, train_num, replace=False)
-    test_indices = np.delete(indices, train_indices)
+    train_indices = np.arange(train_num)
+    if config.batch_shuffle:
+        # Note: this breaks the temporal ordering.
+        train_indices = np.random.choice(indices, train_num, replace=False)
 
+    test_indices = np.delete(indices, train_indices)
     train_dataset = dataset[train_indices]
     train_labels = labels.iloc[train_indices]
 

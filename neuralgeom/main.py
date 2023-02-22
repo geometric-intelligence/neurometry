@@ -71,10 +71,15 @@ def main():
                 )
         elif dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]:
             # Variable experiments parameters (synthetic datasets):
-            for n_times, embedding_dim, distortion_amp, noise_var in itertools.product(
+            for (
+                n_times,
+                embedding_dim,
+                geodesic_distortion_amp,
+                noise_var,
+            ) in itertools.product(
                 default_config.n_times,
                 default_config.embedding_dim,
-                default_config.distortion_amp,
+                default_config.geodesic_distortion_amp,
                 default_config.noise_var,
             ):
                 if (
@@ -89,7 +94,7 @@ def main():
                     dataset_name=dataset_name,
                     n_times=n_times,
                     embedding_dim=embedding_dim,
-                    distortion_amp=distortion_amp,
+                    geodesic_distortion_amp=geodesic_distortion_amp,
                     noise_var=noise_var,
                 )
         elif dataset_name == "grid_cells":
@@ -134,7 +139,7 @@ def main_sweep(
     select_gain_1=None,
     n_times=None,
     embedding_dim=None,
-    distortion_amp=None,
+    geodesic_distortion_amp=None,
     noise_var=None,
     grid_scale=None,
     arena_dims=None,
@@ -164,7 +169,7 @@ def main_sweep(
         Number of times.
     embedding_dim : int (optional, only for synthetic)
         Dimension of the embedding space.
-    distortion_amp : float (optional, only for synthetic)
+    geodesic_distortion_amp : float (optional, only for synthetic)
         Amplitude of the distortion.
     noise_var : float (optional, only for synthetic)
         Variance of the noise.
@@ -176,6 +181,7 @@ def main_sweep(
         "encoder_depth": tune.choice(default_config.encoder_depth),
         "decoder_width": tune.choice(default_config.decoder_width),
         "decoder_depth": tune.choice(default_config.decoder_depth),
+        "drop_out_p": tune.choice(default_config.drop_out_p),
         "wandb": {
             "project": default_config.project,
             "api_key": default_config.api_key,
@@ -192,7 +198,7 @@ def main_sweep(
         "select_gain_1": select_gain_1,
         "n_times": n_times,
         "embedding_dim": embedding_dim,
-        "distortion_amp": distortion_amp,
+        "geodesic_distortion_amp": geodesic_distortion_amp,
         "noise_var": noise_var,
         "grid_scale": grid_scale,
         "arena_dims": arena_dims,
@@ -205,7 +211,9 @@ def main_sweep(
         "manifold_dim": default_config.manifold_dim[dataset_name],
         "latent_dim": default_config.latent_dim[dataset_name],
         "posterior_type": default_config.posterior_type[dataset_name],
-        "distortion_func": default_config.distortion_func[dataset_name],
+        "geodesic_distortion_func": default_config.geodesic_distortion_func[
+            dataset_name
+        ],
         "n_wiggles": default_config.n_wiggles[dataset_name],
         "radius": default_config.radius[dataset_name],
         "major_radius": default_config.major_radius[dataset_name],
@@ -215,13 +223,17 @@ def main_sweep(
         "device": default_config.device,
         "log_interval": default_config.log_interval,
         "checkpt_interval": default_config.checkpt_interval,
+        "batch_shuffle": default_config.batch_shuffle,
         "scheduler": default_config.scheduler,
         "n_epochs": default_config.n_epochs,
         "alpha": default_config.alpha,
         "beta": default_config.beta,
         "gamma": default_config.gamma,
+        "gamma_moving": default_config.gamma_moving,
+        "gamma_dynamic": default_config.gamma_dynamic,
         "sftbeta": default_config.sftbeta,
         "gen_likelihood_type": default_config.gen_likelihood_type,
+        "n_grid_points": default_config.n_grid_points,
     }
 
     @wandb_mixin
@@ -321,6 +333,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
             decoder_width=config.decoder_width,
             decoder_depth=config.decoder_depth,
             posterior_type=config.posterior_type,
+            drop_out_p=config.drop_out_p,
         ).to(config.device)
     elif config.posterior_type == "toroidal":
         model = models.toroidal_vae.ToroidalVAE(
@@ -386,16 +399,19 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     print("Computing learned curvature...")
     start_time = time.time()
     z_grid, geodesic_dist, _, curv_norms_learned = evaluate.compute_curvature_learned(
-        model=model, config=config, embedding_dim=dataset.shape[1]
+        model=model,
+        config=config,
+        embedding_dim=dataset.shape[1],
+        n_grid_points=config.n_grid_points,
     )
-    print("Saving + logging learned curvature profile...")
-    curv_norm_learned_profile = pd.DataFrame(
-        {
-            "z_grid": z_grid,
-            "geodesic_dist": geodesic_dist,
-            "curv_norm_learned": curv_norms_learned,
-        }
-    )
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        curv_norm_learned_profile = pd.DataFrame(
+            {
+                "z_grid": z_grid,
+                "geodesic_dist": geodesic_dist,
+                "curv_norm_learned": curv_norms_learned,
+            }
+        )
 
     if config.dataset_name == "experimental":
         mean_velocities = []
@@ -423,13 +439,14 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         curv_norm_learned_profile["min_velocities"] = min_velocities
         curv_norm_learned_profile["max_velocities"] = max_velocities
 
-    curv_norm_learned_profile.to_csv(
-        os.path.join(
-            default_config.curvature_profiles_dir,
-            f"{config.results_prefix}_curv_norm_learned_profile.csv",
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        curv_norm_learned_profile.to_csv(
+            os.path.join(
+                default_config.curvature_profiles_dir,
+                f"{config.results_prefix}_curv_norm_learned_profile.csv",
+            )
         )
-    )
-    wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
+        wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
 
     comp_time_learned = time.time() - start_time
 
@@ -437,7 +454,9 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     if config.dataset_name in ("s1_synthetic", "s2_synthetic", "t2_synthetic"):
         print("Computing true curvature for synthetic data...")
         start_time = time.time()
-        z_grid, _, curv_norms_true = evaluate.compute_curvature_true(config)
+        z_grid, geodesic_dist, _, curv_norms_true = evaluate.compute_curvature_true(
+            config, n_grid_points=config.n_grid_points
+        )
         comp_time_true = time.time() - start_time
         print("Computing curvature error for synthetic data...")
 
@@ -463,16 +482,17 @@ def curvature_compute_plot_log(config, dataset, labels, model):
             profile_type="true",
         )
 
-    # HACK ALERT: Remove large curvatures
-    # Note that the full curvature profile is saved in csv
-    # The large curvatures are only removed for the plot
-    median = curv_norm_learned_profile["curv_norm_learned"].median()
-    filtered = curv_norm_learned_profile[
-        curv_norm_learned_profile["curv_norm_learned"] < 8 * median
-    ]
-    fig_neural_manifold_learned = viz.plot_neural_manifold_learned(
-        curv_norm_learned_profile=filtered, config=config, labels=labels
-    )
+    if config.dataset_name in ("s1_synthetic", "experimental"):
+        # HACK ALERT: Remove large curvatures
+        # Note that the full curvature profile is saved in csv
+        # The large curvatures are only removed for the plot
+        median = curv_norm_learned_profile["curv_norm_learned"].median()
+        filtered = curv_norm_learned_profile[
+            curv_norm_learned_profile["curv_norm_learned"] < 8 * median
+        ]
+        fig_neural_manifold_learned = viz.plot_neural_manifold_learned(
+            curv_norm_learned_profile=filtered, config=config, labels=labels
+        )
     # Log
     wandb.log(
         {
