@@ -95,7 +95,7 @@ class NeuralVAE(torch.nn.Module):
         h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
 
         for i_layer, layer in enumerate(self.encoder_linears):
-            h = self.drop_out(h)
+            # h = self.drop_out(h)
             h = layer(h)
             h = F.softplus(h, beta=self.sftbeta)
 
