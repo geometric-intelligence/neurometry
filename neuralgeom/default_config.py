@@ -29,6 +29,7 @@ curvature_profiles_dir = os.path.join(os.getcwd(), "results/curvature_profiles/"
 if not os.path.exists(curvature_profiles_dir):
     os.makedirs(curvature_profiles_dir)
 
+
 # Hardware
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -139,35 +140,35 @@ select_gain_1 = [True]  # , False]  # , False]
 
 
 # Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
-n_times = [10]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [4]  # , 5, 8, 10, 20, 50]
+n_times = [2000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
+embedding_dim = [3]  # , 5, 8, 10, 20, 50]
 geodesic_distortion_amp = [0.4]
 noise_var = [1e-3]  # , 1e-2, 1e-1]
 
 # Only used if dataset_name == "grid_cells"
 grid_scale = [1.0]
 arena_dims = [np.array([8, 8])]
-n_cells = [100]
+n_cells = [3]
 grid_orientation_mean = [0.0]
 grid_orientation_std = [0.0]
 field_width = [0.05]
-resolution = [40]
+resolution = [10]
 
 # Models
 gen_likelihood_type = "gaussian"
 
 # Training
 batch_shuffle = (
-    False  # do not shuffle train/test set when moving forward or dynamic loss are used
+    True  # do not shuffle train/test set when moving forward or dynamic loss are used
 )
 scheduler = False
-log_interval = 20
+log_interval = 4
 checkpt_interval = 20
-n_epochs = 1  # 50  # 200  # 150  # 240
+n_epochs = 10 # 50  # 200  # 150  # 240
 sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
-beta = 0.03  # 0.03  # weight for KL loss
-gamma = 30  # 20  # weight for latent regularization loss
+beta = 0.001  # 0.03  # weight for KL loss
+gamma = 10 # 20  # weight for latent regularization loss
 gamma_moving = 0  # weight for moving forward loss, put 0. if unused
 gamma_dynamic = 0  # weight for dynamic loss - TODO
 if gamma_moving > 0 or gamma_dynamic > 0:
@@ -179,12 +180,12 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 # Except for lr_min and lr_max which are floats
 lr_min = 0.000001
 lr_max = 0.1
-batch_size = [4]
-encoder_width = [50]  # , 100, 200, 300]
-encoder_depth = [5]  # , 10, 20, 50, 100]
-decoder_width = [50]  # , 100, 200, 300]
-decoder_depth = [5]  # , 10, 20, 50, 100]
-drop_out_p = [0.25]  # put probability p at 0. for no drop out
+batch_size = [16]#[16,32,64]
+encoder_width = [40]#[100,400]  # , 100, 200, 300]
+encoder_depth = [2]#[4,6,8]  # , 10, 20, 50, 100]
+decoder_width = [40]#[100,400]  # , 100, 200, 300]
+decoder_depth = [2]#[4,6,8]  # , 10, 20, 50, 100]
+drop_out_p = [0]#[0,0.1,0.2]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
@@ -195,8 +196,8 @@ for p in drop_out_p:
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 1
+num_samples = 1 #128
 sweep_metric = "test_loss"
-n_grid_points = 100  # number of points on the z grid for curvature
+n_grid_points = 2000  # number of points on the z grid for curvature
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

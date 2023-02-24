@@ -21,7 +21,7 @@ def load_grid_cells_synthetic(
     rate_maps = create_rate_maps(grids, field_width, arena_dims, resolution)
     neural_activity = get_neural_activity(rate_maps)
 
-    labels = None
+    labels = pd.DataFrame({"no_labels":np.zeros(len(neural_activity))})
 
     return neural_activity, labels
 
@@ -89,6 +89,8 @@ def generate_all_grids(
 
     grids = np.zeros((n_cells,) + np.shape(ref_lattice))
 
+    arena_dims = np.array(arena_dims)
+
     for i in range(n_cells):
         angle_i = np.random.normal(grid_orientation_mean, grid_orientation_std) * (
             np.pi / 180
@@ -98,8 +100,8 @@ def generate_all_grids(
         )
         phase_i = np.multiply([lx, ly], np.random.rand(2))
         lattice_i = np.matmul(rot_i, ref_lattice.T).T + phase_i
-
         lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
+        
 
         grids[i, :, :] = lattice_i
 
