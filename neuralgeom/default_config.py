@@ -4,8 +4,8 @@ import logging
 import os
 from datetime import datetime
 
-import torch
 import numpy as np
+import torch
 from ray.tune.search.hyperopt import HyperOptSearch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
@@ -37,7 +37,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 logging.basicConfig(level=logging.INFO)
 
 # Results
-project = "gridcells"
+project = "neuralgeom"
 trained_model_path = None
 
 ### Fixed experiment parameters ###
@@ -119,7 +119,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["grid_cells"]
+dataset_name = ["experimental", "s1_synthetic", "s2_synthetic", "t2_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -171,6 +171,9 @@ beta = 0.001  # 0.03  # weight for KL loss
 gamma = 10 # 20  # weight for latent regularization loss
 gamma_moving = 0  # weight for moving forward loss, put 0. if unused
 gamma_dynamic = 0  # weight for dynamic loss - TODO
+if gamma_moving > 0 or gamma_dynamic > 0:
+    # preserve temporal order of data point for these losses
+    batch_suffle = False
 
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter

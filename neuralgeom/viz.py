@@ -398,9 +398,8 @@ def plot_neural_manifold_learned(curv_norm_learned_profile, config, labels):
                 # reparameterization invariant.
                 # However, the computation is extremely slow, thus
                 # we recommend using z_grid for the main pipeline
-                # and computing geodesic_dist in a notebook after having selected
-                # a run.
-                # curv_norm_learned_profile["geodesic_dist"],
+                # and computing geodesic_dist in the notebook 07
+                # after having selected a run.
                 curv_norm_learned_profile["z_grid"],
                 1 / curv_norm_learned_profile["curv_norm_learned"],
                 c=curv_norm_learned_profile[stat_velocities],
@@ -425,9 +424,8 @@ def plot_neural_manifold_learned(curv_norm_learned_profile, config, labels):
             # reparameterization invariant.
             # However, the computation is extremely slow, thus
             # we recommend using z_grid for the main pipeline
-            # and computing geodesic_dist in a notebook after having selected
-            # a run.
-            # curv_norm_learned_profile["geodesic_dist"],
+            # and computing geodesic_dist in the notebook 07
+            # after having selected a run.
             curv_norm_learned_profile["z_grid"],
             1 / curv_norm_learned_profile["curv_norm_learned"],
         )
@@ -476,7 +474,6 @@ def plot_comparison_curvature_norms(
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.png"))
     #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))
     return fig
-
 
 
 def plot_persistence_diagrams(diagrams):

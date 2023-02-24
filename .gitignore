@@ -10,6 +10,9 @@ neuralgeom/data/binned/*.npy
 neuralgeom/data/data.zip
 neuralgeom/data/old_data.zip
 
+# notebook figures
+neuralgeom/notebooks/figures/*
+
 # Wandb files
 neuralgeom/wandb/*
 neuralgeom/results/*
