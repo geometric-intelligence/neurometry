@@ -86,6 +86,7 @@ def main():
                     dataset_name in ["s2_synthetic", "t2_synthetic"]
                     and embedding_dim <= 2
                 ):
+                    raise ValueError(f"Manifold cannot be embedded in {embedding_dim} dimensions")
                     continue
                 sweep_name = f"{dataset_name}_noise_var_{noise_var}_embedding_dim_{embedding_dim}"
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
@@ -238,7 +239,7 @@ def main_sweep(
 
     @wandb_mixin
     def main_run(sweep_config):
-        wandb.init(dir=tempfile.gettempdir())
+        wandb.init()
         wandb_config = wandb.config
         wandb_config.update(fixed_config)
         run_name = "run_" + wandb.run.id + "_" + sweep_name

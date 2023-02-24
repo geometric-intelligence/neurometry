@@ -144,7 +144,7 @@ def moving_forward_loss(z, config):
     ----------
     """
     if config.dataset_name != "experimental":
-        print("WARNING: Dynamic loss only implemented for experimental data.")
+        #print("WARNING: Dynamic loss only implemented for experimental data.")
         return torch.zeros(1).to(config.device)
     if len(z) == 1:
         return torch.zeros(1).to(config.device)

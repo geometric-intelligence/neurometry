@@ -2,6 +2,7 @@
 
 import datasets.experimental
 import datasets.synthetic
+import datasets.gridcells
 import mat73
 import numpy as np
 import scipy.io
@@ -172,6 +173,13 @@ def load(config):
         test = []
         for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"]):
             test.append([d, torch.tensor([float(t), float(p)])])
+    elif config.dataset_name == "grid_cells":
+        train = []
+        for d, l in zip(train_dataset, train_labels["no_labels"]):
+            train.append([d, float(l)])
+        test = []
+        for d, l in zip(test_dataset, test_labels["no_labels"]):
+            test.append([d, float(l)])
 
     train_loader = torch.utils.data.DataLoader(train, batch_size=config.batch_size)
     test_loader = torch.utils.data.DataLoader(test, batch_size=config.batch_size)
