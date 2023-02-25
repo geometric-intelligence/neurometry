@@ -49,6 +49,7 @@ manifold_dim = {
     "s2_synthetic": 2,
     "t2_synthetic": 2,
     "grid_cells": 2,
+    "three_place_cells_synthetic": 1,
 }
 
 latent_dim = {
@@ -57,6 +58,7 @@ latent_dim = {
     "s2_synthetic": 3,
     "t2_synthetic": 3,
     "grid_cells": 3,
+    "three_place_cells_synthetic": 2,
 }
 
 posterior_type = {
@@ -65,6 +67,7 @@ posterior_type = {
     "s2_synthetic": "hyperspherical",
     "t2_synthetic": "toroidal",
     "grid_cells": "toroidal",
+    "three_place_cells_synthetic": "hyperspherical",
 }
 
 geodesic_distortion_func = {
@@ -73,6 +76,7 @@ geodesic_distortion_func = {
     "s2_synthetic": None,
     "t2_synthetic": None,
     "grid_cells": None,
+    "three_place_cells_synthetic": None,
 }
 
 n_wiggles = {
@@ -81,6 +85,7 @@ n_wiggles = {
     "s2_synthetic": None,
     "t2_synthetic": None,
     "grid_cells": None,
+    "three_place_cells_synthetic": None,
 }
 
 radius = {
@@ -89,6 +94,7 @@ radius = {
     "s2_synthetic": 1,
     "t2_synthetic": None,
     "grid_cells": None,
+    "three_place_cells_synthetic": None,
 }
 
 major_radius = {
@@ -97,6 +103,7 @@ major_radius = {
     "s2_synthetic": None,
     "t2_synthetic": 2,
     "grid_cells": 1,
+    "three_place_cells_synthetic": None,
 }
 
 minor_radius = {
@@ -105,6 +112,7 @@ minor_radius = {
     "s2_synthetic": None,
     "t2_synthetic": 1,
     "grid_cells": 1,
+    "three_place_cells_synthetic": None,
 }
 
 synthetic_rotation = {
@@ -113,13 +121,14 @@ synthetic_rotation = {
     "s2_synthetic": "identity",  # or "random"
     "t2_synthetic": "identity",  # or "random"
     "grid_cells": None,
+    "three_place_cells_synthetic": None,
 }
 
 ### Variable experiment parameters ###
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental", "s1_synthetic", "s2_synthetic", "t2_synthetic"]
+dataset_name = ["three_place_cells_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -127,6 +136,7 @@ for one_dataset_name in dataset_name:
         "t2_synthetic",
         "experimental",
         "grid_cells",
+        "three_place_cells_synthetic",
     ]:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
@@ -162,13 +172,13 @@ batch_shuffle = (
     True  # do not shuffle train/test set when moving forward or dynamic loss are used
 )
 scheduler = False
-log_interval = 4
+log_interval = 20
 checkpt_interval = 20
-n_epochs = 10 # 50  # 200  # 150  # 240
+n_epochs = 100  # 50  # 200  # 150  # 240
 sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
 beta = 0.001  # 0.03  # weight for KL loss
-gamma = 10 # 20  # weight for latent regularization loss
+gamma = 10  # 20  # weight for latent regularization loss
 gamma_moving = 0  # weight for moving forward loss, put 0. if unused
 gamma_dynamic = 0  # weight for dynamic loss - TODO
 if gamma_moving > 0 or gamma_dynamic > 0:
@@ -180,12 +190,12 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 # Except for lr_min and lr_max which are floats
 lr_min = 0.000001
 lr_max = 0.1
-batch_size = [16]#[16,32,64]
-encoder_width = [40]#[100,400]  # , 100, 200, 300]
-encoder_depth = [2]#[4,6,8]  # , 10, 20, 50, 100]
-decoder_width = [40]#[100,400]  # , 100, 200, 300]
-decoder_depth = [2]#[4,6,8]  # , 10, 20, 50, 100]
-drop_out_p = [0]#[0,0.1,0.2]  # put probability p at 0. for no drop out
+batch_size = [16, 32, 64]
+encoder_width = [40, 100, 400]  # , 100, 200, 300]
+encoder_depth = [2, 4, 6, 8]  # , 10, 20, 50, 100]
+decoder_width = [40, 100, 400]  # , 100, 200, 300]
+decoder_depth = [2, 4, 6, 8]  # , 10, 20, 50, 100]
+drop_out_p = [0]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
@@ -196,8 +206,8 @@ for p in drop_out_p:
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 1 #128
+num_samples = 128
 sweep_metric = "test_loss"
-n_grid_points = 2000  # number of points on the z grid for curvature
+n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:
 # https://docs.ray.io/en/latest/_modules/ray/tune/tune.html

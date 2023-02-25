@@ -142,6 +142,77 @@ def load_points(n_scalars=1, n_angles=1000):
     return np.array(points), labels
 
 
+def _create_bump_array(position, width):
+    """Create array with Gaussian bump of specified position and width.
+
+    Array is of length 360 filled with zeros, except for the bump.
+
+    Parameters
+    ----------
+    - position (int): The index of the center of the bump.
+    - width (int): The width of the bump.
+
+    Returns
+    -------
+    - bump_array (numpy.ndarray): The array with the Gaussian bump.
+    """
+    # Create array of zeros with length 360
+    bump_array = np.zeros(360)
+
+    # Define the range of indices for the bump
+    left = position - width // 2
+    right = position + width // 2
+
+    # Create the Gaussian bump
+    x = np.linspace(-1, 1, width)
+    bump = np.exp(-(x**2) * 5)  # Gaussian bump
+    bump /= np.max(bump)  # Normalize to maximum amplitude of 1
+
+    # Add the bump to the array
+    bump_array[left:right] += bump
+
+    return bump_array
+
+
+def load_three_place_cells(n_times=360, centers=None, widths=None):
+    """Load dataset of three synthetic place cells.
+
+    This is a dataset of synthetic place cell firings, that
+    simulates a rat walking in a circle.
+
+    Three place cells are chosen, with their position and
+    with the width of their place field that can vary.
+
+    Parameters
+    ----------
+    n_times : int
+        Number of times.
+
+    Returns
+    -------
+    place_cells : array-like, shape=[n_times, 3]
+        Number of firings per time step and per cell.
+    labels : pd.DataFrame, shape=[n_times, 1]
+        Labels organized in 1 column: angles.
+    """
+    if n_times != 360:
+        raise NotImplementedError
+    if centers is None:
+        centers = [40, 150, 270]
+    if widths is None:
+        widths = [80, 300, 180]
+
+    place_cell_0 = _create_bump_array(40, 80)
+    place_cell_1 = _create_bump_array(150, 300)
+    place_cell_2 = _create_bump_array(270, 180)
+    place_cells = np.vstack([place_cell_0, place_cell_1, place_cell_2]).T
+
+    assert place_cells.shape == (360, 3)
+
+    labels = np.arange(0, 360, step=1)
+    return place_cells, pd.DataFrame({"angles": labels})
+
+
 def load_place_cells(n_times=10000, n_cells=40):
     """Load synthetic place cells.
 

@@ -3,19 +3,17 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import plotly.graph_objects as go
 import plotly.io as pio
-
+import torch
 
 FIGURES = os.path.join(os.getcwd(), "results/figures/")
 if not os.path.exists(FIGURES):
     os.makedirs(FIGURES)
 
-HTML_FIGURES = os.path.join(os.getcwd(),"results/html_figures/")
+HTML_FIGURES = os.path.join(os.getcwd(), "results/html_figures/")
 if not os.path.exists(HTML_FIGURES):
     os.makedirs(HTML_FIGURES)
-
 
 
 def plot_loss(train_losses, test_losses, config):
@@ -29,7 +27,7 @@ def plot_loss(train_losses, test_losses, config):
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.png"))
-    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.svg"))
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_losses.svg"))
     return fig
 
 
@@ -73,7 +71,7 @@ def plot_recon_per_time(model, dataset_torch, labels, config):
 
     plt.tight_layout()
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.png"))
-    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.svg"))
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon_per_time.svg"))
     return fig
 
 
@@ -101,8 +99,12 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
         sc_rec = ax_rec.scatter(x_rec, y_rec, s=400, c=labels["angles"], cmap=colormap)
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
-        # plt.colorbar(sc_rec)
-    elif config.dataset_name in ("s2_synthetic", "t2_synthetic","grid_cells"):
+    elif config.dataset_name in (
+        "s2_synthetic",
+        "t2_synthetic",
+        "grid_cells",
+        "three_place_cells_synthetic",
+    ):
         ax_data = fig.add_subplot(1, 2, 1, projection="3d")
         x_data = dataset_torch[:, 0].cpu().detach().cpu().numpy()
         y_data = dataset_torch[:, 1].cpu().detach().cpu().numpy()
@@ -150,12 +152,28 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
                 -(config.major_radius + config.minor_radius),
                 (config.major_radius + config.minor_radius),
             )
-        plotly_fig = go.Figure(data=[go.Scatter3d(x=x_rec, y=y_rec, z=z_rec, mode='markers', marker=dict(size=5,
-        color=norms_rec,                # set color to an array/list of desired values
-        colorscale='Viridis',   # choose a colorscale
-        opacity=0.8))])
-        plotly_fig.update_layout(scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"), title=dict(text="Neural Manifold Reconstruction", font=dict(size=24),
-                  x=0.5))
+        plotly_fig = go.Figure(
+            data=[
+                go.Scatter3d(
+                    x=x_rec,
+                    y=y_rec,
+                    z=z_rec,
+                    mode="markers",
+                    marker=dict(
+                        size=5,
+                        color=norms_rec,  # set color to an array/list of desired values
+                        colorscale="Viridis",  # choose a colorscale
+                        opacity=0.8,
+                    ),
+                )
+            ]
+        )
+        plotly_fig.update_layout(
+            scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
+            title=dict(
+                text="Neural Manifold Reconstruction", font=dict(size=24), x=0.5
+            ),
+        )
     elif config.dataset_name == "experimental":
         thetas = np.array(labels["angles"])
         sort = np.argsort(thetas)
@@ -207,14 +225,20 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.png"))
-    pio.write_html(plotly_fig, os.path.join(HTML_FIGURES, f"{config.results_prefix}_recon.html"))
-    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.svg"))
+    pio.write_html(
+        plotly_fig, os.path.join(HTML_FIGURES, f"{config.results_prefix}_recon.html")
+    )
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.svg"))
     return fig
 
 
 def plot_latent_space(model, dataset_torch, labels, config):
     fig = plt.figure(figsize=(20, 20))
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in (
+        "s1_synthetic",
+        "experimental",
+        "three_place_cells_synthetic",
+    ):
         ax = fig.add_subplot(111)
         z, _, _ = model(dataset_torch.to(config.device))
         colormap = plt.get_cmap("twilight")
@@ -253,23 +277,39 @@ def plot_latent_space(model, dataset_torch, labels, config):
             ax.set_xlim(-1, 1)
             ax.set_ylim(-1, 1)
             ax.set_zlim(-1, 1)
-        
-        plotly_fig = go.Figure(data=[go.Scatter3d(x=z0, y=z1, z=z2, mode='markers', marker=dict(size=5,
-                color="blue",                # set color to an array/list of desired values
-                colorscale='Viridis',   # choose a colorscale
-                opacity=0.8))])
-        # Set the layout properties
-        plotly_fig.update_layout(scene=dict(xaxis_title='X', yaxis_title='Y', zaxis_title='Z'), title=dict(text='Latent Space', font=dict(size=24),
-                  x=0.5))
-        # Save the plot as an interactive HTML file
-        pio.write_html(plotly_fig, os.path.join(HTML_FIGURES, f"{config.results_prefix}_latent_plot.html")) 
 
+        plotly_fig = go.Figure(
+            data=[
+                go.Scatter3d(
+                    x=z0,
+                    y=z1,
+                    z=z2,
+                    mode="markers",
+                    marker=dict(
+                        size=5,
+                        color="blue",  # set color to an array/list of desired values
+                        colorscale="Viridis",  # choose a colorscale
+                        opacity=0.8,
+                    ),
+                )
+            ]
+        )
+        # Set the layout properties
+        plotly_fig.update_layout(
+            scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
+            title=dict(text="Latent Space", font=dict(size=24), x=0.5),
+        )
+        # Save the plot as an interactive HTML file
+        pio.write_html(
+            plotly_fig,
+            os.path.join(HTML_FIGURES, f"{config.results_prefix}_latent_plot.html"),
+        )
 
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
     ax.set_title("Latent space", fontsize=40)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.png"))
-    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.svg"))
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_latent_plot.svg"))
 
     return fig
 
@@ -345,19 +385,39 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
         )
         plt.axis("off")
 
-    if config.dataset_name in ["s2_synthetic","t2_synthetic","grid_cells"]:
-        plotly_fig = go.Figure(data=[go.Scatter3d(x=x, y=y, z=z, mode='markers', marker=dict(size=10,
-            color=curvature_norms,                # set color to an array/list of desired values
-            colorscale='plasma',   # choose a colorscale
-            opacity=0.8,
-            cmin=0,
-            cmax=norm_val,
-            colorbar=dict(title="Norm of curvature", tickmode = "auto")))])
-        
-        plotly_fig.update_layout(scene=dict(xaxis_title='X', yaxis_title='Y', zaxis_title='Z'), title=dict(text='Profile of Curvature Norm', font=dict(size=24),
-                  x=0.5))
+    if config.dataset_name in ["s2_synthetic", "t2_synthetic", "grid_cells"]:
+        plotly_fig = go.Figure(
+            data=[
+                go.Scatter3d(
+                    x=x,
+                    y=y,
+                    z=z,
+                    mode="markers",
+                    marker=dict(
+                        size=10,
+                        color=curvature_norms,  # set color to an array/list of desired values
+                        colorscale="plasma",  # choose a colorscale
+                        opacity=0.8,
+                        cmin=0,
+                        cmax=norm_val,
+                        colorbar=dict(title="Norm of curvature", tickmode="auto"),
+                    ),
+                )
+            ]
+        )
 
-        pio.write_html(plotly_fig, os.path.join(HTML_FIGURES, f"{config.results_prefix}_curv_profile_{profile_type}.html")) 
+        plotly_fig.update_layout(
+            scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
+            title=dict(text="Profile of Curvature Norm", font=dict(size=24), x=0.5),
+        )
+
+        pio.write_html(
+            plotly_fig,
+            os.path.join(
+                HTML_FIGURES,
+                f"{config.results_prefix}_curv_profile_{profile_type}.html",
+            ),
+        )
 
     plt.savefig(
         os.path.join(
@@ -472,7 +532,7 @@ def plot_comparison_curvature_norms(
         ax_learned.scatter3D(x, y, z, s=5, c=curvature_norms_learned)
 
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.png"))
-    #plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))
+    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_comparison.svg"))
     return fig
 
 

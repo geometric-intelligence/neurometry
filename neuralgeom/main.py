@@ -86,7 +86,9 @@ def main():
                     dataset_name in ["s2_synthetic", "t2_synthetic"]
                     and embedding_dim <= 2
                 ):
-                    raise ValueError(f"Manifold cannot be embedded in {embedding_dim} dimensions")
+                    raise ValueError(
+                        f"Manifold cannot be embedded in {embedding_dim} dimensions"
+                    )
                     continue
                 sweep_name = f"{dataset_name}_noise_var_{noise_var}_embedding_dim_{embedding_dim}"
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
@@ -129,6 +131,13 @@ def main():
                     field_width=field_width,
                     resolution=resolution,
                 )
+        elif dataset_name == "three_place_cells_synthetic":
+            sweep_name = f"{dataset_name}"
+            logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
+            main_sweep(
+                sweep_name=sweep_name,
+                dataset_name=dataset_name,
+            )
 
 
 def main_sweep(
@@ -405,7 +414,11 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         embedding_dim=dataset.shape[1],
         n_grid_points=config.n_grid_points,
     )
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in (
+        "s1_synthetic",
+        "experimental",
+        "three_place_cells_synthetic",
+    ):
         curv_norm_learned_profile = pd.DataFrame(
             {
                 "z_grid": z_grid,
@@ -483,7 +496,11 @@ def curvature_compute_plot_log(config, dataset, labels, model):
             profile_type="true",
         )
 
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in (
+        "s1_synthetic",
+        "experimental",
+        "three_place_cells_synthetic",
+    ):
         # HACK ALERT: Remove large curvatures
         # Note that the full curvature profile is saved in csv
         # The large curvatures are only removed for the plot
@@ -513,7 +530,7 @@ def curvature_compute_plot_log(config, dataset, labels, model):
                 "fig_curv_norms_true": wandb.Image(fig_curv_norms_true),
             }
         )
-    elif config.dataset_name == "experimental":
+    elif config.dataset_name in ("experimental", "three_place_cells_synthetic"):
         wandb.log(
             {
                 "fig_neural_manifold_learned": wandb.Image(fig_neural_manifold_learned),
