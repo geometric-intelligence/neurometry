@@ -119,7 +119,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["experimental", "s1_synthetic", "s2_synthetic", "t2_synthetic"]
+dataset_name = ["s1_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -131,7 +131,7 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Only used if dataset_name == "experimental"
-expt_id = ["41"]  # , "34"]  # hd: with head direction
+expt_id = ["34"]  # , "34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]  # , int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
@@ -140,18 +140,18 @@ select_gain_1 = [True]  # , False]  # , False]
 
 
 # Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
-n_times = [2000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
+n_times = [1000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
 embedding_dim = [3]  # , 5, 8, 10, 20, 50]
 geodesic_distortion_amp = [0.4]
-noise_var = [1e-3]  # , 1e-2, 1e-1]
+noise_var = [1e-2]  # , 1e-2, 1e-1]
 
 # Only used if dataset_name == "grid_cells"
 grid_scale = [1.0]
 arena_dims = [np.array([8, 8])]
-n_cells = [3]
+n_cells = [2]
 grid_orientation_mean = [0.0]
 grid_orientation_std = [0.0]
-field_width = [0.05]
+field_width = [0.1]
 resolution = [10]
 
 # Models
@@ -162,14 +162,14 @@ batch_shuffle = (
     True  # do not shuffle train/test set when moving forward or dynamic loss are used
 )
 scheduler = False
-log_interval = 4
+log_interval = 20
 checkpt_interval = 20
-n_epochs = 10 # 50  # 200  # 150  # 240
+n_epochs = 150 # 50  # 200  # 150  # 240
 sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
 beta = 0.001  # 0.03  # weight for KL loss
-gamma = 10 # 20  # weight for latent regularization loss
-gamma_moving = 0  # weight for moving forward loss, put 0. if unused
+gamma = 20#20 # 20  # weight for latent regularization loss
+gamma_moving = 0#1  # weight for moving forward loss, put 0. if unused
 gamma_dynamic = 0  # weight for dynamic loss - TODO
 if gamma_moving > 0 or gamma_dynamic > 0:
     # preserve temporal order of data point for these losses
@@ -181,10 +181,10 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 lr_min = 0.000001
 lr_max = 0.1
 batch_size = [16]#[16,32,64]
-encoder_width = [40]#[100,400]  # , 100, 200, 300]
-encoder_depth = [2]#[4,6,8]  # , 10, 20, 50, 100]
-decoder_width = [40]#[100,400]  # , 100, 200, 300]
-decoder_depth = [2]#[4,6,8]  # , 10, 20, 50, 100]
+encoder_width = [400]#[100,400]  # , 100, 200, 300]
+encoder_depth = [8]#[4,6,8]  # , 10, 20, 50, 100]
+decoder_width = [400]#[100,400]  # , 100, 200, 300]
+decoder_depth = [8]#[4,6,8]  # , 10, 20, 50, 100]
 drop_out_p = [0]#[0,0.1,0.2]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"

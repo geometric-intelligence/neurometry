@@ -135,7 +135,6 @@ def load(config):
         dataset_torch = torch.from_numpy(dataset)
     else:
         dataset_torch = dataset
-
     # dataset_torch = dataset_torch - torch.mean(dataset_torch, dim=0)
 
     train_num = int(round(0.7 * len(dataset)))  # 70% training
