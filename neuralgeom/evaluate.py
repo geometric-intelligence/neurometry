@@ -48,8 +48,9 @@ def get_learned_immersion(model, config):
                 ]
             )
         elif config.dataset_name in ("t2_synthetic", "grid_cells"):
+            #angle = gs.squeeze(angle,axis=0)
             theta = angle[0]
-            phi = angle[1]
+            phi = angle[0]
             z = gs.array(
                 [
                     (config.major_radius - config.minor_radius * gs.cos(theta))
