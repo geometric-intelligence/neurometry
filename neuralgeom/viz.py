@@ -19,10 +19,11 @@ if not os.path.exists(HTML_FIGURES):
 def plot_loss(train_losses, test_losses, config):
     fig, ax = plt.subplots(figsize=(20, 20))
     epochs = [epoch for epoch in range(1, config.n_epochs + 1)]
-    ax.plot(epochs, train_losses, linewidth=10, label="train")
-    ax.plot(epochs, test_losses, linewidth=10, label="test")
+    ax.plot(epochs, np.log(1 + np.array(train_losses)), linewidth=10, label="train")
+    ax.plot(epochs, np.log(1 + np.array(test_losses)), linewidth=10, label="test")
     ax.set_title("Losses", fontsize=40)
     ax.set_xlabel("epoch", fontsize=40)
+    ax.set_ylabel("Log(1+Loss)", fontsize=40)
     ax.legend(prop={"size": 40})
     plt.xticks(fontsize=30)
     plt.yticks(fontsize=30)
@@ -174,6 +175,10 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
                 text="Neural Manifold Reconstruction", font=dict(size=24), x=0.5
             ),
         )
+        pio.write_html(
+            plotly_fig,
+            os.path.join(HTML_FIGURES, f"{config.results_prefix}_recon.html"),
+        )
     elif config.dataset_name == "experimental":
         thetas = np.array(labels["angles"])
         sort = np.argsort(thetas)
@@ -225,9 +230,7 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.png"))
-    pio.write_html(
-        plotly_fig, os.path.join(HTML_FIGURES, f"{config.results_prefix}_recon.html")
-    )
+
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.svg"))
     return fig
 
@@ -386,24 +389,48 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
         plt.axis("off")
 
     if config.dataset_name in ["s2_synthetic", "t2_synthetic", "grid_cells"]:
-        plotly_fig = go.Figure(
-            data=[
-                go.Scatter3d(
-                    x=x,
-                    y=y,
-                    z=z,
-                    mode="markers",
-                    marker=dict(
-                        size=10,
-                        color=curvature_norms,  # set color to an array/list of desired values
-                        colorscale="plasma",  # choose a colorscale
-                        opacity=0.8,
-                        cmin=0,
-                        cmax=norm_val,
-                        colorbar=dict(title="Norm of curvature", tickmode="auto"),
-                    ),
-                )
-            ]
+        if norm_val != None:
+            plotly_fig = go.Figure(
+                data=[
+                    go.Scatter3d(
+                        x=x,
+                        y=y,
+                        z=z,
+                        mode="markers",
+                        marker=dict(
+                            size=10,
+                            color=curvature_norms,  # set color to an array/list of desired values
+                            colorscale="plasma",  # choose a colorscale
+                            opacity=0.8,
+                            cmin=0,
+                            cmax=float(norm_val),
+                            colorbar=dict(title="Norm of curvature", tickmode="auto"),
+                        ),
+                    )
+                ]
+            )
+        else:
+            plotly_fig = go.Figure(
+                data=[
+                    go.Scatter3d(
+                        x=x,
+                        y=y,
+                        z=z,
+                        mode="markers",
+                        marker=dict(
+                            size=10,
+                            color=curvature_norms,  # set color to an array/list of desired values
+                            colorscale="plasma",  # choose a colorscale
+                            opacity=0.8,
+                            colorbar=dict(title="Norm of curvature", tickmode="auto"),
+                        ),
+                    )
+                ]
+            )
+
+        plotly_fig.update_layout(
+            scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
+            title=dict(text="Profile of Curvature Norm", font=dict(size=24), x=0.5),
         )
 
         plotly_fig.update_layout(

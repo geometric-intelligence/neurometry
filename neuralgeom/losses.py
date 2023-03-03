@@ -144,6 +144,9 @@ def moving_forward_loss(z, config):
     ----------
     """
     if config.dataset_name != "experimental":
+        # print(
+        #     "WARNING: Moving forward loss only implemented for experimental data --> Skipped."
+        # )
         return torch.zeros(1).to(config.device)
     if len(z) == 1:
         return torch.zeros(1).to(config.device)
@@ -169,6 +172,9 @@ def dynamic_loss(labels, z, config):
     ----------
     """
     if config.dataset_name != "experimental":
+        # print(
+        #     "WARNING: Dynamic loss only implemented for experimental data --> Skipped."
+        # )
         return torch.zeros(1).to(config.device)
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
     diff = latent_angles[1:, :] - latent_angles[:-1, :]
