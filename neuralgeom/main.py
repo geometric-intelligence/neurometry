@@ -9,6 +9,8 @@ import time
 import traceback
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"  # NOQA
+import random
+
 import datasets.utils
 import default_config
 import evaluate
@@ -23,7 +25,7 @@ import torch
 import train
 import viz
 import wandb
-from ray import tune
+from ray import air, tune
 from ray.tune.integration.wandb import wandb_mixin
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
@@ -285,7 +287,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        # curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -295,9 +297,7 @@ def main_sweep(
         # Returns metrics to log into ray tune sweep
         return {"test_loss": np.min(test_losses)}
 
-    sweep_search = HyperOptSearch(
-        sweep_config, metric=default_config.sweep_metric, mode="min"
-    )
+    sweep_search = HyperOptSearch(metric=default_config.sweep_metric, mode="min")
 
     sweep_scheduler = AsyncHyperBandScheduler(
         time_attr="training_iteration",
@@ -307,16 +307,19 @@ def main_sweep(
         mode="min",
     )
 
-    analysis = tune.run(
-        main_run,
-        name=sweep_name,
-        local_dir=default_config.ray_sweep_dir,
-        raise_on_failed_trial=False,
-        num_samples=default_config.num_samples,
-        scheduler=sweep_scheduler,
-        search_alg=sweep_search,
-        resources_per_trial={"cpu": 4, "gpu": 1},
+    tuner = tune.Tuner(
+        trainable=tune.with_resources(main_run, {"cpu": 4, "gpu": 1}),
+        param_space=sweep_config,
+        tune_config=tune.TuneConfig(
+            search_alg=sweep_search,
+            scheduler=sweep_scheduler,
+            num_samples=default_config.num_samples,
+        ),
+        run_config=air.RunConfig(
+            name=sweep_name, local_dir=default_config.ray_sweep_dir
+        ),
     )
+    tuner.fit()
 
     logging.info(f"\n------> COMPLETED RAY SWEEP: {sweep_name}.\n")
 
@@ -334,6 +337,10 @@ def create_model_and_train_test(config, train_loader, test_loader):
     data_dim = tuple(train_loader.dataset[0][0].data.shape)[0]
     # Create model
     if config.posterior_type in ("gaussian", "hyperspherical"):
+        random.seed(0)
+        torch.manual_seed(0)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(0)
         model = models.neural_vae.NeuralVAE(
             data_dim=data_dim,
             latent_dim=config.latent_dim,
@@ -346,6 +353,10 @@ def create_model_and_train_test(config, train_loader, test_loader):
             drop_out_p=config.drop_out_p,
         ).to(config.device)
     elif config.posterior_type == "toroidal":
+        random.seed(0)
+        torch.manual_seed(0)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(0)
         model = models.toroidal_vae.ToroidalVAE(
             data_dim=data_dim,
             latent_dim=config.latent_dim,
@@ -426,6 +437,15 @@ def curvature_compute_plot_log(config, dataset, labels, model):
                 "curv_norm_learned": curv_norms_learned,
             }
         )
+    if config.dataset_name == "t2_synthetic":
+        curv_norm_learned_profile = pd.DataFrame(
+            {
+                "z_grid_theta": z_grid[:, 0],
+                "z_grid_phi": z_grid[:, 1],
+                "geodesic_dist": geodesic_dist,
+                "curv_norm_learned": curv_norms_learned,
+            }
+        )
 
     if config.dataset_name == "experimental":
         mean_velocities = []
@@ -453,7 +473,7 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         curv_norm_learned_profile["min_velocities"] = min_velocities
         curv_norm_learned_profile["max_velocities"] = max_velocities
 
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in ("s1_synthetic", "experimental", "t2_synthetic"):
         curv_norm_learned_profile.to_csv(
             os.path.join(
                 default_config.curvature_profiles_dir,

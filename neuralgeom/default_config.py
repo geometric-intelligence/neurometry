@@ -128,7 +128,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["three_place_cells_synthetic"]
+dataset_name = ["t2_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -141,7 +141,7 @@ for one_dataset_name in dataset_name:
         raise ValueError(f"Dataset name {one_dataset_name} not recognized.")
 
 # Only used if dataset_name == "experimental"
-expt_id = ["41"]  # , "34"]  # hd: with head direction
+expt_id = ["34"]  # , "34"]  # hd: with head direction
 timestep_microsec = [int(1e6)]  # , int(1e6)]  # , int(1e5)]
 smooth = [True]  # , False]
 # Note: if there is only one gain (gain 1), it will be selected
@@ -158,10 +158,10 @@ noise_var = [1e-3]  # , 1e-2, 1e-1]
 # Only used if dataset_name == "grid_cells"
 grid_scale = [1.0]
 arena_dims = [np.array([8, 8])]
-n_cells = [3]
+n_cells = [2]
 grid_orientation_mean = [0.0]
 grid_orientation_std = [0.0]
-field_width = [0.05]
+field_width = [0.1]
 resolution = [10]
 
 # Models
@@ -174,12 +174,12 @@ batch_shuffle = (
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 100  # 50  # 200  # 150  # 240
+n_epochs = 1000  # 50  # 200  # 150  # 240
 sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
 beta = 0.001  # 0.03  # weight for KL loss
-gamma = 10  # 20  # weight for latent regularization loss
-gamma_moving = 0  # weight for moving forward loss, put 0. if unused
+gamma = 0  # 20 # 20  # weight for latent regularization loss
+gamma_moving = 0  # 1  # weight for moving forward loss, put 0. if unused
 gamma_dynamic = 0  # weight for dynamic loss - TODO
 if gamma_moving > 0 or gamma_dynamic > 0:
     # preserve temporal order of data point for these losses
@@ -190,12 +190,12 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 # Except for lr_min and lr_max which are floats
 lr_min = 0.000001
 lr_max = 0.1
-batch_size = [16, 32, 64]
-encoder_width = [40, 100, 400]  # , 100, 200, 300]
-encoder_depth = [2, 4, 6, 8]  # , 10, 20, 50, 100]
-decoder_width = [40, 100, 400]  # , 100, 200, 300]
-decoder_depth = [2, 4, 6, 8]  # , 10, 20, 50, 100]
-drop_out_p = [0]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
+batch_size = [16, 32, 64]  # [16,32,64]
+encoder_width = [100, 200, 400]  # [100,400]  # , 100, 200, 300]
+encoder_depth = [6, 8, 10, 12]  # [4,6,8]  # , 10, 20, 50, 100]
+decoder_width = [100, 200, 400]  # [100,400]  # , 100, 200, 300]
+decoder_depth = [6, 8, 10, 12]  # [4,6,8]  # , 10, 20, 50, 100]
+drop_out_p = [0, 0.1]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
@@ -206,7 +206,7 @@ for p in drop_out_p:
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 128
+num_samples = 864  # 128
 sweep_metric = "test_loss"
 n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:
