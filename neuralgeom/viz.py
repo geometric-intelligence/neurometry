@@ -19,10 +19,21 @@ if not os.path.exists(HTML_FIGURES):
 def plot_loss(train_losses, test_losses, config):
     fig, ax = plt.subplots(figsize=(20, 20))
     epochs = [epoch for epoch in range(1, config.n_epochs + 1)]
-    ax.plot(epochs, np.log(1 + np.array(train_losses)), linewidth=10, label="train")
-    ax.plot(epochs, np.log(1 + np.array(test_losses)), linewidth=10, label="test")
+    ax.plot(
+        epochs,
+        np.log(1 + np.array(np.log(1 + np.array(train_losses)))),
+        linewidth=10,
+        label="train",
+    )
+    ax.plot(
+        epochs,
+        np.log(1 + np.array(np.log(1 + np.array(test_losses)))),
+        linewidth=10,
+        label="test",
+    )
     ax.set_title("Losses", fontsize=40)
     ax.set_xlabel("epoch", fontsize=40)
+    ax.set_ylabel("Log(1+Loss)", fontsize=40)
     ax.set_ylabel("Log(1+Loss)", fontsize=40)
     ax.legend(prop={"size": 40})
     plt.xticks(fontsize=30)
@@ -174,6 +185,10 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
             title=dict(
                 text="Neural Manifold Reconstruction", font=dict(size=24), x=0.5
             ),
+        )
+        pio.write_html(
+            plotly_fig,
+            os.path.join(HTML_FIGURES, f"{config.results_prefix}_recon.html"),
         )
         pio.write_html(
             plotly_fig,
