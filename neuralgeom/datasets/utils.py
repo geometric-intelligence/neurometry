@@ -1,8 +1,8 @@
 """Utils to import data from matlab."""
 
 import datasets.experimental
-import datasets.synthetic
 import datasets.gridcells
+import datasets.synthetic
 import mat73
 import numpy as np
 import scipy.io
@@ -130,6 +130,8 @@ def load(config):
             field_width=config.field_width,
             resolution=config.resolution,
         )
+    elif config.dataset_name == "three_place_cells_synthetic":
+        dataset, labels = datasets.synthetic.load_three_place_cells()
     print(f"Dataset shape: {dataset.shape}.")
     if type(dataset) == np.ndarray:
         dataset_torch = torch.from_numpy(dataset)
@@ -159,6 +161,13 @@ def load(config):
 
     # The angles are positional angles in the lab frame
     if config.dataset_name in ("experimental", "s1_synthetic"):
+        train = []
+        for d, l in zip(train_dataset, train_labels["angles"]):
+            train.append([d, float(l)])
+        test = []
+        for d, l in zip(test_dataset, test_labels["angles"]):
+            test.append([d, float(l)])
+    elif config.dataset_name in ("three_place_cells_synthetic"):
         train = []
         for d, l in zip(train_dataset, train_labels["angles"]):
             train.append([d, float(l)])

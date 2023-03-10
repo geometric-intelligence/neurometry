@@ -34,7 +34,11 @@ def get_learned_immersion(model, config):
     """Define immersion from latent angles to neural manifold."""
 
     def immersion(angle):
-        if config.dataset_name in ("s1_synthetic", "experimental"):
+        if config.dataset_name in (
+            "s1_synthetic",
+            "experimental",
+            "three_place_cells_synthetic",
+        ):
             z = gs.array([gs.cos(angle[0]), gs.sin(angle[0])])
 
         elif config.dataset_name == "s2_synthetic":
@@ -48,7 +52,7 @@ def get_learned_immersion(model, config):
                 ]
             )
         elif config.dataset_name in ("t2_synthetic", "grid_cells"):
-            #angle = gs.squeeze(angle,axis=0)
+            # angle = gs.squeeze(angle,axis=0)
             theta = angle[0]
             phi = angle[0]
             z = gs.array(
@@ -101,7 +105,11 @@ def get_true_immersion(config):
 
 
 def get_z_grid(config, n_grid_points=100):
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in (
+        "s1_synthetic",
+        "experimental",
+        "three_place_cells_synthetic",
+    ):
         z_grid = torch.linspace(0, 2 * gs.pi, n_grid_points)
     elif config.dataset_name == "s2_synthetic":
         thetas = gs.linspace(0.01, gs.pi, int(np.sqrt(n_grid_points)))

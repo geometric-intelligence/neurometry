@@ -9,6 +9,8 @@ import time
 import traceback
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"  # NOQA
+import random
+
 import datasets.utils
 import default_config
 import evaluate
@@ -23,11 +25,10 @@ import torch
 import train
 import viz
 import wandb
-from ray import tune, air
+from ray import air, tune
 from ray.tune.integration.wandb import wandb_mixin
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
-import random
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -132,6 +133,13 @@ def main():
                     field_width=field_width,
                     resolution=resolution,
                 )
+        elif dataset_name == "three_place_cells_synthetic":
+            sweep_name = f"{dataset_name}"
+            logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
+            main_sweep(
+                sweep_name=sweep_name,
+                dataset_name=dataset_name,
+            )
 
 
 def main_sweep(
@@ -191,7 +199,7 @@ def main_sweep(
             "api_key": default_config.api_key,
         },
     }
-    
+
     fixed_config = {
         # Parameters constant across runs of the sweep (unique value):
         "dataset_name": dataset_name,
@@ -279,7 +287,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        #curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        # curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -417,7 +425,11 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         embedding_dim=dataset.shape[1],
         n_grid_points=config.n_grid_points,
     )
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in (
+        "s1_synthetic",
+        "experimental",
+        "three_place_cells_synthetic",
+    ):
         curv_norm_learned_profile = pd.DataFrame(
             {
                 "z_grid": z_grid,
@@ -504,7 +516,11 @@ def curvature_compute_plot_log(config, dataset, labels, model):
             profile_type="true",
         )
 
-    if config.dataset_name in ("s1_synthetic", "experimental"):
+    if config.dataset_name in (
+        "s1_synthetic",
+        "experimental",
+        "three_place_cells_synthetic",
+    ):
         # HACK ALERT: Remove large curvatures
         # Note that the full curvature profile is saved in csv
         # The large curvatures are only removed for the plot
@@ -534,7 +550,7 @@ def curvature_compute_plot_log(config, dataset, labels, model):
                 "fig_curv_norms_true": wandb.Image(fig_curv_norms_true),
             }
         )
-    elif config.dataset_name == "experimental":
+    elif config.dataset_name in ("experimental", "three_place_cells_synthetic"):
         wandb.log(
             {
                 "fig_neural_manifold_learned": wandb.Image(fig_neural_manifold_learned),

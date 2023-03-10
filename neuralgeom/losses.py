@@ -97,7 +97,7 @@ def latent_regularization_loss(labels, z, config):
         latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
         angle_loss = torch.mean(1 - torch.cos(latent_angles - labels))
         latent_loss = angle_loss
-    elif config.dataset_name == "experimental":
+    elif config.dataset_name in ("experimental", "three_place_cells_synthetic"):
         labels = labels * (torch.pi / 180)
         latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
         angle_loss = torch.mean(1 - torch.cos(latent_angles - labels))
