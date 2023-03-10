@@ -117,7 +117,7 @@ minor_radius = {
 
 synthetic_rotation = {
     "experimental": None,
-    "s1_synthetic": "identity",  # or "random"
+    "s1_synthetic": "random",
     "s2_synthetic": "identity",  # or "random"
     "t2_synthetic": "identity",  # or "random"
     "grid_cells": None,
@@ -128,7 +128,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["t2_synthetic"]
+dataset_name = ["s1_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -151,9 +151,9 @@ select_gain_1 = [True]  # , False]  # , False]
 
 # Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
 n_times = [2000]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [3]  # , 5, 8, 10, 20, 50]
+embedding_dim = [2, 3, 5, 10, 20, 50]
 geodesic_distortion_amp = [0.4]
-noise_var = [1e-3]  # , 1e-2, 1e-1]
+noise_var = [0.05, 0.01, 0.005, 0.001, 0.0]  # , 1e-2, 1e-1]
 
 # Only used if dataset_name == "grid_cells"
 grid_scale = [1.0]
@@ -174,11 +174,11 @@ batch_shuffle = (
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 1000  # 50  # 200  # 150  # 240
+n_epochs = 100  # 00  # 50  # 200  # 150  # 240
 sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
 beta = 0.001  # 0.03  # weight for KL loss
-gamma = 0  # 20 # 20  # weight for latent regularization loss
+gamma = 20  # 20  # weight for latent regularization loss
 gamma_moving = 0  # 1  # weight for moving forward loss, put 0. if unused
 gamma_dynamic = 0  # weight for dynamic loss - TODO
 if gamma_moving > 0 or gamma_dynamic > 0:
@@ -206,7 +206,7 @@ for p in drop_out_p:
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 864  # 128
+num_samples = 20  # 128
 sweep_metric = "test_loss"
 n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:

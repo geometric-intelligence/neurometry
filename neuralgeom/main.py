@@ -253,6 +253,8 @@ def main_sweep(
         wandb.init()
         wandb_config = wandb.config
         wandb_config.update(fixed_config)
+        wandb_config.update(sweep_config)
+
         run_name = "run_" + wandb.run.id + "_" + sweep_name
         wandb.run.name = run_name
 
@@ -267,8 +269,6 @@ def main_sweep(
                 "data_dim": data_dim,
             }
         )
-        # Update wandb config with ray tune's config
-        wandb_config.update(sweep_config)
 
         # Save config for easy access from notebooks
         wandb_config_path = os.path.join(default_config.configs_dir, run_name + ".json")
@@ -287,7 +287,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        # curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -425,27 +425,22 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         embedding_dim=dataset.shape[1],
         n_grid_points=config.n_grid_points,
     )
+
+    curv_norm_learned_profile = pd.DataFrame(
+        {
+            "geodesic_dist": geodesic_dist,
+            "curv_norm_learned": curv_norms_learned,
+        }
+    )
     if config.dataset_name in (
         "s1_synthetic",
         "experimental",
         "three_place_cells_synthetic",
     ):
-        curv_norm_learned_profile = pd.DataFrame(
-            {
-                "z_grid": z_grid,
-                "geodesic_dist": geodesic_dist,
-                "curv_norm_learned": curv_norms_learned,
-            }
-        )
-    if config.dataset_name == "t2_synthetic":
-        curv_norm_learned_profile = pd.DataFrame(
-            {
-                "z_grid_theta": z_grid[:, 0],
-                "z_grid_phi": z_grid[:, 1],
-                "geodesic_dist": geodesic_dist,
-                "curv_norm_learned": curv_norms_learned,
-            }
-        )
+        curv_norm_learned_profile["z_grid"] = z_grid
+    elif config.dataset_name in ("s2_synthetic", "t2_synthetic", "grid_cells"):
+        curv_norm_learned_profile["z_grid_theta"] = z_grid[:, 0]
+        curv_norm_learned_profile["z_grid_phi"] = z_grid[:, 1]
 
     if config.dataset_name == "experimental":
         mean_velocities = []
@@ -473,14 +468,14 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         curv_norm_learned_profile["min_velocities"] = min_velocities
         curv_norm_learned_profile["max_velocities"] = max_velocities
 
-    if config.dataset_name in ("s1_synthetic", "experimental", "t2_synthetic"):
-        curv_norm_learned_profile.to_csv(
-            os.path.join(
-                default_config.curvature_profiles_dir,
-                f"{config.results_prefix}_curv_norm_learned_profile.csv",
-            )
+    print("Logging learned curvature...")
+    curv_norm_learned_profile.to_csv(
+        os.path.join(
+            default_config.curvature_profiles_dir,
+            f"{config.results_prefix}_curv_norm_learned_profile.csv",
         )
-        wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
+    )
+    wandb.log({"curv_norm_learned_profile": curv_norm_learned_profile})
 
     comp_time_learned = time.time() - start_time
 
@@ -498,6 +493,26 @@ def curvature_compute_plot_log(config, dataset, labels, model):
             z_grid, curv_norms_learned, curv_norms_true, config
         )
         norm_val = max(curv_norms_true)
+
+        curv_norm_true_profile = pd.DataFrame(
+            {
+                "geodesic_dist": geodesic_dist,
+                "curv_norm_true": curv_norms_true,
+            }
+        )
+
+        if config.dataset_name == "s1_synthetic":
+            curv_norm_true_profile["z_grid"] = z_grid
+        else:
+            curv_norm_true_profile["z_grid_theta"] = z_grid[:, 0]
+            curv_norm_true_profile["z_grid_phi"] = z_grid[:, 1]
+        print("Logging true curvature profile for synthetic data...")
+        curv_norm_true_profile.to_csv(
+            os.path.join(
+                default_config.curvature_profiles_dir,
+                f"{config.results_prefix}_curv_norm_true_profile.csv",
+            )
+        )
 
     # Plot
     fig_curv_norms_learned = viz.plot_curvature_norms(
@@ -521,15 +536,10 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         "experimental",
         "three_place_cells_synthetic",
     ):
-        # HACK ALERT: Remove large curvatures
-        # Note that the full curvature profile is saved in csv
-        # The large curvatures are only removed for the plot
-        median = curv_norm_learned_profile["curv_norm_learned"].median()
-        filtered = curv_norm_learned_profile[
-            curv_norm_learned_profile["curv_norm_learned"] < 8 * median
-        ]
         fig_neural_manifold_learned = viz.plot_neural_manifold_learned(
-            curv_norm_learned_profile=filtered, config=config, labels=labels
+            curv_norm_learned_profile=curv_norm_learned_profile,
+            config=config,
+            labels=labels,
         )
     # Log
     wandb.log(

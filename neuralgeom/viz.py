@@ -230,9 +230,6 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.png"))
-    pio.write_html(
-        plotly_fig, os.path.join(HTML_FIGURES, f"{config.results_prefix}_recon.html")
-    )
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.svg"))
     return fig
 
