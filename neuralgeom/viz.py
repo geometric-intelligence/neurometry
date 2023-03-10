@@ -245,7 +245,6 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.png"))
-
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_recon.svg"))
     return fig
 
