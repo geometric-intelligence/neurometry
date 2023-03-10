@@ -200,7 +200,30 @@ def _integrate_s2(thetas, phis, h):
     """Helper function for compute_curvature_error_s2.
 
     This function integrates over S^2.
+
+    Note that function first extracts the unique values from
+    the arrays of thetas and phis.
+
+    Parameters
+    ----------
+    thetas : array-like, len=len(z_grid)
+        Array of latitudes in [0, pi] (rads).
+        Note that values are repeated, e.g.
+        >>> tensor([0.0100, 0.0100, 0.0100, 0.3580, ...])
+    phis : array-like, len=len(z_grid)
+        Array of longitudes in [0, pi] (rads).
+        Note that values are repeated, e.g.
+        >>> tensor([0.0000, 0.6981, 1.3963, 0.0000, 0.6981, ...])
+    h : array-like, len=len(z_grid)
+        Values to integrate over s2.
+
+    Returns
+    -------
+    integral : float-like
+        Value of the integral.
     """
+    thetas = torch.unique(thetas)
+    phis = torch.unique(phis)
     sum_phis = torch.zeros_like(thetas)
     for t, theta in enumerate(thetas):
         sum_phis[t] = torch.trapz(
@@ -250,7 +273,7 @@ def compute_curvature_error(
             thetas, phis, curv_norms_learned, curv_norms_true
         )
     end_time = time.time()
-    print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
+    # print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return error
 
 
