@@ -1,0 +1,33 @@
+name: lddmm
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - python=3.8
+  - scikit-image>=0.19.2
+  - pandas
+  - pip:
+    - -r requirements.txt
+  # - pip:
+  #   - black
+  #   - flake8
+  #   - flake8-docstrings
+  #   - git+https://github.com/geomstats/geomstats.git
+  #   - isort
+  #   - jupyter
+  #   - jupyterlab-code-formatter
+  #   - pre-commit
+  #   - pytest
+  #   - cycler==0.10.0
+  #   - decorator==4.4.1
+  #   - imageio==2.6.1
+  #   - kiwisolver==1.1.0
+  #   - matplotlib==3.1.2
+  #   - networkx==2.4
+  #   - numpy==1.18.0
+  #   - Pillow==6.2.1
+  #   - pyparsing==2.4.6
+  #   - python-dateutil==2.8.1
+  #   - PyWavelets==1.1.1
+  #   - scipy==1.4.1
+  #   - six==1.13.0 
