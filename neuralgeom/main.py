@@ -4,9 +4,7 @@ import itertools
 import json
 import logging
 import os
-import tempfile
 import time
-import traceback
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"  # NOQA
 import random
