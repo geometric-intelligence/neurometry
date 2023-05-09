@@ -45,22 +45,26 @@ def create_reference_lattice(lx, ly, arena_dims):
 
     """
 
-    n_x = np.arange(-(arena_dims[0] / lx) // 2, (arena_dims[0] / lx) // 2 + 1)
-    n_y = np.arange(-(arena_dims[1] / ly) // 2, (arena_dims[1] / ly) // 2 + 1)
+    # n_x = np.arange(-(arena_dims[0] / lx) // 2, (arena_dims[0] / lx) // 2 + 1)
+    # n_y = np.arange(-(arena_dims[1] / ly) // 2, (arena_dims[1] / ly) // 2 + 1)
+    n_x = np.arange(-(arena_dims[0] / lx), (arena_dims[0] / lx) + 1)
+    n_y = np.arange(-(arena_dims[1] / ly), (arena_dims[1] / ly) + 1)
     N_x, N_y = np.meshgrid(n_x, n_y)
+    
 
     offset_x = np.tile([[0], [0.5]], np.shape(N_x))[: np.shape(N_x)[0], :]
 
-    X = lx * (N_x + offset_x)
+    X = lx * (N_x - offset_x)
     Y = ly * N_y
-
+    
     ref_lattice = np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
+
 
     return ref_lattice
 
 
 def generate_all_grids(
-    grid_scale, arena_dims, n_cells, grid_orientation_mean, grid_orientation_std
+    grid_scale, arena_dims, n_cells, grid_orientation_mean, grid_orientation_std, warp=None
 ):
     """Create lattices for all grid cells within a module, with varying phase & orientation.
 
@@ -89,6 +93,8 @@ def generate_all_grids(
 
     grids = np.zeros((n_cells,) + np.shape(ref_lattice))
 
+    grids_warped = np.zeros((n_cells,) + np.shape(ref_lattice))
+    
     arena_dims = np.array(arena_dims)
 
     for i in range(n_cells):
@@ -100,12 +106,18 @@ def generate_all_grids(
         )
         phase_i = np.multiply([lx, ly], np.random.rand(2))
         lattice_i = np.matmul(rot_i, ref_lattice.T).T + phase_i
-        lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
+        #lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
+        
+        if warp == None:
+            pass
+        else:
+            for j, point in enumerate(lattice_i):
+                grids_warped[i,j,:] = warp(point)
         
 
         grids[i, :, :] = lattice_i
 
-    return grids
+    return grids, grids_warped
 
 
 def create_rate_maps(grids, field_width, arena_dims, resolution):
