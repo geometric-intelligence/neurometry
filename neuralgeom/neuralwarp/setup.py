@@ -28,6 +28,3 @@ def main():
     print("Directory added to path: ", sys_dir)
     sys.path.append(os.getcwd())
     print("Directory added to path: ", os.getcwd())
-    
-    %load_ext autoreload
-    %autoreload 2
