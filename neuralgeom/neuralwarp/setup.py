@@ -20,7 +20,7 @@ def main():
         ["git", "rev-parse", "--show-toplevel"], universal_newlines=True
     )
 
-    os.chdir(os.path.join(gitroot_path[:-1], "neuralgeom"))
+    os.chdir(os.path.join(gitroot_path[:-1], "neuralgeom/neuralwarp"))
     print("Working directory: ", os.getcwd())
 
     sys_dir = os.path.dirname(os.getcwd())

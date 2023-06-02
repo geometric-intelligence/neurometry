@@ -40,6 +40,7 @@ def plot_warpgrid(warp, interval=2, show_axis=False):
     @param show_axis: Bool, should axes be included?
     @return: matplotlib plot. Show with plt.show()
     """
+
     if show_axis is False:
         plt.axis('off')
     ax = plt.gca()
@@ -50,4 +51,4 @@ def plot_warpgrid(warp, interval=2, show_axis=False):
         plt.plot(warp[row, :, 1], warp[row, :, 0], 'k')
     for col in range(0, warp.shape[1], interval):
         plt.plot(warp[:, col, 1], warp[:, col, 0], 'k')
-    return plt
+    return ax
