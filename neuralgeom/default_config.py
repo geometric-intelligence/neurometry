@@ -13,8 +13,8 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 # WANDB API KEY
 # Find it here: https://wandb.ai/authorize
 # Story it in file: api_key.txt (without extra line break)
-with open("api_key.txt") as f:
-    api_key = f.read()
+# with open("api_key.txt") as f:
+#     api_key = f.read()
 
 # Directories
 work_dir = os.getcwd()
