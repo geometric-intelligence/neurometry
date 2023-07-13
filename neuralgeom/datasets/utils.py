@@ -33,7 +33,7 @@ def load(config):
         test dataset.
     """
     if config.dataset_name == "experimental":
-        dataset, labels = datasets.experimental.load_place_cells(
+        dataset, labels = datasets.experimental.load_neural_activity(
             expt_id=config.expt_id, timestep_microsec=config.timestep_microsec
         )
         dataset = dataset[labels["velocities"] > 5]
