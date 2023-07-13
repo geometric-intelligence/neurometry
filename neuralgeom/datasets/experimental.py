@@ -15,7 +15,7 @@ RAW_DIR = os.path.join(WORK_DIR, "data/raw")
 BINNED_DIR = os.path.join(WORK_DIR, "data/binned")
 
 
-def load_place_cells(expt_id=34, timestep_microsec=1000000):
+def load_neural_activity(expt_id=34, timestep_microsec=1000000):
     """Load pre-processed experimental place cells firings.
 
     Parameters
@@ -29,14 +29,14 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
 
     Returns
     -------
-    place_cells : array-like, shape=[n_timesteps, n_cells]
+    neural_activity : array-like, shape=[n_timesteps, n_cells]
         Number of firings at each time-steps, for each place cell.
     labels : pandas.DataFrame, shape= [n_timesteps, n_labels]
         Ground truth variables.
         Example: positional angle.
     """
-    data_path = os.path.join(
-        BINNED_DIR, f"expt{expt_id}_place_cells_timestep{timestep_microsec}.npy"
+    neural_data_path = os.path.join(
+        BINNED_DIR, f"expt{expt_id}_neural_activity_timestep{timestep_microsec}.npy"
     )
     labels_path = os.path.join(
         BINNED_DIR, f"expt{expt_id}_labels_timestep{timestep_microsec}.txt"
@@ -53,35 +53,35 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
         expt = utils.loadmat(os.path.join(RAW_DIR, f"expt{expt_id}.mat"))
         expt = expt["x"]
 
-        firing_times = _extract_firing_times(expt)
+        all_firing_times = _extract_firing_times(expt)
         times = np.arange(
-            start=firing_times[0], stop=firing_times[-1], step=timestep_microsec
+            start=all_firing_times[0], stop=all_firing_times[-1], step=timestep_microsec
         )
 
         logging.info(f"# - Saving times of shape {times.shape} to {times_path}...")
         np.savetxt(fname=times_path, X=times)
 
-    if os.path.exists(data_path):
-        logging.info(f"# - Found file at {data_path}! Loading...")
-        place_cells = np.load(data_path)
+    if os.path.exists(neural_data_path):
+        logging.info(f"# - Found file at {neural_data_path}! Loading...")
+        neural_activity = np.load(neural_data_path)
 
     else:
-        logging.info(f"# - No file at {data_path}. Preprocessing needed:")
+        logging.info(f"# - No file at {neural_data_path}. Preprocessing needed:")
         n_timesteps = len(times) - 1
-        n_cells = len(expt["clust"])
-        logging.info(f"Number of cells: {n_cells}")
-        place_cells = np.zeros((n_timesteps, n_cells))
-        for i_cell, cell in enumerate(expt["clust"]):
-            logging.info(f"Counting firings per time-step in cell {i_cell}...")
-            counts, bins, _ = plt.hist(cell["ts"], bins=times)
+        n_neurons = len(expt["clust"])
+        logging.info(f"Number of neurons: {n_neurons}")
+        neural_activity = np.zeros((n_timesteps, n_neurons))
+        for neuron_index, neuron in enumerate(expt["clust"]):
+            logging.info(f"Counting firings per time-step in neuron {neuron_index}...")
+            counts, bins, _ = plt.hist(neuron["ts"], bins=times)
             assert sum(bins != times) == 0
             assert len(counts) == n_timesteps
-            place_cells[:, i_cell] = counts
+            neural_activity[:, neuron_index] = counts
 
         logging.info(
-            f"# - Saving place_cells of shape {place_cells.shape} to {data_path}..."
+            f"# - Saving neural_activity of shape {neural_activity.shape} to {neural_data_path}..."
         )
-        np.save(data_path, place_cells)
+        np.save(neural_data_path, neural_activity)
 
     if os.path.exists(labels_path):
         logging.info(f"# - Found file at {labels_path}! Loading...")
@@ -90,8 +90,6 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
 
     else:
         logging.info(f"# - No file at {labels_path}. Preprocessing needed:")
-        expt = utils.loadmat(os.path.join(RAW_DIR, f"expt{expt_id}.mat"))
-        expt = expt["x"]
 
         enc_times = expt["rosdata"]["encTimes"]
         enc_angles = expt["rosdata"]["encAngle"]
@@ -103,7 +101,7 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
 
         tracking_path = os.path.join(RAW_DIR, f"{rat}-{day}_trackingResults.mat")
         if os.path.exists(tracking_path):
-            logging.info(f"Found file at {data_path}! Loading...")
+            logging.info(f"Found file at {neural_data_path}! Loading...")
             tracking = utils.loadmat(tracking_path)
             tracking = tracking["tracked_results"]
             tracked_times, x, y, z = (
@@ -151,7 +149,7 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
                 raise ValueError("Tracking times and firing times do not match.")
 
         else:
-            logging.info(f"No file at {data_path}! Skipping...")
+            logging.info(f"No file at {neural_data_path}! Skipping...")
 
         logging.info("Averaging variables angle, velocity and gain per time-step...")
 
@@ -194,7 +192,7 @@ def load_place_cells(expt_id=34, timestep_microsec=1000000):
         )
         labels.to_csv(labels_path)
 
-    return place_cells, labels
+    return neural_activity, labels
 
 
 def _extract_firing_times(expt):
@@ -206,24 +204,19 @@ def _extract_firing_times(expt):
         Dictionnary summarizing the experiment, with:
             key: clust
     """
-    times = []
-    for cell in expt["clust"]:
-        times.extend(cell["ts"])
 
-    times = sorted(times)
-    n_times = len(times)
-    logging.info(
-        f"Nb of firing times (all cells) before deleting duplicates: {n_times}."
-    )
-    aux = []
-    for time in times:
-        if time not in aux:
-            aux.append(time)
-    n_times = len(aux)
+    all_firing_times = []
+    for neuron in expt["clust"]:
+        all_firing_times.extend(neuron["ts"])
+
+    # get rid of duplicates
+    all_firing_times = sorted(list(set(all_firing_times)))
+    n_times = len(all_firing_times)
+
     logging.info(
         f"Nb of firing times  (all cells) after deleting duplicates: {n_times}."
     )
-    return aux
+    return all_firing_times
 
 
 def _average_in_timestep(variable_to_average, variable_times, times):
