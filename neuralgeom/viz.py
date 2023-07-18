@@ -620,3 +620,43 @@ def plot_grid_rate_maps(rate_maps):
         plt.colorbar(img, label="Relative Firing Rate")
         ax.set_title("Grid Cell #" + str(cell_index + 1) + " Firing Rate Map")
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_grid_rate_maps.png"))
+
+
+
+def plot_activity_with_mi(expt_id,name,neural_activity,task_variable,mutual_info):
+    """ Visualize neural activity perisitimulus histogram and show mutual information between neural activity and task variable.
+    
+    """
+    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, gridspec_kw={'width_ratios': [1, 30]}, figsize=(20,10))
+
+    vector = mutual_info
+
+    img1 = ax1.imshow(vector[:, np.newaxis], aspect='auto', cmap='viridis', vmin=vector.min(), vmax=vector.max())
+    ax1.set_ylabel(f"Neuron - {name} Mutual Information",fontsize=25)
+    ax1.set_yticks(np.arange(0,len(mutual_info)))
+    ax1.set_xticks([])
+
+
+    img2 = ax2.imshow(neural_activity.T, aspect="auto",cmap="viridis",norm="symlog",interpolation='none')
+    ax2.set_yticks([])
+    ax2.set_title(f"Neural Activity vs {name}, Experiment {expt_id} -- Symlog scale",fontsize=25)
+    ax2.set_xticks(np.arange(len(task_variable))[::50])
+    ax2.set_xticklabels(task_variable[::50].astype(int))
+    ax2.set_xlabel(f"{name}",fontsize=25)
+
+    for i in range(len(neural_activity.T)):
+        ax2.axhline(i-0.5, color='black', lw=1)
+        ax1.axhline(i-0.5, color='black', lw=1)
+
+    ax2.tick_params(axis='both', which='major', labelsize=15)
+    plt.subplots_adjust(wspace=0.0)
+
+    # Create a new axis for the colorbar at the bottom
+    cbar_ax = fig.add_axes([0.95, 0.1, 0.02, 0.75])
+
+    # Add a colorbar with label
+    cbar = fig.colorbar(img2, cax=cbar_ax, orientation='vertical')
+    cbar.set_label('Firing rate (spikes/second)', fontsize=25, labelpad=15)
+    cbar_ax.tick_params(axis='both', which='major', labelsize=15)
+
+    plt.show()

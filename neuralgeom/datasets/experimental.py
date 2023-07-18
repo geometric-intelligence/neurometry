@@ -154,6 +154,7 @@ def load_neural_activity(expt_id=34, timestep_microsec=1000000):
         logging.info("Averaging variables angle, velocity and gain per time-step...")
 
         angles = _average_in_timestep(enc_angles, enc_times, times)
+        lap = angles//360
         angles = [angle % 360 for angle in angles]
         velocities = _average_in_timestep(vel, enc_times, times)
         gains = _average_in_timestep(gain, enc_times, times)
@@ -181,6 +182,7 @@ def load_neural_activity(expt_id=34, timestep_microsec=1000000):
             labels = pd.DataFrame(
                 {
                     "times": times[:-1],
+                    "lap": lap,
                     "angles": angles,
                     "velocities": velocities,
                     "gains": gains,
@@ -248,3 +250,21 @@ def _average_in_timestep(variable_to_average, variable_times, times):
         cum_count += int(count)
     assert len(variable_averaged) == len(times) - 1
     return np.array(variable_averaged)
+
+
+
+def get_place_field_centers(neural_activity, task_variable):
+    """
+    Returns the center of mass of the place fields of list of neurons in neural_activity
+    """
+
+    weights = neural_activity.T
+
+    points = np.tile(task_variable,(weights.shape[0], 1))
+
+    weighted_center_of_mass = np.average(points, weights=weights, axis=1)
+
+    center_of_mass_indices = np.argmax(weights, axis=1)
+
+    return weighted_center_of_mass, center_of_mass_indices
+

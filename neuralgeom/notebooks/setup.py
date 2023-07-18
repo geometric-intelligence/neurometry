@@ -28,6 +28,10 @@ def main():
     print("Directory added to path: ", sys_dir)
     sys.path.append(os.getcwd())
     print("Directory added to path: ", os.getcwd())
-    
-    %load_ext autoreload
-    %autoreload 2
+
+def get_data_dir():
+    RAW_DIR = os.path.join(os.getcwd(), "data", "raw")
+    print(f"The raw data is located in the directory:\n{RAW_DIR}.")
+    BINNED_DIR = os.path.join(os.getcwd(), "data", "binned")
+    print(f"The binned data is located in the directory:\n{BINNED_DIR}.")
+    return RAW_DIR, BINNED_DIR
