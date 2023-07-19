@@ -640,8 +640,8 @@ def plot_activity_with_mi(expt_id,name,neural_activity,task_variable,mutual_info
     img2 = ax2.imshow(neural_activity.T, aspect="auto",cmap="viridis",norm="symlog",interpolation='none')
     ax2.set_yticks([])
     ax2.set_title(f"Neural Activity vs {name}, Experiment {expt_id} -- Symlog scale",fontsize=25)
-    ax2.set_xticks(np.arange(len(task_variable))[::50])
-    ax2.set_xticklabels(task_variable[::50].astype(int))
+    ax2.set_xticks(np.arange(len(task_variable))[::500])
+    ax2.set_xticklabels(task_variable[::500].astype(int))
     ax2.set_xlabel(f"{name}",fontsize=25)
 
     for i in range(len(neural_activity.T)):
@@ -660,3 +660,4 @@ def plot_activity_with_mi(expt_id,name,neural_activity,task_variable,mutual_info
     cbar_ax.tick_params(axis='both', which='major', labelsize=15)
 
     plt.show()
+
