@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 import neuralgeom.datasets.structures as structures
@@ -25,7 +26,7 @@ def load_grid_cells_synthetic(
     rate_maps = create_rate_maps(grids, field_width, arena_dims, resolution)
     neural_activity = get_neural_activity(rate_maps)
 
-    labels = pd.DataFrame({"no_labels":np.zeros(len(neural_activity))})
+    labels = pd.DataFrame({"no_labels": np.zeros(len(neural_activity))})
 
     return neural_activity, labels
 
@@ -54,22 +55,27 @@ def create_reference_lattice(lx, ly, arena_dims, lattice_type="hexagonal"):
     n_x = np.arange(-(arena_dims[0] / lx), (arena_dims[0] / lx) + 1)
     n_y = np.arange(-(arena_dims[1] / ly), (arena_dims[1] / ly) + 1)
     N_x, N_y = np.meshgrid(n_x, n_y)
-    
+
     if lattice_type == "hexagonal":
         offset_x = np.tile([[0], [0.5]], np.shape(N_x))[: np.shape(N_x)[0], :]
         X = lx * (N_x - offset_x)
     elif lattice_type == "square":
-        X = lx*N_x
+        X = lx * N_x
     Y = ly * N_y
-    
-    ref_lattice = np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
 
+    ref_lattice = np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
 
     return ref_lattice
 
 
 def generate_all_grids(
-    grid_scale, arena_dims, n_cells, grid_orientation_mean=0, grid_orientation_std=0, warp=None, lattice_type="hexagonal"
+    grid_scale,
+    arena_dims,
+    n_cells,
+    grid_orientation_mean=0,
+    grid_orientation_std=0,
+    warp=None,
+    lattice_type="hexagonal",
 ):
     """Create lattices for all grid cells within a module, with varying phase & orientation.
 
@@ -92,13 +98,15 @@ def generate_all_grids(
         All the grid cell lattices.
     """
 
-    #ref_lattice = create_reference_lattice(lx, ly, arena_dims, lattice_type = lattice_type)
-    ref_lattice = structures.get_lattice(scale=grid_scale,lattice_type=lattice_type,dimensions=arena_dims)
-    
+    # ref_lattice = create_reference_lattice(lx, ly, arena_dims, lattice_type = lattice_type)
+    ref_lattice = structures.get_lattice(
+        scale=grid_scale, lattice_type=lattice_type, dimensions=arena_dims
+    )
+
     grids = np.zeros((n_cells,) + np.shape(ref_lattice))
 
     grids_warped = np.zeros((n_cells,) + np.shape(ref_lattice))
-    
+
     arena_dims = np.array(arena_dims)
 
     for i in range(n_cells):
@@ -110,14 +118,13 @@ def generate_all_grids(
         )
         phase_i = np.multiply([lx, ly], np.random.rand(2))
         lattice_i = np.matmul(rot_i, ref_lattice.T).T + phase_i
-        #lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
-        
+        # lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
+
         if warp == None:
             pass
         else:
             for j, point in enumerate(lattice_i):
-                grids_warped[i,j,:] = warp(gs.array(point))
-        
+                grids_warped[i, j, :] = warp(gs.array(point))
 
         grids[i, :, :] = lattice_i
 
@@ -182,7 +189,6 @@ def zig_zag_flatten(matrix):
 
 
 def get_neural_activity(rate_maps):
-
     num_points = rate_maps.shape[1] * rate_maps.shape[2]
 
     num_cells = rate_maps.shape[0]

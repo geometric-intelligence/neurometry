@@ -4,7 +4,6 @@ import torch
 
 
 class HypersphericalUniform(torch.distributions.Distribution):
-
     arg_constraints = {}
     support = torch.distributions.constraints.real
     has_rsample = False

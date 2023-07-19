@@ -104,7 +104,6 @@ class ToroidalVAE(torch.nn.Module):
         return posterior_params
 
     def _build_torus(self, z_theta, z_phi):
-
         # theta = torch.atan2(z_theta[:, 1] / z_theta[:, 0])
         # phi = torch.atan2(z_phi[:, 1] / z_phi[:, 0])
         cos_theta = z_theta[:, 0]

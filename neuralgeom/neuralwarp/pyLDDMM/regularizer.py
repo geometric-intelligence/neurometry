@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.ndimage import convolve
 
+
 class BiharmonicReguarizer:
     def __init__(self, alpha, gamma):
         """
@@ -18,14 +19,12 @@ class BiharmonicReguarizer:
         @param f: an array representing function f, array of dim H x W x 2
         @return: g = L(f), array of dim H x W x 2
         """
-        w = np.array([[0.,  1.,  0.],
-                      [1., -4.,  1.],
-                      [0.,  1.,  0.]])
+        w = np.array([[0.0, 1.0, 0.0], [1.0, -4.0, 1.0], [0.0, 1.0, 0.0]])
         dxx = convolve(f[:, :, 0], w)
         dyy = convolve(f[:, :, 1], w)
 
-        dff = np.stack([dxx, dyy], axis= -1)
-        g = - self.alpha * dff + self.gamma * f
+        dff = np.stack([dxx, dyy], axis=-1)
+        g = -self.alpha * dff + self.gamma * f
 
         return g
 
@@ -60,7 +59,14 @@ class BiharmonicReguarizer:
 
         for h in range(H):
             for w in range(W):
-                A[h, w] += 2 * self.alpha * ((1 - np.cos(2 * np.pi * h / H)) + (1 - np.cos(2 * np.pi * w / W)))
+                A[h, w] += (
+                    2
+                    * self.alpha
+                    * (
+                        (1 - np.cos(2 * np.pi * h / H))
+                        + (1 - np.cos(2 * np.pi * w / W))
+                    )
+                )
 
         A += self.gamma
 
@@ -88,7 +94,8 @@ class BiharmonicReguarizer:
             a[:, :, c] = np.fft.ifft2(A[:, :, c])
         return np.real(a)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     v = np.zeros((5, 5, 2))
     v[2, 2, 0] = 1
 

@@ -3,6 +3,7 @@ from pyLDDMM.utils import sampler, grid
 from pyLDDMM.utils.grad import finite_difference
 from pyLDDMM.regularizer import BiharmonicReguarizer
 
+
 class LDDMM2D(object):
     """
     2d LDDMM registration
@@ -35,7 +36,6 @@ class LDDMM2D(object):
 
         # (12): iteration over k
         for k in range(K):
-
             # (1): Calculate new estimate of velocity
             v -= epsilon * dv
 
@@ -61,12 +61,20 @@ class LDDMM2D(object):
             # (8): Calculate Jacobian determinant of the transformation
             detPhi1 = self.jacobian_derterminant(Phi1)
             if self.is_injectivity_violated(detPhi1):
-                print("Injectivity violated. Stopping. Try lowering the learning rate (epsilon).")
+                print(
+                    "Injectivity violated. Stopping. Try lowering the learning rate (epsilon)."
+                )
                 break
 
             # (9): Calculate the gradient
             for t in range(0, self.T):
-                dv[t] = 2*v[t] - self.regularizer.K(2 / sigma**2 * detPhi1[t][:, :, np.newaxis] * dJ0[t] * (J0[t] - J1[t])[:, :, np.newaxis])
+                dv[t] = 2 * v[t] - self.regularizer.K(
+                    2
+                    / sigma**2
+                    * detPhi1[t][:, :, np.newaxis]
+                    * dJ0[t]
+                    * (J0[t] - J1[t])[:, :, np.newaxis]
+                )
 
             # (10) calculate nor of the gradient, stop if small
             dv_norm = np.linalg.norm(dv)
@@ -76,24 +84,30 @@ class LDDMM2D(object):
                 break
 
             # (11): calculate new energy
-            E_regularizer = np.sum([np.linalg.norm(self.regularizer.L(v[t])) for t in range(T)])
-            E_intensity = 1 / sigma**2 * np.sum((J0[-1] - I1)**2)
+            E_regularizer = np.sum(
+                [np.linalg.norm(self.regularizer.L(v[t])) for t in range(T)]
+            )
+            E_intensity = 1 / sigma**2 * np.sum((J0[-1] - I1) ** 2)
             E = E_regularizer + E_intensity
             energies.append(E)
 
             # (12): iterate k = k+1
-            print("iteration {:3d}, energy {:4.2f}, thereof {:4.2f} regularization and {:4.2f} intensity difference".format(k, E, E_regularizer, E_intensity))
+            print(
+                "iteration {:3d}, energy {:4.2f}, thereof {:4.2f} regularization and {:4.2f} intensity difference".format(
+                    k, E, E_regularizer, E_intensity
+                )
+            )
             # end of for loop block
 
         # (13): Denote the final velocity field as \hat{v}
         v_hat = v
 
         # (14): Calculate the length of the path on the manifold
-        length = np.sum([np.linalg.norm(self.regularizer.L(v_hat[t])) for t in range(T)])
+        length = np.sum(
+            [np.linalg.norm(self.regularizer.L(v_hat[t])) for t in range(T)]
+        )
 
         return J0[-1], v_hat, energies, length, Phi0, Phi1, J0, J1
-
-
 
     def reparameterize(self, v):
         """
@@ -101,7 +115,9 @@ class LDDMM2D(object):
         @param v:
         @return:
         """
-        length = np.sum([np.linalg.norm(self.regularizer.L(v[t])) for t in range(self.T)])
+        length = np.sum(
+            [np.linalg.norm(self.regularizer.L(v[t])) for t in range(self.T)]
+        )
         for t in range(self.T):
             v[t] = length / self.T * v[t] / np.linalg.norm(self.regularizer.L(v[t]))
         return v
@@ -120,7 +136,7 @@ class LDDMM2D(object):
         # Phi1_1 is the identity mapping
         Phi1[self.T - 1] = x
 
-        for t in range(self.T-2, -1, -1):
+        for t in range(self.T - 2, -1, -1):
             alpha = self.backwards_alpha(v[t], x)
             Phi1[t] = sampler.sample(Phi1[t + 1], x + alpha)
 
@@ -152,9 +168,9 @@ class LDDMM2D(object):
         # Phi0_0 is the identity mapping
         Phi0[0] = x
 
-        for t in range(0, self.T-1):
+        for t in range(0, self.T - 1):
             alpha = self.forward_alpha(v[t], x)
-            Phi0[t+1] = sampler.sample(Phi0[t], x - alpha)
+            Phi0[t + 1] = sampler.sample(Phi0[t], x - alpha)
 
         return Phi0
 
@@ -193,7 +209,7 @@ class LDDMM2D(object):
         """
         J1 = np.zeros((self.T,) + I1.shape)
 
-        for t in range(self.T-1, -1, -1):
+        for t in range(self.T - 1, -1, -1):
             J1[t] = sampler.sample(I1, Phi1[t])
 
         return J1
@@ -237,6 +253,3 @@ class LDDMM2D(object):
         @return: bool
         """
         return detPhi1.min() < 0
-
-
-

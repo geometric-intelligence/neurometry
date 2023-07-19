@@ -541,7 +541,6 @@ def get_t2_synthetic_immersion(
         return gs.array([x, y, z])
 
     def t2_synthetic_immersion(angle_pair):
-
         theta = angle_pair[0]
         phi = angle_pair[1]
         amplitude = (

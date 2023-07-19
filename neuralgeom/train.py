@@ -12,7 +12,6 @@ def train_test(model, train_loader, test_loader, optimizer, scheduler, config):
     test_losses = []
     lowest_test_loss = 1000
     for epoch in range(1, config.n_epochs + 1):
-
         train_loss = train_one_epoch(
             epoch=epoch,
             model=model,
