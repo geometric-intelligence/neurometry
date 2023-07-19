@@ -8,7 +8,7 @@ def finite_difference(a):
     @param a:, an array H x W x n with n being different channel intensity values, or H x W
     @return: array H x W x 2, with partial derivative with respect to x and y in the last dimension
     """
-    wx = np.array([[1., 0., -1.]])
+    wx = np.array([[1.0, 0.0, -1.0]])
     wy = wx.T
 
     if a.ndim == 2:
@@ -25,7 +25,8 @@ def finite_difference(a):
             grad += finite_difference(a[:, :, c])
         return grad
 
+
 if __name__ == "__main__":
-    img = np.zeros((5,5))
+    img = np.zeros((5, 5))
     img[:, 2] = 1
     print(finite_difference(img))

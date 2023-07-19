@@ -29,6 +29,7 @@ def main():
     sys.path.append(os.getcwd())
     print("Directory added to path: ", os.getcwd())
 
+
 def get_data_dir():
     RAW_DIR = os.path.join(os.getcwd(), "data", "raw")
     print(f"The raw data is located in the directory:\n{RAW_DIR}.")

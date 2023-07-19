@@ -7,7 +7,6 @@ from torch.distributions.kl import register_kl
 
 
 class VonMisesFisher(torch.distributions.Distribution):
-
     arg_constraints = {
         "loc": torch.distributions.constraints.real,
         "scale": torch.distributions.constraints.positive,

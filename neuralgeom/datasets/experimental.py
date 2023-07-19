@@ -36,20 +36,30 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
         Example: positional angle.
     """
     neural_data_path = os.path.join(
-        BINNED_DIR, f"expt{expt_id}_neural_activity_timestep{timestep_microsec}_velthreshold_{vel_threshold}.npy"
+        BINNED_DIR,
+        f"expt{expt_id}_neural_activity_timestep{timestep_microsec}_velthreshold_{vel_threshold}.npy",
     )
     labels_path = os.path.join(
-        BINNED_DIR, f"expt{expt_id}_labels_timestep{timestep_microsec}_velthreshold_{vel_threshold}.txt"
+        BINNED_DIR,
+        f"expt{expt_id}_labels_timestep{timestep_microsec}_velthreshold_{vel_threshold}.txt",
     )
     times_path = os.path.join(
-        BINNED_DIR, f"expt{expt_id}_times_timestep{timestep_microsec}_velthreshold_{vel_threshold}.txt"
+        BINNED_DIR,
+        f"expt{expt_id}_times_timestep{timestep_microsec}_velthreshold_{vel_threshold}.txt",
     )
 
-    if not (os.path.exists(neural_data_path) and os.path.exists(labels_path) and os.path.exists(times_path)):
+    if not (
+        os.path.exists(neural_data_path)
+        and os.path.exists(labels_path)
+        and os.path.exists(times_path)
+    ):
         expt = utils.loadmat(os.path.join(RAW_DIR, f"expt{expt_id}.mat"))
-        period_start_times, period_end_times, _ = _apply_velocity_threshold(expt, vel_threshold)
-        sampling_times = _get_sampling_times(period_start_times, period_end_times, timestep_microsec)
-
+        period_start_times, period_end_times, _ = _apply_velocity_threshold(
+            expt, vel_threshold
+        )
+        sampling_times = _get_sampling_times(
+            period_start_times, period_end_times, timestep_microsec
+        )
 
     if os.path.exists(times_path):
         logging.info(f"# - Found file at {times_path}! Loading...")
@@ -71,7 +81,7 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
 
     else:
         logging.info(f"# - No file at {neural_data_path}. Preprocessing needed:")
-        
+
         neural_activity = []
 
         for _, neuron in enumerate(expt["x"]["clust"]):
@@ -79,7 +89,7 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
             for times in sampling_times:
                 spike_count, _ = np.histogram(neuron["ts"], bins=times)
                 neuron_i_activity.extend(spike_count)
-                    
+
             neural_activity.append(neuron_i_activity)
 
         neural_activity = np.array(neural_activity).T
@@ -135,7 +145,6 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
             qw = _average_variable(qw, tracked_times, sampling_times)
             success = _average_variable(success, tracked_times, sampling_times)
 
-
             radius2 = [xx**2 + yy**2 for xx, yy in zip(x, y)]
             angles_tracked = np.arctan2(y, x)
 
@@ -162,12 +171,10 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
         logging.info("Averaging variables angle, velocity and gain per time-step...")
 
         angles = _average_variable(recorded_angles, recorded_times, sampling_times)
-        lap = angles//360
+        lap = angles // 360
         angles = angles % 360
         velocities = _average_variable(recorded_vel, recorded_times, sampling_times)
         gains = _average_variable(recorded_gain, recorded_times, sampling_times)
-
-
 
         if os.path.exists(tracking_path):
             labels = pd.DataFrame(
@@ -207,8 +214,6 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
 
     return neural_activity, labels
 
-
-
     """Average values of recorded variables for each time-step.
 
     Parameters
@@ -240,7 +245,7 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
 
 
 def _apply_velocity_threshold(expt, threshold=5):
-    """ Apply a velocity threshold to the data.
+    """Apply a velocity threshold to the data.
 
     This function finds the start and end times of all the contiguous periods where the velocity is above a threshold.
 
@@ -254,33 +259,35 @@ def _apply_velocity_threshold(expt, threshold=5):
     Returns
     -------
     period_start_times : array-like, shape=[number of contiguous periods above threshold]
-        List of times, each denoting the start of a period where velocity is above threshold. 
+        List of times, each denoting the start of a period where velocity is above threshold.
     period_end_times : list
         List of times, each denoting the end of a period where velocity is above threshold.
     """
     df = pd.DataFrame({k: pd.Series(v) for k, v in expt["x"]["rosdata"].items()})
-    df = df.drop(index=["name","startTs","stopTs"])
+    df = df.drop(index=["name", "startTs", "stopTs"])
 
     # create a new column 'above_threshold' to indicate whether the value is above the threshold
-    df['above_threshold'] = df['vel'] > threshold
+    df["above_threshold"] = df["vel"] > threshold
 
     # find the periods where the value rises above and then dips below the threshold
-    df['rise_event'] = np.ceil(df['above_threshold'].diff()[1:].ne(0).cumsum()/2)
+    df["rise_event"] = np.ceil(df["above_threshold"].diff()[1:].ne(0).cumsum() / 2)
 
     # Compute the lengths of the rises
-    rise_lengths_microseconds = df[df['above_threshold']].groupby('rise_event').apply(lambda x: x['encTimes'].max() - x['encTimes'].min())
+    rise_lengths_microseconds = (
+        df[df["above_threshold"]]
+        .groupby("rise_event")
+        .apply(lambda x: x["encTimes"].max() - x["encTimes"].min())
+    )
 
-
-    df['above_threshold'] = df['above_threshold'].astype(int)
+    df["above_threshold"] = df["above_threshold"].astype(int)
 
     # Convert lengths from microseconds to seconds
     rise_lengths_in_seconds = rise_lengths_microseconds / 1_000_000
 
-
     # then you can analyze the lengths, for example, plot a histogram
     counts, bins, _ = plt.hist(rise_lengths_in_seconds, bins=300)
-    plt.xlabel('Length of rise events (seconds)')
-    plt.ylabel('Count')
+    plt.xlabel("Length of rise events (seconds)")
+    plt.ylabel("Count")
 
     print(f"Mean rise length: {rise_lengths_in_seconds.mean()} seconds")
     print(f"Median rise length: {rise_lengths_in_seconds.median()} seconds")
@@ -314,7 +321,7 @@ def _apply_velocity_threshold(expt, threshold=5):
 
 
 def _get_sampling_times(period_start_times, period_end_times, timestep_microseconds):
-    """ Get the sampling times for the data.
+    """Get the sampling times for the data.
 
     This function finds the sampling times for the data, given the start and end times of the periods where velocity is above a threshold and the timestep.
 
@@ -346,7 +353,7 @@ def _get_sampling_times(period_start_times, period_end_times, timestep_microseco
 
 
 def _average_variable(variable_to_average, recorded_times, sampling_times):
-    """ Average values of a variable for each valid timestep.
+    """Average values of a variable for each valid timestep.
 
     Parameters
     ----------
@@ -373,7 +380,7 @@ def _average_variable(variable_to_average, recorded_times, sampling_times):
 
 
 def get_place_field_centers(neural_activity, task_variable):
-    """ Get the center of mass of the place fields of a list of neurons.
+    """Get the center of mass of the place fields of a list of neurons.
 
     Parameters
     ----------
@@ -389,13 +396,10 @@ def get_place_field_centers(neural_activity, task_variable):
 
     weights = neural_activity.T
 
-    points = np.tile(task_variable,(weights.shape[0], 1))
+    points = np.tile(task_variable, (weights.shape[0], 1))
 
     weighted_center_of_mass = np.average(points, weights=weights, axis=1)
 
     center_of_mass_indices = np.argmax(weights, axis=1)
 
     return weighted_center_of_mass, center_of_mass_indices
-
-
-
