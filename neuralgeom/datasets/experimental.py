@@ -93,6 +93,7 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
             neural_activity.append(neuron_i_activity)
 
         neural_activity = np.array(neural_activity).T
+        neural_activity = neural_activity/(timestep_microsec/1e6)
 
         logging.info(
             f"# - Saving neural_activity of shape {neural_activity.shape} to {neural_data_path}..."
@@ -263,8 +264,7 @@ def _apply_velocity_threshold(expt, threshold=5):
     period_end_times : list
         List of times, each denoting the end of a period where velocity is above threshold.
     """
-    df = pd.DataFrame({k: pd.Series(v) for k, v in expt["x"]["rosdata"].items()})
-    df = df.drop(index=["name", "startTs", "stopTs"])
+    df = pd.DataFrame({k: pd.Series(v) for k, v in expt["x"]["rosdata"].items() if isinstance(v, np.ndarray)})
 
     # create a new column 'above_threshold' to indicate whether the value is above the threshold
     df["above_threshold"] = df["vel"] > threshold

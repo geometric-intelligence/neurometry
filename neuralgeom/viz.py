@@ -580,12 +580,13 @@ def plot_persistence_diagrams(diagrams):
     ax.set_xlabel("Birth")
     ax.set_ylabel("Death")
     ax.set_title("Persistence Diagram")
+    max_limit = max(H_n.max() for H_n in diagrams)
     for n, H_n in enumerate(diagrams):
         birth_n = H_n[:, 0]
         death_n = H_n[:, 1]
-        ax.scatter(birth_n, death_n, s=10, label="H_" + str(n))
-        ax.plot([0, 1], [0, 1], transform=ax.transAxes, c="gray", ls="--")
-
+        ax.scatter(birth_n, death_n, s=10, label=f"Dimension {n}")
+        
+    ax.plot(np.arange(0, max_limit), np.arange(0, max_limit), c="gray", ls="--")
     ax.legend(loc="lower right")
 
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
@@ -619,7 +620,7 @@ def plot_grid_rate_maps(rate_maps):
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_grid_rate_maps.png"))
 
 
-def plot_activity_with_mi(expt_id, name, neural_activity, task_variable, mutual_info):
+def plot_activity_with_mi(expt_id, name, neural_activity, task_variable, mutual_info, norm="symlog"):
     """Visualize neural activity perisitimulus histogram and show mutual information between neural activity and task variable."""
     fig, (ax1, ax2) = plt.subplots(
         nrows=1, ncols=2, gridspec_kw={"width_ratios": [1, 30]}, figsize=(20, 10)
@@ -642,12 +643,12 @@ def plot_activity_with_mi(expt_id, name, neural_activity, task_variable, mutual_
         neural_activity.T,
         aspect="auto",
         cmap="viridis",
-        norm="symlog",
+        norm=norm,
         interpolation="none",
     )
     ax2.set_yticks([])
     ax2.set_title(
-        f"Neural Activity vs {name}, Experiment {expt_id} -- Symlog scale", fontsize=25
+        f"Neural Activity vs {name}, Experiment {expt_id} -- {norm} scale", fontsize=25
     )
     ax2.set_xticks(np.arange(len(task_variable))[::500])
     ax2.set_xticklabels(task_variable[::500].astype(int))
