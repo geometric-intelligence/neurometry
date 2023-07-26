@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.io as pio
 import torch
+import seaborn as sns
 
 FIGURES = os.path.join(os.getcwd(), "results/figures/")
 if not os.path.exists(FIGURES):
@@ -574,22 +575,44 @@ def plot_comparison_curvature_norms(
     return fig
 
 
-def plot_persistence_diagrams(diagrams):
-    fig = plt.figure()
-    ax = fig.add_subplot()
-    ax.set_xlabel("Birth")
-    ax.set_ylabel("Death")
-    ax.set_title("Persistence Diagram")
-    max_limit = max(H_n.max() for H_n in diagrams)
-    for n, H_n in enumerate(diagrams):
-        birth_n = H_n[:, 0]
-        death_n = H_n[:, 1]
-        ax.scatter(birth_n, death_n, s=10, label=f"Dimension {n}")
-        
-    ax.plot(np.arange(0, max_limit), np.arange(0, max_limit), c="gray", ls="--")
-    ax.legend(loc="lower right")
 
-    # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_persistence_diagrams.png"))
+def plot_persistence_diagrams(diagrams_df, density=False):
+    # Make a copy of the dataframe to avoid changing the original data
+    plot_df = diagrams_df.copy()
+
+    # Find the maximum finite value from the Death column
+    max_finite_value = plot_df.replace([np.inf, -np.inf], np.nan)["Death"].max()
+
+    # Replace infinities with a slightly larger value than the maximum finite value
+    plot_df.replace([np.inf, -np.inf], max_finite_value * 1.1, inplace=True)
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    ax.axhline(y=max_finite_value*1.1, color='red', linestyle='-',label="Infinity",alpha=0.5)
+
+    sns.scatterplot(data=plot_df,x="Birth",y="Death",hue="Dimension",ax=ax,palette="tab10",s=40,edgecolor="none")
+
+    ax.set_xlim(-max_finite_value/25, max_finite_value*1.2)
+    ax.set_ylim(0, max_finite_value*1.2)
+
+    sns.lineplot(x=[0, max_finite_value*1.2], y=[0, max_finite_value*1.2], color='black', linestyle='--')
+
+
+    if density:
+        sns.histplot(plot_df,x="Birth",y="Death",hue="Dimension",kde=True,fill=True, ax=ax,palette="tab10", alpha = 0.3)
+
+    handles, _ = ax.get_legend_handles_labels()
+
+
+    legend_labels = []
+    legend_labels.append("Infinity")
+    for dimension in plot_df["Dimension"].unique():
+        legend_labels.append(f"Dimension {dimension}")
+
+    
+    ax.legend(handles, legend_labels, loc="lower right")
+
+    ax.set_title("Persistence Diagram")
 
 
 def plot_grids(grids, arena_dims):

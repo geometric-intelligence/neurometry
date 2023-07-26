@@ -1,8 +1,7 @@
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-
-import time
+from decorators import timer
 
 import geomstats.backend as gs
 import gph
@@ -16,18 +15,6 @@ from datasets.synthetic import (
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
-
-def timer_func(func):
-    # This function shows the execution time of
-    # the function object passed
-    def wrap_func(*args, **kwargs):
-        t1 = time.time()
-        result = func(*args, **kwargs)
-        t2 = time.time()
-        print(f"Function {func.__name__!r} executed in {(t2-t1):.4f}s")
-        return result
-
-    return wrap_func
 
 
 def get_learned_immersion(model, config):
@@ -277,9 +264,3 @@ def compute_curvature_error(
     return error
 
 
-@timer_func
-def compute_persistence_diagrams(point_cloud, maxdim=2, n_threads=-1):
-    pers = gph.ripser_parallel(X=point_cloud, maxdim=maxdim, n_threads=n_threads)
-    diagrams = pers["dgms"]
-
-    return diagrams

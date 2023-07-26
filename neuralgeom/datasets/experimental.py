@@ -215,34 +215,6 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
 
     return neural_activity, labels
 
-    """Average values of recorded variables for each time-step.
-
-    Parameters
-    ----------
-    variable_to_average : array-like, shape=[n_times,]
-        Values of the variable to average.
-    variable_times : array-like, shape=[n_times,]
-        Times at which the variable has been recorded.
-    times : array-like, shape=[n_new_times,]
-        Times at which the variable is resampled.
-
-    Returns
-    -------
-    variable_averaged : array-like, shape=[n_new_times]
-        Values of the variable at times.
-    """
-    counts, bins, _ = plt.hist(variable_times, bins=times)
-    assert len(counts) == len(times) - 1, len(counts)
-    assert len(bins) == len(times), len(bins)
-
-    variable_averaged = []
-    cum_count = 0
-    for count in counts:
-        averaged = np.mean(variable_to_average[cum_count : cum_count + int(count)])
-        variable_averaged.append(averaged)
-        cum_count += int(count)
-    assert len(variable_averaged) == len(times) - 1
-    return np.array(variable_averaged)
 
 
 def _apply_velocity_threshold(expt, threshold=5):
@@ -379,6 +351,8 @@ def _average_variable(variable_to_average, recorded_times, sampling_times):
     return variable_averaged
 
 
+
+
 def get_place_field_centers(neural_activity, task_variable):
     """Get the center of mass of the place fields of a list of neurons.
 
@@ -394,12 +368,27 @@ def get_place_field_centers(neural_activity, task_variable):
     center_of_mass : array-like, shape=[number of neurons]
     """
 
+    # convert task_variable from degrees to radians
+    task_variable_rad = np.deg2rad(task_variable)
+
     weights = neural_activity.T
+    points_sin = np.tile(np.sin(task_variable_rad), (weights.shape[0], 1))
+    points_cos = np.tile(np.cos(task_variable_rad), (weights.shape[0], 1))
 
-    points = np.tile(task_variable, (weights.shape[0], 1))
+    # Compute weighted sum of sines and cosines
+    weighted_sum_sin = np.average(points_sin, weights=weights, axis=1)
+    weighted_sum_cos = np.average(points_cos, weights=weights, axis=1)
 
-    weighted_center_of_mass = np.average(points, weights=weights, axis=1)
+    # Compute average angle, taking care to handle the quadrant correctly
+    weighted_center_of_mass_rad = np.arctan2(weighted_sum_sin, weighted_sum_cos)
+
+    # Convert from radians back to degrees
+    weighted_center_of_mass = np.rad2deg(weighted_center_of_mass_rad)
+
+    # handle the negative angles from arctan2
+    weighted_center_of_mass = (weighted_center_of_mass + 360) % 360
 
     center_of_mass_indices = np.argmax(weights, axis=1)
 
     return weighted_center_of_mass, center_of_mass_indices
+
