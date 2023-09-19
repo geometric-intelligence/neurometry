@@ -1,4 +1,4 @@
-name: neuralgeom
+name: neurometry
 channels:
   - conda-forge
 dependencies:
