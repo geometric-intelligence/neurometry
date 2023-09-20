@@ -1,6 +1,6 @@
 # Neurometry #
 
-Neurometry is package for analysis of the geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
+Neurometry is an open-source Python package for analysis of the geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
 
 This repository containts the official PyTorch implementation of the paper "Quantifying Extrinsic Curvature in Neural Manifolds" (2023).
 
