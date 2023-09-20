@@ -1,6 +1,6 @@
 # Neurometry #
 
-The Neurometry package aims to analyze geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
+Neurometry is package for analysis of the geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
 
 This repository containts the official PyTorch implementation of the paper "Quantifying Extrinsic Curvature in Neural Manifolds" (2023).
 
@@ -24,7 +24,7 @@ We recommend using Anaconda for easy installation and use of the method. To crea
 
 ```
 conda env create -f environment.yml
-conda activate neuralgeom
+conda activate neurometry
 ```
 
 ## 🌎 Bibtex ##
