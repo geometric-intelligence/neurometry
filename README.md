@@ -1,6 +1,8 @@
-# Neural Geometry #
+# Neurometry #
 
-Official PyTorch implementation of the paper "Quantifying Local Extrinsic Curvature in Neural Manifolds" (2022).
+The Neurometry package aims to analyze geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
+
+This repository containts the official PyTorch implementation of the paper "Quantifying Extrinsic Curvature in Neural Manifolds" (2023).
 
 [Francisco Acosta](https://web.physics.ucsb.edu/~facosta/), [Sophia Sanborn](https://www.sophiasanborn.com/), [Khanh Dao Duc](https://kdaoduc.com/), [Manu Mahdav](https://www.manusmad.com/) and [Nina Miolane](https://www.ninamiolane.com/).
 
@@ -30,21 +32,15 @@ conda activate neuralgeom
 If this code is useful to your research, please cite:
 
 ```
-@misc{https://doi.org/10.48550/arxiv.2212.10414,
-  doi = {10.48550/ARXIV.2212.10414},
-  
-  url = {https://arxiv.org/abs/2212.10414},
-  
-  author = {Acosta, Francisco E. and Sanborn, Sophia and Duc, Khanh Dao and Madhav, Manu and Miolane, Nina},
-  
-  keywords = {Neurons and Cognition (q-bio.NC), FOS: Biological sciences, FOS: Biological sciences},
-  
-  title = {Quantifying Local Extrinsic Curvature in Neural Manifolds},
-  
-  publisher = {arXiv},
-  
-  year = {2022},
-  
-  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}
+@inproceedings{acostaQuantifyingExtrinsicCurvature2023,
+  title = {Quantifying {{Extrinsic Curvature}} in {{Neural Manifolds}}},
+  booktitle = {Proceedings of the {{IEEE}}/{{CVF Conference}} on {{Computer Vision}} and {{Pattern Recognition}}},
+  author = {Acosta, Francisco and Sanborn, Sophia and Duc, Khanh Dao and Madhav, Manu and Miolane, Nina},
+  year = {2023},
+  pages = {610--619},
+  urldate = {2023-07-07},
+  langid = {english},
+  file = {/Users/facosta/Zotero/storage/BUNYT2IF/Acosta et al. - 2023 - Quantifying Extrinsic Curvature in Neural Manifold.pdf}
 }
 ```
+
