@@ -2,29 +2,39 @@ name: neurometry
 channels:
   - conda-forge
 dependencies:
+  - python=3.9
   - pip
-  - python=3.8
-  - scikit-image>=0.19.2
   - pandas
+  - matplotlib
+  - numpy
+  - scikit-learn
+  - jupyter
+  - jupyterlab
   - pip:
     - black
-    - flake8
-    - flake8-docstrings
     - giotto-ph
     - git+https://github.com/geomstats/geomstats.git
     - hyperopt==0.2.5
     - isort
-    - jupyter
-    - jupyterlab-code-formatter
     - mat73
     - pre-commit
     - pytest
-    - ray
     - ray[tune]
     - torch
     - wandb
     - seaborn
     - plotly
+    - gdown
+    - fastparquet
+    - mtalg
+    - torchmetrics
+    - torchinfo
+    - git+https://github.com/johnmarktaylor91/torchlens
+    - kneed
+    - jupyter-black 
+    - adjustText
+    - git+https://github.com/ahwillia/netrep.git
+
     # pyLDDMM dependencies:
     # - cycler==0.10.0
     # - decorator==4.4.1
