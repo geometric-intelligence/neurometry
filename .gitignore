@@ -9,6 +9,10 @@ neurometry/curvature/data/binned/*.txt
 neurometry/curvature/data/binned/*.npy
 neurometry/curvature/data/data.zip
 neurometry/curvature/data/old_data.zip
+neurometry/rep_metrics/benchmarks/response/*
+neurometry/rep_metrics/benchmarks/stimulus/*
+
+
 
 
 # Wandb files
