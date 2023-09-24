@@ -12,6 +12,8 @@ neurometry/curvature/data/old_data.zip
 neurometry/rep_metrics/benchmarks/ceilings/*
 neurometry/rep_metrics/benchmarks/image_sets/*
 neurometry/rep_metrics/benchmarks/voxel_sets/*
+neurometry/rep_metrics/benchmarks/response/*
+neurometry/rep_metrics/benchmarks/stimulus/*
 
 
 
