@@ -161,22 +161,22 @@ def get_traintest_rdms(rdm_data, test_idx=None):
 
 ### (code by F. Acosta)
 
-def _compute_rsa_dissimilarity(i, j, rdm1, rdm2):
+def _compute_rsa_dissimilarity(i, j, rdm1, rdm2, rdm_compare_method):
     rdm1.cpu()
     rdm2.cpu()
-    rsa_dissimilarity = 1 - compare_rdms(rdm1, rdm2, method="pearson")
+    rsa_dissimilarity = 1 - compare_rdms(rdm1, rdm2, method=rdm_compare_method)
     return i, j, rsa_dissimilarity
 
 
 def _compute_rsa_dissimilarity_star(args):
     return _compute_rsa_dissimilarity(*args)
 
-def compute_rsa_pairwise_dissimilarities(neural_data, processes=None):
+def compute_rsa_pairwise_dissimilarities(neural_data, rdm_compute_method, rdm_compare_method, processes=None):
     functional_rois = list(neural_data.keys())
     rdms = {}
     for region in functional_rois:
         rdms[region] = compute_rdm(
-            neural_data[region].to_numpy().transpose(), method="pearson"
+            neural_data[region].to_numpy().transpose(), method=rdm_compute_method
         )
     rdms_list = list(rdms.values())
     
@@ -185,7 +185,7 @@ def compute_rsa_pairwise_dissimilarities(neural_data, processes=None):
     n_dists = n*(n-1)/2
 
     ij = itertools.combinations(range(n),2)
-    args = ((i,j, rdms_list[i], rdms_list[j]) for i, j in ij)
+    args = ((i,j, rdms_list[i], rdms_list[j], rdm_compare_method) for i, j in ij)
 
     print(f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes.")
     pbar = lambda x: tqdm(x, total=n_dists, desc="Computing distances")
