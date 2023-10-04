@@ -8,7 +8,6 @@ def nested_dict():
     return defaultdict(nested_dict)
 
 
-
 def all_rsa_geometry_matrices(neural_data,rdm_compute_methods,rdm_compare_methods):
     
     rsa_methods = list(itertools.product(rdm_compute_methods, rdm_compare_methods))

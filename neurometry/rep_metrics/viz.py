@@ -117,3 +117,17 @@ def convert_figure_to_image(fig, dpi=300):
 
     # Load image from buffer; convert to RGB
     return Image.open(buffer).convert("RGB")
+
+
+def plot_roi_frechet_mean(subject, surface, roi, frechet_mean):
+    center = frechet_mean
+    radius = 4
+
+    patch = surface.get_geodesic_patch(center, radius=radius)
+    subsurface = surface.create_subsurface(vertex_mask=patch["vertex_mask"])
+
+    data = subsurface.geodesic_distance([0]) + 20
+    dataset = cortex.Vertex(subsurface.lift_subsurface_data(data), subject, cmap="viridis")
+    cortex.quickshow(dataset, with_curvature=True, curvature_contrast=0.1,curvature_brightness=0.9)
+    plt.title(f"Frechet mean of {roi}")
+    plt.show()
