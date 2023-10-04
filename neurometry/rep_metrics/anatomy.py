@@ -1,5 +1,6 @@
 import cortex
 import multiprocessing
+from multiprocessing.pool import ThreadPool
 import itertools
 from tqdm import tqdm
 import numpy as np
@@ -31,6 +32,11 @@ def get_roi_vertices(subject,rois):
 
     return left_rois_vertices, right_rois_vertices
 
+def get_subjects_rois(subjects):
+    subject_rois = {}
+    for subject in subjects:
+        subject_rois[subject] = list(cortex.get_roi_verts(subject).keys())
+    return subject_rois
 
 
 def compute_frechet_mean(roi_surface, hemi="left"):
@@ -71,7 +77,7 @@ def compute_all_frechet_means(subject, surface, functional_rois):
 
 
 def _compute_cortex_geodesic_dist(i, j, surface, frechet_mean_id_i, frechet_mean_id_j):
-    dists_i = surface.geodesic_disstance([frechet_mean_id_i])
+    dists_i = surface.geodesic_distance([frechet_mean_id_i])
     dist_ij = dists_i[frechet_mean_id_j]
     return i, j, dist_ij
 
@@ -80,13 +86,15 @@ def _compute_cortex_geodesic_dist_star(args):
     return _compute_cortex_geodesic_dist(*args)
 
 
-def compute_cortex_pairwise_geodesic_dist(subject, functional_rois, processes=None):
-
+def compute_cortex_pairwise_geodesic_dist(subject, functional_rois, frechet_means=None, processes=None):
+    
     surfs = [cortex.polyutils.Surface(*d) for d in cortex.db.get_surf(subject, "fiducial")]
-
     left, right = surfs
-
-    left_rois_frechet_mean_ids = compute_all_frechet_means(subject, left, functional_rois)
+    if frechet_means is None:
+        left_rois_frechet_mean_ids = compute_all_frechet_means(subject, left, functional_rois)
+    else:
+        left_rois_frechet_mean_ids = frechet_means
+    
     frechet_mean_ids_list = list(left_rois_frechet_mean_ids.values())
     
     n = len(functional_rois)
@@ -99,7 +107,7 @@ def compute_cortex_pairwise_geodesic_dist(subject, functional_rois, processes=No
     print(f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes.")
     pbar = lambda x: tqdm(x, total=n_dists, desc="Computing distances on left cortex")
 
-    with multiprocessing.pool.ThreadPool(processes=processes) as pool:
+    with ThreadPool(processes=processes) as pool:
         results = []
         for result in pbar(pool.imap_unordered(_compute_cortex_geodesic_dist_star, args)):
             results.append(result)
