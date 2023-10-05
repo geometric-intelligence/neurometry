@@ -3,7 +3,7 @@ import itertools
 from collections import defaultdict
 from .load_nsd import load_nsd, get_neural_data
 from .dissimilarity import compute_rsa_pairwise_dissimilarities, compute_shape_pairwise_distances
-
+from .anatomy import get_subjects_rois, get_roi_list_intersection, compute_cortex_pairwise_geodesic_dist
 
 # NSD data
 target_regions = config.target_regions
@@ -42,7 +42,13 @@ def shape_pairwise_matrices():
 
     return shape_final_matrices
 
-def anatomical_distance_matrices():
-    return 
 
+def anatomical_distance_matrices():
+    anatomical_rois = get_subjects_rois(subjects)
+    rois = get_roi_list_intersection(functional_rois, anatomical_rois)
+    anatomy_final_matrices = defaultdict(_nested_dict)
+    for subject in subjects:
+        cortex_pairwise_dists = compute_cortex_pairwise_geodesic_dist(subject, functional_rois)
+        anatomy_final_matrices[subject] = cortex_pairwise_dists
+    return anatomy_final_matrices
 
