@@ -5,8 +5,9 @@ from PIL import Image
 import cortex
 
 
-
-def plot_pca_spectrum(region, slope, y_intercept, log_ranks, log_eigvals, knee_x, knee_y):
+def plot_pca_spectrum(
+    region, slope, y_intercept, log_ranks, log_eigvals, knee_x, knee_y
+):
     # Create a scatter plot of the log-ranks and log-eigenvalues
     plt.scatter(log_ranks, log_eigvals, label="Data", alpha=0.5)
 
@@ -32,9 +33,11 @@ def plot_pca_spectrum(region, slope, y_intercept, log_ranks, log_eigvals, knee_x
 
 def plot_pairwise_dis_matrix(pairwise_dis_matrix, functional_rois, method):
     plt.imshow(pairwise_dis_matrix)
-    plt.xticks(ticks=np.arange(len(functional_rois)), labels=functional_rois, rotation=90)
+    plt.xticks(
+        ticks=np.arange(len(functional_rois)), labels=functional_rois, rotation=90
+    )
     plt.yticks(ticks=np.arange(len(functional_rois)), labels=functional_rois)
-    if method == "RSA": 
+    if method == "RSA":
         matrix_type = "Dissimilarity"
     if method == "Shape":
         matrix_type = "Distance"
@@ -47,8 +50,8 @@ def plot_pca_distortions(corrs, stresses, corrs_dim=None, stresses_dim=None):
     fig, axs = plt.subplots(1, 2, figsize=(10, 4))
 
     if corrs_dim is not None:
-        axs[0].set_xlim(-1,corrs_dim+5)
-        axs[0].axvline(x=corrs_dim, color="red",linestyle="--")
+        axs[0].set_xlim(-1, corrs_dim + 5)
+        axs[0].axvline(x=corrs_dim, color="red", linestyle="--")
     axs[0].plot(corrs.T)
     axs[0].grid()
     axs[0].set_xlabel("Dimensions kept")
@@ -56,8 +59,8 @@ def plot_pca_distortions(corrs, stresses, corrs_dim=None, stresses_dim=None):
     axs[0].set_title("Correlation")
 
     if stresses_dim is not None:
-        axs[1].set_xlim(-1,stresses_dim+5)
-        axs[1].axvline(x=stresses_dim, color="red",linestyle="--")
+        axs[1].set_xlim(-1, stresses_dim + 5)
+        axs[1].axvline(x=stresses_dim, color="red", linestyle="--")
     axs[1].plot(stresses.T)
     axs[1].grid()
     axs[1].set_xlabel("Dimensions kept")
@@ -110,6 +113,7 @@ def plot_ROI_flatmap(
 
     return plot_data, fig
 
+
 def convert_figure_to_image(fig, dpi=300):
     buffer = BytesIO()
     fig.savefig(buffer, format="png", dpi=dpi)
@@ -127,7 +131,11 @@ def plot_roi_frechet_mean(subject, surface, roi, frechet_mean):
     subsurface = surface.create_subsurface(vertex_mask=patch["vertex_mask"])
 
     data = subsurface.geodesic_distance([0]) + 20
-    dataset = cortex.Vertex(subsurface.lift_subsurface_data(data), subject, cmap="viridis")
-    cortex.quickshow(dataset, with_curvature=True, curvature_contrast=0.1,curvature_brightness=0.9)
+    dataset = cortex.Vertex(
+        subsurface.lift_subsurface_data(data), subject, cmap="viridis"
+    )
+    cortex.quickshow(
+        dataset, with_curvature=True, curvature_contrast=0.1, curvature_brightness=0.9
+    )
     plt.title(f"Frechet mean of {roi}")
     plt.show()

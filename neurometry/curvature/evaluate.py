@@ -16,7 +16,6 @@ from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
 
-
 def get_learned_immersion(model, config):
     """Define immersion from latent angles to neural manifold."""
 
@@ -262,5 +261,3 @@ def compute_curvature_error(
     end_time = time.time()
     # print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return error
-
-
