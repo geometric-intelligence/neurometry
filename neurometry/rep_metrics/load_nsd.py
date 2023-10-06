@@ -3,7 +3,6 @@ import pandas as pd
 
 
 def load_nsd(target_regions):
-
     combined_response_data = []
     combined_metadata = []
 
@@ -26,14 +25,14 @@ def load_nsd(target_regions):
 
 
 def get_neural_data(subjects, rois, voxel_metadata, response_data):
-
     subject_ids = [int(s.split("subj")[1]) for s in subjects]
 
     neural_data = {}
-    for subject_id in subject_ids:
+    for i, subject_id in enumerate(subject_ids):
         subject_neural_data = {}
+        subject_rois = rois[subjects[i]]
         subject_dataframe = voxel_metadata[voxel_metadata["subj_id"] == subject_id]
-        for region in rois:
+        for region in subject_rois:
             region_voxel_idxs = subject_dataframe[
                 subject_dataframe[region] == True
             ].index

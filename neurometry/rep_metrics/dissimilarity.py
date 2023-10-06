@@ -8,13 +8,18 @@ from torchmetrics.functional import spearman_corrcoef, pearson_corrcoef
 from torchmetrics.functional import concordance_corrcoef, explained_variance
 
 from .structural import convert_to_tensor
-from .dim_reduction import TorchPCA
+
 
 from netrep.metrics import LinearMetric
 import itertools
 import multiprocessing
 from tqdm import tqdm
+from collections import defaultdict
+from .dim_reduction import TorchPCA
 
+
+def _nested_dict():
+    return defaultdict(str)
 
 
 ### RSA: Compare RDMS (code by C. Conwell) ------------------------------------------------------------
@@ -194,17 +199,16 @@ def _compute_rsa_dissimilarity_star(args):
 
 
 def compute_rsa_pairwise_dissimilarities(
-    neural_data, rdm_compute_method, rdm_compare_method, processes=None
+    neural_data, rois, rdm_compute_method, rdm_compare_method, processes=None
 ):
-    functional_rois = list(neural_data.keys())
     rdms = {}
-    for region in functional_rois:
+    for region in rois:
         rdms[region] = compute_rdm(
             neural_data[region].to_numpy().transpose(), method=rdm_compute_method
         )
     rdms_list = list(rdms.values())
 
-    n = len(functional_rois)
+    n = len(rois)
 
     n_dists = n * (n - 1) / 2
 
@@ -287,7 +291,7 @@ class TorchCKA:
 ### Shape-Based Metrics (code by F. Acosta, adapted from https://github.com/ahwillia/netrep) -----------------------------------------------------------
 
 
-def train_test_split(neural_data, stimulus, seed=2023):
+def train_test_split(neural_data, rois, stimulus, seed=2023):
     """Create 80/20 train/test data split.
 
     Parameters
@@ -304,7 +308,6 @@ def train_test_split(neural_data, stimulus, seed=2023):
     """
 
     n_features, n_classes = next(iter(neural_data.values())).shape
-    functional_rois = list(neural_data.keys())
 
     seed = 2023
     rng = np.random.default_rng(seed)
@@ -316,13 +319,11 @@ def train_test_split(neural_data, stimulus, seed=2023):
     test_images = stimulus.loc[idx_test]["image_id"].astype(str)
 
     train_dict = {
-        region: neural_data[region][train_images].to_numpy().T
-        for region in functional_rois
+        region: neural_data[region][train_images].to_numpy().T for region in rois
     }
 
     test_dict = {
-        region: neural_data[region][test_images].to_numpy().T
-        for region in functional_rois
+        region: neural_data[region][test_images].to_numpy().T for region in rois
     }
 
     train_data = list(train_dict.values())
@@ -330,35 +331,10 @@ def train_test_split(neural_data, stimulus, seed=2023):
 
     return train_data, test_data
 
-def _shape_preprocess(subjects, neural_data):
-    functional_rois = list(neural_data[list(neural_data.keys())[0]].keys())
-    neural_data_region_pcas = {}
-    for subject in subjects:
-        for region in functional_rois:
-            pca = TorchPCA(device="cuda").fit(neural_data[region].to_numpy())
-            neural_data_region_pcas[region] = pca
-            X = (neural_data_region_pcas[region].get_top_n_components(n_components=n_components).T)
 
-
-    preprocessed_neural_data = None
-    return preprocessed_neural_data
-
-    n_components = 211
-
-pca_reduced_neural_data = {}
-
-for region in functional_rois:
-    X = (
-        neural_data_region_pcas[region]
-        .get_top_n_components(n_components=n_components)
-        .T
-    )
-    pca_reduced_neural_data[region] = pd.DataFrame(
-        X.cpu(), columns=neural_data[region].columns
-    )
-
-
-def compute_shape_pairwise_distances(neural_data, stimulus, alpha=1):
+def compute_shape_pairwise_distances(
+    preprocessed_shape_neural_data, rois, stimulus, alpha=1
+):
     """Compute matrix of pairwise shape-space distances between N networks.
 
     Parameters
@@ -378,9 +354,9 @@ def compute_shape_pairwise_distances(neural_data, stimulus, alpha=1):
 
     metric = LinearMetric(alpha=alpha, center_columns=True, score_method="angular")
 
-    preprocessed_neural_data = _shape_preprocess(neural_data)
-
-    train_data, test_data = train_test_split(preprocessed_neural_data, stimulus)
+    train_data, test_data = train_test_split(
+        preprocessed_shape_neural_data, rois, stimulus
+    )
 
     n = len(train_data)
     print(f"We have n = {n} cortical regions;")
@@ -391,3 +367,27 @@ def compute_shape_pairwise_distances(neural_data, stimulus, alpha=1):
     )
 
     return pairwise_dist_test
+
+
+def shape_preprocess(neural_data, subjects, rois):
+    subject_ids = [int(s.split("subj")[1]) for s in subjects]
+    preprocessed_neural_data = defaultdict(_nested_dict)
+    pcas = defaultdict(_nested_dict)
+    print("PCAing neural data for shape metrics analysis...")
+    for i, subject_id in enumerate(subject_ids):
+        num_voxels = []
+
+        for region in rois[subjects[i]]:
+            num_voxels.append(len(neural_data[subject_id][region]))
+        n_components = min(num_voxels)
+        for region in rois[subjects[i]]:
+            pca = TorchPCA(device="cuda").fit(
+                neural_data[subject_id][region].to_numpy()
+            )
+            X = pca.get_top_n_components(n_components=n_components).T
+            preprocessed_neural_data[subject_id][region] = pd.DataFrame(
+                X.cpu(), columns=neural_data[subject_id][region].columns
+            )
+            pcas[subject_id][region] = pca
+    print("done!")
+    return preprocessed_neural_data, pcas
