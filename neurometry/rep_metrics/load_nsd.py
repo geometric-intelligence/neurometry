@@ -25,7 +25,10 @@ def load_nsd(target_regions):
     return response_data, voxel_metadata, stimulus_data, functional_rois
 
 
-def get_neural_data(subject_ids, rois, voxel_metadata, response_data):
+def get_neural_data(subjects, rois, voxel_metadata, response_data):
+
+    subject_ids = [int(s.split("subj")[1]) for s in subjects]
+
     neural_data = {}
     for subject_id in subject_ids:
         subject_neural_data = {}

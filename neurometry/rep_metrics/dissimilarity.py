@@ -8,11 +8,14 @@ from torchmetrics.functional import spearman_corrcoef, pearson_corrcoef
 from torchmetrics.functional import concordance_corrcoef, explained_variance
 
 from .structural import convert_to_tensor
+from .dim_reduction import TorchPCA
 
 from netrep.metrics import LinearMetric
 import itertools
 import multiprocessing
 from tqdm import tqdm
+
+
 
 ### RSA: Compare RDMS (code by C. Conwell) ------------------------------------------------------------
 
@@ -327,9 +330,32 @@ def train_test_split(neural_data, stimulus, seed=2023):
 
     return train_data, test_data
 
-def _shape_preprocess(neural_data):
+def _shape_preprocess(subjects, neural_data):
+    functional_rois = list(neural_data[list(neural_data.keys())[0]].keys())
+    neural_data_region_pcas = {}
+    for subject in subjects:
+        for region in functional_rois:
+            pca = TorchPCA(device="cuda").fit(neural_data[region].to_numpy())
+            neural_data_region_pcas[region] = pca
+            X = (neural_data_region_pcas[region].get_top_n_components(n_components=n_components).T)
+
+
     preprocessed_neural_data = None
     return preprocessed_neural_data
+
+    n_components = 211
+
+pca_reduced_neural_data = {}
+
+for region in functional_rois:
+    X = (
+        neural_data_region_pcas[region]
+        .get_top_n_components(n_components=n_components)
+        .T
+    )
+    pca_reduced_neural_data[region] = pd.DataFrame(
+        X.cpu(), columns=neural_data[region].columns
+    )
 
 
 def compute_shape_pairwise_distances(neural_data, stimulus, alpha=1):

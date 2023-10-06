@@ -27,7 +27,7 @@ def rsa_pairwise_matrices():
     rsa_final_matrices = defaultdict(_nested_dict)
     for subject in subjects:
         for rsa_type in rsa_types:
-            rsa_type_name = result = "_".join(rsa_type)
+            rsa_type_name = "_".join(rsa_type)
             rsa_pairwise_dissimilarity = compute_rsa_pairwise_dissimilarities(neural_data, rsa_type[0], rsa_type[1])
             rsa_final_matrices[subject][rsa_type_name] = rsa_pairwise_dissimilarity
     return rsa_final_matrices
@@ -42,13 +42,16 @@ def shape_pairwise_matrices():
 
     return shape_final_matrices
 
+def cka_pairwise_matrices():
+    return NotImplementedError
+
 
 def anatomical_distance_matrices():
     anatomical_rois = get_subjects_rois(subjects)
     rois = get_roi_list_intersection(functional_rois, anatomical_rois)
     anatomy_final_matrices = defaultdict(_nested_dict)
     for subject in subjects:
-        cortex_pairwise_dists = compute_cortex_pairwise_geodesic_dist(subject, functional_rois)
+        cortex_pairwise_dists = compute_cortex_pairwise_geodesic_dist(subject, rois)
         anatomy_final_matrices[subject] = cortex_pairwise_dists
     return anatomy_final_matrices
 
