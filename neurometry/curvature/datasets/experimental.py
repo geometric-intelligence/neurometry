@@ -93,7 +93,7 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
             neural_activity.append(neuron_i_activity)
 
         neural_activity = np.array(neural_activity).T
-        neural_activity = neural_activity/(timestep_microsec/1e6)
+        neural_activity = neural_activity / (timestep_microsec / 1e6)
 
         logging.info(
             f"# - Saving neural_activity of shape {neural_activity.shape} to {neural_data_path}..."
@@ -216,7 +216,6 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
     return neural_activity, labels
 
 
-
 def _apply_velocity_threshold(expt, threshold=5):
     """Apply a velocity threshold to the data.
 
@@ -236,7 +235,13 @@ def _apply_velocity_threshold(expt, threshold=5):
     period_end_times : list
         List of times, each denoting the end of a period where velocity is above threshold.
     """
-    df = pd.DataFrame({k: pd.Series(v) for k, v in expt["x"]["rosdata"].items() if isinstance(v, np.ndarray)})
+    df = pd.DataFrame(
+        {
+            k: pd.Series(v)
+            for k, v in expt["x"]["rosdata"].items()
+            if isinstance(v, np.ndarray)
+        }
+    )
 
     # create a new column 'above_threshold' to indicate whether the value is above the threshold
     df["above_threshold"] = df["vel"] > threshold
@@ -351,7 +356,6 @@ def _average_variable(variable_to_average, recorded_times, sampling_times):
     return variable_averaged
 
 
-
 def get_place_field_centers(neural_activity, task_variable):
     """Get the center of mass of the place fields of a list of neurons.
 
@@ -390,4 +394,3 @@ def get_place_field_centers(neural_activity, task_variable):
     center_of_mass_indices = np.argmax(weights, axis=1)
 
     return weighted_center_of_mass, center_of_mass_indices
-

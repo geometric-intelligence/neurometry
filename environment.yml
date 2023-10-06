@@ -34,6 +34,10 @@ dependencies:
     - jupyter-black 
     - adjustText
     - git+https://github.com/ahwillia/netrep.git
+    - cupy-cuda11x
+    - cython
+    - nibabel
+    - pycortex
 
     # pyLDDMM dependencies:
     # - cycler==0.10.0

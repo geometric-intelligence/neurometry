@@ -575,7 +575,6 @@ def plot_comparison_curvature_norms(
     return fig
 
 
-
 def plot_persistence_diagrams(diagrams_df, density=False):
     # Make a copy of the dataframe to avoid changing the original data
     plot_df = diagrams_df.copy()
@@ -588,28 +587,55 @@ def plot_persistence_diagrams(diagrams_df, density=False):
 
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    ax.axhline(y=max_finite_value*1.1, color='red', linestyle='-',label="Infinity",alpha=0.5)
+    ax.axhline(
+        y=max_finite_value * 1.1,
+        color="red",
+        linestyle="-",
+        label="Infinity",
+        alpha=0.5,
+    )
 
-    sns.scatterplot(data=plot_df,x="Birth",y="Death",hue="Dimension",ax=ax,palette="tab10",s=40,edgecolor="none")
+    sns.scatterplot(
+        data=plot_df,
+        x="Birth",
+        y="Death",
+        hue="Dimension",
+        ax=ax,
+        palette="tab10",
+        s=40,
+        edgecolor="none",
+    )
 
-    ax.set_xlim(-max_finite_value/25, max_finite_value*1.2)
-    ax.set_ylim(0, max_finite_value*1.2)
+    ax.set_xlim(-max_finite_value / 25, max_finite_value * 1.2)
+    ax.set_ylim(0, max_finite_value * 1.2)
 
-    sns.lineplot(x=[0, max_finite_value*1.2], y=[0, max_finite_value*1.2], color='black', linestyle='--')
-
+    sns.lineplot(
+        x=[0, max_finite_value * 1.2],
+        y=[0, max_finite_value * 1.2],
+        color="black",
+        linestyle="--",
+    )
 
     if density:
-        sns.histplot(plot_df,x="Birth",y="Death",hue="Dimension",kde=True,fill=True, ax=ax,palette="tab10", alpha = 0.3)
+        sns.histplot(
+            plot_df,
+            x="Birth",
+            y="Death",
+            hue="Dimension",
+            kde=True,
+            fill=True,
+            ax=ax,
+            palette="tab10",
+            alpha=0.3,
+        )
 
     handles, _ = ax.get_legend_handles_labels()
-
 
     legend_labels = []
     legend_labels.append("Infinity")
     for dimension in plot_df["Dimension"].unique():
         legend_labels.append(f"Dimension {dimension}")
 
-    
     ax.legend(handles, legend_labels, loc="lower right")
 
     ax.set_title("Persistence Diagram")
@@ -643,7 +669,9 @@ def plot_grid_rate_maps(rate_maps):
     # plt.savefig(os.path.join(FIGURES, f"{config.results_prefix}_grid_rate_maps.png"))
 
 
-def plot_activity_with_mi(expt_id, name, neural_activity, task_variable, mutual_info, norm="symlog"):
+def plot_activity_with_mi(
+    expt_id, name, neural_activity, task_variable, mutual_info, norm="symlog"
+):
     """Visualize neural activity perisitimulus histogram and show mutual information between neural activity and task variable."""
     fig, (ax1, ax2) = plt.subplots(
         nrows=1, ncols=2, gridspec_kw={"width_ratios": [1, 30]}, figsize=(20, 10)

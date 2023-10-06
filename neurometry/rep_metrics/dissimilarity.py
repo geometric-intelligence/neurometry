@@ -9,62 +9,81 @@ from torchmetrics.functional import concordance_corrcoef, explained_variance
 
 from .structural import convert_to_tensor
 
+
 from netrep.metrics import LinearMetric
 import itertools
 import multiprocessing
 from tqdm import tqdm
+from collections import defaultdict
+from .dim_reduction import TorchPCA
+
+
+def _nested_dict():
+    return defaultdict(str)
+
 
 ### RSA: Compare RDMS (code by C. Conwell) ------------------------------------------------------------
 
-_compare_rdms_by = {'spearman': spearman_corrcoef,
-                    'pearson': pearson_corrcoef,
-                    'concordance': concordance_corrcoef}
+_compare_rdms_by = {
+    "spearman": spearman_corrcoef,
+    "pearson": pearson_corrcoef,
+    "concordance": concordance_corrcoef,
+}
+
 
 def extract_rdv(X):
     return X[torch.triu(torch.ones_like(X, dtype=bool), diagonal=1)]
 
-def compare_rdms(rdm1, rdm2, method = 'pearson', device = None, **method_kwargs):
+
+def compare_rdms(rdm1, rdm2, method="pearson", device=None, **method_kwargs):
     rdm1, rdm2 = convert_to_tensor(rdm1, rdm2)
-    
+
     if device is None:
         rdm2 = rdm2.to(rdm1.device)
     else:
         rdm1 = rdm1.to(device)
         rdm2 = rdm2.to(device)
-        
+
     rdm1_triu = extract_rdv(rdm1)
     rdm2_triu = extract_rdv(rdm2)
-    
+
     return _compare_rdms_by[method](rdm1_triu, rdm2_triu, **method_kwargs).item()
 
+
 def fisherz(r, eps=1e-5):
-    return torch.arctanh(r-eps)
+    return torch.arctanh(r - eps)
+
 
 def fisherz_inv(z):
     return torch.tanh(z)
 
-def average_rdms(rdms):
-    return (1 - fisherz_inv(fisherz(torch.stack([1 - rdm for rdm in rdms]))
-                            .mean(axis = 0, keepdims = True).squeeze()))
 
+def average_rdms(rdms):
+    return 1 - fisherz_inv(
+        fisherz(torch.stack([1 - rdm for rdm in rdms]))
+        .mean(axis=0, keepdims=True)
+        .squeeze()
+    )
 
 
 ### RSA: Calculate RDMS (code by C. Conwell) -----------------------------------------------------------
 
-def compute_rdm(data, method = 'pearson', norm=False, device=None, **rdm_kwargs):
+
+def compute_rdm(data, method="pearson", norm=False, device=None, **rdm_kwargs):
     rdm_args = (data, norm, device)
-    if method == 'euclidean':
+    if method == "euclidean":
         return compute_euclidean_rdm(*rdm_args, **rdm_kwargs)
-    if method == 'pearson':
+    if method == "pearson":
         return compute_pearson_rdm(*rdm_args, **rdm_kwargs)
-    if method == 'spearman':
+    if method == "spearman":
         return compute_spearman_rdm(*rdm_args, **rdm_kwargs)
-    if method == 'mahalanobis':
+    if method == "mahalanobis":
         return compute_mahalanobis_rdm(*rdm_args, **rdm_kwargs)
-    if method == 'concordance':
+    if method == "concordance":
         return compute_concordance_rdm(*rdm_args, **rdm_kwargs)
 
-def compute_mahalanobis_rdm(data, norm = False, device=None):
+
+def compute_mahalanobis_rdm(data, norm=False, device=None):
     data = convert_to_tensor(data, device=device)
     cov_matrix = torch.cov(data.T)
     inv_cov_matrix = torch.inverse(cov_matrix)
@@ -72,11 +91,13 @@ def compute_mahalanobis_rdm(data, norm = False, device=None):
     kernel = centered_data @ inv_cov_matrix @ centered_data.T
     rdm = torch.diag(kernel).unsqueeze(1) + torch.diag(kernel).unsqueeze(0) - 2 * kernel
     return rdm / data.shape[1] if norm else rdm
-    
+
+
 def compute_pearson_rdm(data, norm=False, device=None):
     data = convert_to_tensor(data, device=device)
     rdm = 1 - torch.corrcoef(data)
     return rdm / data.shape[1] if norm else rdm
+
 
 def compute_spearman_rdm(data, norm=False, device=None):
     data = convert_to_tensor(data, device=device)
@@ -84,11 +105,13 @@ def compute_spearman_rdm(data, norm=False, device=None):
     rdm = 1 - torch.corrcoef(rank_data)
     return rdm / data.shape[1] if norm else rdm
 
+
 def compute_euclidean_rdm(data, norm=False, device=None):
     data = convert_to_tensor(data, device=device)
     rdm = torch.cdist(data, data, p=2.0)
     rdm = rdm.fill_diagonal_(0)
     return rdm / data.shape[1] if norm else rdm
+
 
 def compute_concordance_rdm(data, norm=False, device=None):
     data = convert_to_tensor(data, device=device)
@@ -99,10 +122,11 @@ def compute_concordance_rdm(data, norm=False, device=None):
     numerator = 2 * corr_matrix * std_matrix[:, None] * std_matrix[None, :]
     denominator1 = var_matrix[:, None] + var_matrix[None, :]
     denominator2 = (mean_matrix[:, None] - mean_matrix[None, :]) ** 2
-    rdm =  1 - (numerator / (denominator1 + denominator2))
+    rdm = 1 - (numerator / (denominator1 + denominator2))
     return rdm / data.shape[1] if norm else rdm
 
-def get_rdms_by_indices(data, indices, method='pearson', device='cpu', **rdm_kwargs):
+
+def get_rdms_by_indices(data, indices, method="pearson", device="cpu", **rdm_kwargs):
     def get_rdm(data, index):
         if isinstance(data, (np.ndarray, torch.Tensor)):
             rdm_data = data[index, :].T
@@ -115,13 +139,16 @@ def get_rdms_by_indices(data, indices, method='pearson', device='cpu', **rdm_kwa
     if isinstance(indices, dict):
         rdms_dict = {}
         for key, index in indices.items():
-            rdms_dict[key] = get_rdms_by_indices(data, index, method, device, **rdm_kwargs)
+            rdms_dict[key] = get_rdms_by_indices(
+                data, index, method, device, **rdm_kwargs
+            )
         return rdms_dict
-    
+
+
 def clean_nan_rdms(rdm_data):
     def rdm_nan_check(rdm):
         return rdm if torch.sum(torch.isnan(rdm) == 0) else None
-    
+
     if isinstance(rdm_data, (np.ndarray, torch.Tensor)):
         return rdm_nan_check(rdm_data)
 
@@ -129,23 +156,23 @@ def clean_nan_rdms(rdm_data):
         cleaned_dict = {}
         for key, data in rdm_data.items():
             cleaned_data = clean_nan_rdms(data)
-            if cleaned_data is not None:  
+            if cleaned_data is not None:
                 cleaned_dict[key] = cleaned_data
         return cleaned_dict
-    
+
+
 def get_traintest_rdms(rdm_data, test_idx=None):
     def get_traintest_rdm(rdm, test_idx):
         if test_idx is not None:
             if isinstance(test_idx, np.ndarray):
                 test_idx = torch.tensor(test_idx)
-                
+
             train_idx = torch.ones(rdm.shape[0], dtype=torch.bool)
             train_idx[test_idx] = False
 
-            return {'train': rdm[train_idx, train_idx], 
-                    'test': rdm[test_idx, test_idx]}
-        
-        return {'train': rdm[::2, ::2], 'test': rdm[1::2, 1::2]}
+            return {"train": rdm[train_idx, train_idx], "test": rdm[test_idx, test_idx]}
+
+        return {"train": rdm[::2, ::2], "test": rdm[1::2, 1::2]}
 
     if isinstance(rdm_data, (np.ndarray, torch.Tensor)):
         return get_traintest_rdm(rdm_data, test_idx)
@@ -155,68 +182,73 @@ def get_traintest_rdms(rdm_data, test_idx=None):
         for key, data in rdm_data.items():
             rdms_dict[key] = get_traintest_rdms(data, test_idx)
         return rdms_dict
-    
-
 
 
 ### (code by F. Acosta)
 
-def _compute_rsa_dissimilarity(i, j, rdm1, rdm2):
+
+def _compute_rsa_dissimilarity(i, j, rdm1, rdm2, rdm_compare_method):
     rdm1.cpu()
     rdm2.cpu()
-    rsa_dissimilarity = 1 - compare_rdms(rdm1, rdm2, method="pearson")
+    rsa_dissimilarity = 1 - compare_rdms(rdm1, rdm2, method=rdm_compare_method)
     return i, j, rsa_dissimilarity
 
 
 def _compute_rsa_dissimilarity_star(args):
     return _compute_rsa_dissimilarity(*args)
 
-def compute_rsa_pairwise_dissimilarities(neural_data, processes=None):
-    functional_rois = list(neural_data.keys())
+
+def compute_rsa_pairwise_dissimilarities(
+    neural_data, rois, rdm_compute_method, rdm_compare_method, processes=None
+):
     rdms = {}
-    for region in functional_rois:
+    for region in rois:
         rdms[region] = compute_rdm(
-            neural_data[region].to_numpy().transpose(), method="pearson"
+            neural_data[region].to_numpy().transpose(), method=rdm_compute_method
         )
     rdms_list = list(rdms.values())
-    
-    n = len(functional_rois)
 
-    n_dists = n*(n-1)/2
+    n = len(rois)
 
-    ij = itertools.combinations(range(n),2)
-    args = ((i,j, rdms_list[i], rdms_list[j]) for i, j in ij)
+    n_dists = n * (n - 1) / 2
 
-    print(f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes.")
+    ij = itertools.combinations(range(n), 2)
+    args = ((i, j, rdms_list[i], rdms_list[j], rdm_compare_method) for i, j in ij)
+
+    print(
+        f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes."
+    )
     pbar = lambda x: tqdm(x, total=n_dists, desc="Computing distances")
 
     with multiprocessing.pool.ThreadPool(processes=processes) as pool:
         results = []
-        for result in pbar(pool.imap_unordered(_compute_rsa_dissimilarity_star, args)):
+        for result in pbar(pool.imap(_compute_rsa_dissimilarity_star, args)):
             results.append(result)
 
-
-
-    rsa_pairwise_dissimilarity = np.zeros((n,n))
+    rsa_pairwise_dissimilarity = np.zeros((n, n))
 
     for i, j, rsa_dissimilarity in results:
-        rsa_pairwise_dissimilarity[i,j], rsa_pairwise_dissimilarity[j,i] = rsa_dissimilarity, rsa_dissimilarity
+        rsa_pairwise_dissimilarity[i, j], rsa_pairwise_dissimilarity[j, i] = (
+            rsa_dissimilarity,
+            rsa_dissimilarity,
+        )
 
     return rsa_pairwise_dissimilarity
 
 
 ### CKA Methods (code by C. Conwell) -----------------------------------------------------------
 
-class TorchCKA():
+
+class TorchCKA:
     def __init__(self, device):
         self.device = device
-    
+
     def centering(self, K):
         n = K.shape[0]
         unit = torch.ones([n, n], device=self.device)
         I = torch.eye(n, device=self.device)
         H = I - unit / n
-        return torch.matmul(torch.matmul(H, K), H)  
+        return torch.matmul(torch.matmul(H, K), H)
 
     def rbf(self, X, sigma=None):
         GX = torch.matmul(X, X.T)
@@ -224,12 +256,14 @@ class TorchCKA():
         if sigma is None:
             mdist = torch.median(KX[KX != 0])
             sigma = math.sqrt(mdist)
-        KX *= - 0.5 / (sigma * sigma)
+        KX *= -0.5 / (sigma * sigma)
         KX = torch.exp(KX)
         return KX
 
-    def kernel_HSIC(self, X, Y, sigma):
-        return torch.sum(self.centering(self.rbf(X, sigma)) * self.centering(self.rbf(Y, sigma)))
+    def kernel_HSIC(self, X, Y, sigma=None):
+        return torch.sum(
+            self.centering(self.rbf(X, sigma)) * self.centering(self.rbf(Y, sigma))
+        )
 
     def linear_HSIC(self, X, Y):
         L_X = torch.matmul(X, X.T)
@@ -242,40 +276,87 @@ class TorchCKA():
         var2 = torch.sqrt(self.linear_HSIC(Y, Y))
 
         return hsic / (var1 * var2)
-    
+
     def kernel_CKA(self, X, Y, sigma=None):
         hsic = self.kernel_HSIC(X, Y, sigma)
         var1 = torch.sqrt(self.kernel_HSIC(X, X, sigma))
         var2 = torch.sqrt(self.kernel_HSIC(Y, Y, sigma))
         return hsic / (var1 * var2)
-    
+
     @staticmethod
     def cite_source():
-        print('See: https://github.com/jayroxis/CKA-similarity')
+        print("See: https://github.com/jayroxis/CKA-similarity")
 
 
+def _compute_cka_dissimilarity(i, j, rep_i, rep_j, cka_type):
+    cka = TorchCKA(device="cuda")
+    if cka_type == "linear_cka":
+        similarity = cka.linear_CKA(rep_i, rep_j)
+    elif cka_type == "kernel_cka":
+        similarity = cka.kernel_CKA(rep_i, rep_j)
+
+    cka_dissimilarity = 1 - similarity
+
+    return i, j, cka_dissimilarity
+
+
+def _compute_cka_dissimilarity_star(args):
+    return _compute_cka_dissimilarity(*args)
+
+
+def compute_cka_pairwise_dissimilarities(neural_data, rois, cka_type, processes=None):
+    n = len(rois)
+    n_dists = n * (n - 1) / 2
+
+    reps = {}
+    for region in rois:
+        X = neural_data[region].to_numpy().T
+        X = convert_to_tensor(X, device="cuda", dtype=torch.float32)
+        reps[region] = X
+    reps_list = list(reps.values())
+
+    ij = itertools.combinations(range(n), 2)
+    args = ((i, j, reps_list[i], reps_list[j], cka_type) for i, j in ij)
+    print(
+        f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes."
+    )
+    pbar = lambda x: tqdm(x, total=n_dists, desc="Computing distances")
+    with multiprocessing.pool.ThreadPool(processes=processes) as pool:
+        results = []
+        for result in pbar(pool.imap(_compute_cka_dissimilarity_star, args)):
+            results.append(result)
+
+    cka_pairwise_dissimilarity = np.zeros((n, n))
+
+    for i, j, cka_dissimilarity in results:
+        cka_pairwise_dissimilarity[i, j], cka_pairwise_dissimilarity[j, i] = (
+            cka_dissimilarity,
+            cka_dissimilarity,
+        )
+
+    return cka_pairwise_dissimilarity
 
 
 ### Shape-Based Metrics (code by F. Acosta, adapted from https://github.com/ahwillia/netrep) -----------------------------------------------------------
 
-def train_test_split(neural_data, stimulus, seed=2023):
+
+def train_test_split(neural_data, rois, stimulus, seed=2023):
     """Create 80/20 train/test data split.
 
     Parameters
     ----------
     neural_data : array-like, shape = []
         fMRI voxel activations.
-    stimulus : 
+    stimulus :
         stimulus data (NSD images)
-    
+
     Returns
     -------
-    train_data :  
-    test_data : 
+    train_data :
+    test_data :
     """
 
     n_features, n_classes = next(iter(neural_data.values())).shape
-    functional_rois = list(neural_data.keys())
 
     seed = 2023
     rng = np.random.default_rng(seed)
@@ -287,13 +368,11 @@ def train_test_split(neural_data, stimulus, seed=2023):
     test_images = stimulus.loc[idx_test]["image_id"].astype(str)
 
     train_dict = {
-        region: neural_data[region][train_images].to_numpy().T
-        for region in functional_rois
+        region: neural_data[region][train_images].to_numpy().T for region in rois
     }
-    
+
     test_dict = {
-        region: neural_data[region][test_images].to_numpy().T
-        for region in functional_rois
+        region: neural_data[region][test_images].to_numpy().T for region in rois
     }
 
     train_data = list(train_dict.values())
@@ -302,7 +381,9 @@ def train_test_split(neural_data, stimulus, seed=2023):
     return train_data, test_data
 
 
-def compute_pairwise_distances(neural_data, stimulus, alpha = 1):
+def compute_shape_pairwise_distances(
+    preprocessed_shape_neural_data, rois, stimulus, alpha=1
+):
     """Compute matrix of pairwise shape-space distances between N networks.
 
     Parameters
@@ -315,23 +396,47 @@ def compute_pairwise_distances(neural_data, stimulus, alpha = 1):
     Returns
     -------
     pairwise_distance_matrix : array-like, shape=[N,N]
-        NxN matrix of pairwise distances between N network representations. 
+        NxN matrix of pairwise distances between N network representations.
     """
-    
+
     os.environ["OMP_NUM_THREADS"] = "1"
 
     metric = LinearMetric(alpha=alpha, center_columns=True, score_method="angular")
 
-    train_data, test_data = train_test_split(neural_data, stimulus)
+    train_data, test_data = train_test_split(
+        preprocessed_shape_neural_data, rois, stimulus
+    )
 
     n = len(train_data)
     print(f"We have n = {n} cortical regions;")
     print(f"We need n(n-1)/2 = {int((n*(n-1)/2))} distance calculations")
 
-    pairwise_dist_train, pairwise_dist_test = metric.pairwise_distances(train_data, test_data)
+    pairwise_dist_train, pairwise_dist_test = metric.pairwise_distances(
+        train_data, test_data
+    )
 
     return pairwise_dist_test
 
 
+def shape_preprocess(neural_data, subjects, rois):
+    subject_ids = [int(s.split("subj")[1]) for s in subjects]
+    preprocessed_neural_data = defaultdict(_nested_dict)
+    pcas = defaultdict(_nested_dict)
+    print("PCAing neural data for shape metrics analysis...")
+    for i, subject_id in enumerate(subject_ids):
+        num_voxels = []
 
-
+        for region in rois[subjects[i]]:
+            num_voxels.append(len(neural_data[subject_id][region]))
+        n_components = min(num_voxels)
+        for region in rois[subjects[i]]:
+            pca = TorchPCA(device="cuda").fit(
+                neural_data[subject_id][region].to_numpy()
+            )
+            X = pca.get_top_n_components(n_components=n_components).T
+            preprocessed_neural_data[subject_id][region] = pd.DataFrame(
+                X.cpu(), columns=neural_data[subject_id][region].columns
+            )
+            pcas[subject_id][region] = pca
+    print("done!")
+    return preprocessed_neural_data, pcas

@@ -3,7 +3,7 @@ import time
 
 def timer(func):
     """Decorator function to time the execution of a function."""
-    
+
     def wrap_func(*args, **kwargs):
         t1 = time.time()
         result = func(*args, **kwargs)
