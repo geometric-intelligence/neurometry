@@ -58,9 +58,10 @@ def compute_frechet_mean(roi_surface, hemi="left"):
     return frechet_mean_id
 
 
-def compute_all_frechet_means(subject, surface, functional_rois):
+def compute_all_frechet_means(subject, surface, rois):
     left_rois_frechet_mean_ids = {}
-    for roi in functional_rois:
+    empty_rois = []
+    for roi in rois:
         vertex_mask = cortex.get_roi_verts(subject, roi=roi, mask=True)[roi]
         left_roi_surface = surface.create_subsurface(vertex_mask=vertex_mask)
         roi_pts_ids = cortex.get_roi_verts(subject, roi=roi)[roi]
@@ -69,12 +70,12 @@ def compute_all_frechet_means(subject, surface, functional_rois):
         if frechet_mean_id is not None:
             print("done.")
             frechet_mean_id_left = _ids_from_roi_to_hemi(roi_pts_ids, frechet_mean_id)
+            left_rois_frechet_mean_ids[roi] = frechet_mean_id_left
         else:
             print("skipping...")
-            frechet_mean_id_left = None
-        left_rois_frechet_mean_ids[roi] = frechet_mean_id_left
+            empty_rois.append(roi)
 
-    return left_rois_frechet_mean_ids
+    return left_rois_frechet_mean_ids, empty_rois
 
 
 def _compute_cortex_geodesic_dist(i, j, surface, frechet_mean_id_i, frechet_mean_id_j):
@@ -88,22 +89,24 @@ def _compute_cortex_geodesic_dist_star(args):
 
 
 def compute_cortex_pairwise_geodesic_dist(
-    subject, functional_rois, frechet_means=None, processes=None
+    subject, rois, frechet_means=None, processes=None
 ):
     surfs = [
         cortex.polyutils.Surface(*d) for d in cortex.db.get_surf(subject, "fiducial")
     ]
     left, right = surfs
     if frechet_means is None:
-        left_rois_frechet_mean_ids = compute_all_frechet_means(
-            subject, left, functional_rois
+        left_rois_frechet_mean_ids, empty_rois = compute_all_frechet_means(
+            subject, left, rois
         )
+
+        rois = [roi for roi in rois if roi not in empty_rois]
     else:
         left_rois_frechet_mean_ids = frechet_means
 
     frechet_mean_ids_list = list(left_rois_frechet_mean_ids.values())
 
-    n = len(functional_rois)
+    n = len(rois)
 
     n_dists = n * (n - 1) / 2
 
@@ -119,9 +122,7 @@ def compute_cortex_pairwise_geodesic_dist(
 
     with ThreadPool(processes=processes) as pool:
         results = []
-        for result in pbar(
-            pool.imap_unordered(_compute_cortex_geodesic_dist_star, args)
-        ):
+        for result in pbar(pool.imap(_compute_cortex_geodesic_dist_star, args)):
             results.append(result)
 
     cortex_pairwise_dists = np.zeros((n, n))
@@ -132,7 +133,7 @@ def compute_cortex_pairwise_geodesic_dist(
             geodesic_dist,
         )
 
-    return cortex_pairwise_dists
+    return cortex_pairwise_dists, empty_rois
 
 
 def get_roi_list_intersection(roi_list1, roi_list2):

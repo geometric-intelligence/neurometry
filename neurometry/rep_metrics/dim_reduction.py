@@ -153,7 +153,7 @@ def _state_space_pairwise_distances(X):
     return distances.flatten()
 
 
-def _compute_stress(d0, d1):
+def compute_stress(d0, d1):
     """Compute the stress between two distance matrices."""
     stress = np.sqrt(np.sum((d0 - d1) ** 2) / np.sum(d0**2))
     return stress
@@ -164,7 +164,7 @@ def _compute_one_dimension(args):
     d1 = _state_space_pairwise_distances(X_reduced[:, : k + 1])
 
     pearson_val = pearsonr(d0, d1)[0]
-    stress_val = _compute_stress(d0, d1)
+    stress_val = compute_stress(d0, d1)
 
     return pearson_val, stress_val
 

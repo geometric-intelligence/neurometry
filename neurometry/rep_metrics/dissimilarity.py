@@ -222,7 +222,7 @@ def compute_rsa_pairwise_dissimilarities(
 
     with multiprocessing.pool.ThreadPool(processes=processes) as pool:
         results = []
-        for result in pbar(pool.imap_unordered(_compute_rsa_dissimilarity_star, args)):
+        for result in pbar(pool.imap(_compute_rsa_dissimilarity_star, args)):
             results.append(result)
 
     rsa_pairwise_dissimilarity = np.zeros((n, n))
@@ -260,7 +260,7 @@ class TorchCKA:
         KX = torch.exp(KX)
         return KX
 
-    def kernel_HSIC(self, X, Y, sigma):
+    def kernel_HSIC(self, X, Y, sigma=None):
         return torch.sum(
             self.centering(self.rbf(X, sigma)) * self.centering(self.rbf(Y, sigma))
         )
@@ -286,6 +286,55 @@ class TorchCKA:
     @staticmethod
     def cite_source():
         print("See: https://github.com/jayroxis/CKA-similarity")
+
+
+def _compute_cka_dissimilarity(i, j, rep_i, rep_j, cka_type):
+    cka = TorchCKA(device="cuda")
+    if cka_type == "linear_cka":
+        similarity = cka.linear_CKA(rep_i, rep_j)
+    elif cka_type == "kernel_cka":
+        similarity = cka.kernel_CKA(rep_i, rep_j)
+
+    cka_dissimilarity = 1 - similarity
+
+    return i, j, cka_dissimilarity
+
+
+def _compute_cka_dissimilarity_star(args):
+    return _compute_cka_dissimilarity(*args)
+
+
+def compute_cka_pairwise_dissimilarities(neural_data, rois, cka_type, processes=None):
+    n = len(rois)
+    n_dists = n * (n - 1) / 2
+
+    reps = {}
+    for region in rois:
+        X = neural_data[region].to_numpy().T
+        X = convert_to_tensor(X, device="cuda", dtype=torch.float32)
+        reps[region] = X
+    reps_list = list(reps.values())
+
+    ij = itertools.combinations(range(n), 2)
+    args = ((i, j, reps_list[i], reps_list[j], cka_type) for i, j in ij)
+    print(
+        f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes."
+    )
+    pbar = lambda x: tqdm(x, total=n_dists, desc="Computing distances")
+    with multiprocessing.pool.ThreadPool(processes=processes) as pool:
+        results = []
+        for result in pbar(pool.imap(_compute_cka_dissimilarity_star, args)):
+            results.append(result)
+
+    cka_pairwise_dissimilarity = np.zeros((n, n))
+
+    for i, j, cka_dissimilarity in results:
+        cka_pairwise_dissimilarity[i, j], cka_pairwise_dissimilarity[j, i] = (
+            cka_dissimilarity,
+            cka_dissimilarity,
+        )
+
+    return cka_pairwise_dissimilarity
 
 
 ### Shape-Based Metrics (code by F. Acosta, adapted from https://github.com/ahwillia/netrep) -----------------------------------------------------------

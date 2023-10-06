@@ -25,6 +25,7 @@ wandb/*
 # Result files
 neurometry/curvature/results/*
 neurometry/neuralwarp/results/*
+neurometry/rep_metrics/results/*
 *.png
 *.pt
 

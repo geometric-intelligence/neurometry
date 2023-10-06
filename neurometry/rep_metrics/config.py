@@ -1,7 +1,6 @@
 ### NSD data -------
-target_regions = ["OTC", "EVC"]
-# subjects = ["subj01", "subj02", "subj05", "subj07"]
-subjects = ["subj02"]
+target_regions = ["OTC"]  # , "EVC"]
+subjects = ["subj01", "subj02", "subj05", "subj07"]
 
 
 ### RSA settings ----------
@@ -10,3 +9,6 @@ rdm_compare_types = ["pearson", "spearman", "concordance"]
 
 ### Shape metrics settings ----------
 alphas = [0, 0.5, 1]
+
+### CKA settings ----------
+cka_types = ["linear_cka", "kernel_cka"]
