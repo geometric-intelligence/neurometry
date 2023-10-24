@@ -4,6 +4,8 @@ neurometry/api_key.txt
 # Data files
 *.mat
 *.npy
+*.pkl
+*.jpg
 neurometry/curvature/data/raw/*.mat
 neurometry/curvature/data/binned/*.txt
 neurometry/curvature/data/binned/*.npy
