@@ -38,6 +38,7 @@ dependencies:
     - cython
     - nibabel
     - pycortex
+    - scikit-image
 
     # pyLDDMM dependencies:
     # - cycler==0.10.0
