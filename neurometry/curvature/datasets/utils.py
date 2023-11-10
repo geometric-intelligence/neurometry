@@ -1,8 +1,8 @@
 """Utils to import data from matlab."""
 
-import datasets.experimental
-import datasets.gridcells
-import datasets.synthetic
+import curvature.datasets.experimental
+import curvature.datasets.gridcells
+import curvature.datasets.synthetic
 import mat73
 import numpy as np
 import scipy.io

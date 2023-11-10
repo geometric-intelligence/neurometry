@@ -7,7 +7,7 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
-import neurometry.datasets.structures as structures
+import neurometry.curvature.datasets.structures as structures
 
 
 # TODO
