@@ -1,6 +1,9 @@
 # API KEY
 neurometry/api_key.txt
 
+
+*viewer*
+*vizcortex*
 # Data files
 *.mat
 *.npy
