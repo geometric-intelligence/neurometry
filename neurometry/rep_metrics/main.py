@@ -57,9 +57,28 @@ def _nested_dict_3():
     return defaultdict(dict)
 
 
-def _normalize_by_mean(matrix):
-    mean_val = np.mean(matrix)
-    return matrix / mean_val
+# def _normalize_by_mean(matrix):
+#     mean_val = np.mean(matrix)
+#     return matrix / mean_val
+
+def _normalize_by_frobenius_norm(matrix):
+    frobenius_norm = np.sqrt(np.sum(matrix ** 2))
+    return matrix / frobenius_norm
+
+
+# def _normalize_by_frobenius_norm(matrices):
+#     # Initialize an empty tensor of the same shape for the normalized matrices
+#     normalized_matrices = np.zeros_like(matrices)
+
+#     # Iterate over each matrix in the tensor
+#     for i in range(len(matrices)):
+#         # Compute the Frobenius norm of the current matrix
+#         frobenius_norm = np.sqrt(np.sum(matrices[i] ** 2))
+
+#         # Normalize the matrix and store it in the corresponding position in the normalized tensor
+#         normalized_matrices[i] = matrices[i] / frobenius_norm
+
+#     return normalized_matrices
 
 
 def anatomical_distance_matrices():
@@ -70,7 +89,7 @@ def anatomical_distance_matrices():
         cortex_pairwise_dists, empty_rois = compute_cortex_pairwise_geodesic_dist(
             subject, rois[subject]
         )
-        anatomy_final_matrices[subject] = _normalize_by_mean(cortex_pairwise_dists)
+        anatomy_final_matrices[subject] = _normalize_by_frobenius_norm(cortex_pairwise_dists)[0]
         empty_rois_dict[subject] = empty_rois
 
         print("done!")
@@ -103,7 +122,7 @@ def rsa_pairwise_matrices():
             rsa_pairwise_dissimilarity = compute_rsa_pairwise_dissimilarities(
                 neural_data[subject_ids[i]], rois[subject], rsa_type[0], rsa_type[1]
             )
-            matrix = _normalize_by_mean(rsa_pairwise_dissimilarity)
+            matrix = _normalize_by_frobenius_norm(rsa_pairwise_dissimilarity)
             stress = compute_stress(matrix, anatomy_final_matrices[subject])
             rsa_final_matrices[subject][rsa_type_name]["matrix"] = matrix
             rsa_final_matrices[subject][rsa_type_name]["stress"] = stress
@@ -111,6 +130,49 @@ def rsa_pairwise_matrices():
         print(f"finished RSA for subject{subject}.")
     print(f"-----finished RSA computations for all subjects-----")
     return rsa_final_matrices
+
+
+
+def rsa_pairwise_matrices(n_bootstrap_iterations=1000):
+    rsa_types = list(itertools.product(rdm_compute_types, rdm_compare_types))
+    rsa_types.remove(("spearman", "spearman"))  # WHY IS THIS ONE SO SLOW ???
+    rsa_final_matrices = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
+    for i, subject in enumerate(subjects):
+        for rsa_type in rsa_types:
+            rsa_type_name = "_".join(rsa_type)
+            print(f"Bootstrapping RSA {rsa_type_name} for subject {subject}...")
+
+            # Bootstrap loop
+            for _ in range(n_bootstrap_iterations):
+                # Create a bootstrapped sample of neural_data
+                bootstrapped_neural_data = bootstrap_neural_data(neural_data[subject_ids[i]])
+                
+                # Compute RSA pairwise dissimilarities for the bootstrapped sample
+                rsa_pairwise_dissimilarity = compute_rsa_pairwise_dissimilarities(
+                    bootstrapped_neural_data, rois[subject], rsa_type[0], rsa_type[1]
+                )
+                matrix = _normalize_by_frobenius_norm(rsa_pairwise_dissimilarity)
+                stress = compute_stress(matrix, anatomy_final_matrices[subject])
+                
+                # Store stress scores for each bootstrap iteration
+                rsa_final_matrices[subject][rsa_type_name]["stress"].append(stress)
+
+            print(f"Finished bootstrapping RSA for subject {subject}.")
+
+    # Calculate mean and confidence intervals from bootstrap results
+    for subject in subjects:
+        for rsa_type_name in rsa_final_matrices[subject]:
+            stress_scores = rsa_final_matrices[subject][rsa_type_name]["stress"]
+            mean_stress = np.mean(stress_scores)
+            ci_lower, ci_upper = np.percentile(stress_scores, [2.5, 97.5])  # 95% CI
+            rsa_final_matrices[subject][rsa_type_name]["mean_stress"] = mean_stress
+            rsa_final_matrices[subject][rsa_type_name]["ci_lower"] = ci_lower
+            rsa_final_matrices[subject][rsa_type_name]["ci_upper"] = ci_upper
+
+    print("-----Finished RSA computations with bootstrapping for all subjects-----")
+    return rsa_final_matrices
+
 
 
 def cka_pairwise_matrices():
@@ -123,7 +185,7 @@ def cka_pairwise_matrices():
             cka_pairwise_dissimilarity = compute_cka_pairwise_dissimilarities(
                 neural_data[subject_ids[i]], rois[subject], cka_type
             )
-            matrix = _normalize_by_mean(cka_pairwise_dissimilarity)
+            matrix = _normalize_by_frobenius_norm(cka_pairwise_dissimilarity)
             stress = compute_stress(matrix, anatomy_final_matrices[subject])
             cka_final_matrices[subject][cka_type]["matrix"] = matrix
             cka_final_matrices[subject][cka_type]["stress"] = stress
@@ -149,7 +211,7 @@ def shape_pairwise_matrices():
                 stimulus_data,
                 alpha,
             )
-            matrix = _normalize_by_mean(shape_pairwise_distance)
+            matrix = _normalize_by_frobenius_norm(shape_pairwise_distance)
             stress = compute_stress(matrix, anatomy_final_matrices[subject])
             shape_final_matrices[subject][f"shape_alpha={alpha}"]["matrix"] = matrix
             shape_final_matrices[subject][f"shape_alpha={alpha}"]["stress"] = stress
@@ -162,7 +224,7 @@ def shape_pairwise_matrices():
 
 if __name__ == "__main__":
     print("This script is being run directly.")
-    anatomy_final_matrices = anatomical_distance_matrices()
+    anatomy_final_matrices = anatomical_distance_matrices(subjects,rois)
     rsa_final_matrices = rsa_pairwise_matrices()
     cka_final_matrices = cka_pairwise_matrices()
     shape_final_matrices = shape_pairwise_matrices()
