@@ -16,6 +16,8 @@ from .anatomy import (
 )
 from .dim_reduction import compute_stress
 
+from .statistics import generate_multiple_bootstrap_samples
+
 
 # NSD data
 target_regions = config.target_regions
@@ -31,12 +33,15 @@ rois = {}
 for subject in subjects:
     rois[subject] = get_roi_list_intersection(benchmark_rois, anatomical_rois[subject])
 
-rois["subj02"].remove(
-    "OPA"
-)  # (sometimes) gives nans in many geodesic computations, not sure why
+# rois["subj02"].remove(
+#     "OPA"
+# )  # (sometimes) gives nans in many geodesic computations, not sure why
 
 neural_data = get_neural_data(subjects, rois, voxel_metadata, response_data)
 
+n_bootstrap_iterations = config.n_bootstrap_iterations
+
+bootstrapping_neural_data = generate_multiple_bootstrap_samples(neural_data,stimulus_data.shape[0],n_bootstrap_iterations)
 
 # RSA parameters
 rdm_compute_types = config.rdm_compute_types
@@ -64,21 +69,6 @@ def _nested_dict_3():
 def _normalize_by_frobenius_norm(matrix):
     frobenius_norm = np.sqrt(np.sum(matrix ** 2))
     return matrix / frobenius_norm
-
-
-# def _normalize_by_frobenius_norm(matrices):
-#     # Initialize an empty tensor of the same shape for the normalized matrices
-#     normalized_matrices = np.zeros_like(matrices)
-
-#     # Iterate over each matrix in the tensor
-#     for i in range(len(matrices)):
-#         # Compute the Frobenius norm of the current matrix
-#         frobenius_norm = np.sqrt(np.sum(matrices[i] ** 2))
-
-#         # Normalize the matrix and store it in the corresponding position in the normalized tensor
-#         normalized_matrices[i] = matrices[i] / frobenius_norm
-
-#     return normalized_matrices
 
 
 def anatomical_distance_matrices():
@@ -109,33 +99,33 @@ for subject in subjects:
 rois = nonempty_rois
 
 
+# def rsa_pairwise_matrices():
+#     rsa_types = list(itertools.product(rdm_compute_types, rdm_compare_types))
+#     rsa_types.remove(("spearman", "spearman"))  # WHY IS THIS ONE SO SLOW ???
+#     rsa_final_matrices = defaultdict(_nested_dict_3)
+#     for i, subject in enumerate(subjects):
+#         for rsa_type in rsa_types:
+#             rsa_type_name = "_".join(rsa_type)
+#             print(
+#                 f"Computing RSA {rsa_type_name} pairwise dissimilarities for subject {subject}..."
+#             )
+#             rsa_pairwise_dissimilarity = compute_rsa_pairwise_dissimilarities(
+#                 neural_data[subject_ids[i]], rois[subject], rsa_type[0], rsa_type[1]
+#             )
+#             matrix = _normalize_by_frobenius_norm(rsa_pairwise_dissimilarity)
+#             stress = compute_stress(matrix, anatomy_final_matrices[subject])
+#             rsa_final_matrices[subject][rsa_type_name]["matrix"] = matrix
+#             rsa_final_matrices[subject][rsa_type_name]["stress"] = stress
+#             print("done!")
+#         print(f"finished RSA for subject{subject}.")
+#     print(f"-----finished RSA computations for all subjects-----")
+#     return rsa_final_matrices
+
+
+
 def rsa_pairwise_matrices():
     rsa_types = list(itertools.product(rdm_compute_types, rdm_compare_types))
-    rsa_types.remove(("spearman", "spearman"))  # WHY IS THIS ONE SO SLOW ???
-    rsa_final_matrices = defaultdict(_nested_dict_3)
-    for i, subject in enumerate(subjects):
-        for rsa_type in rsa_types:
-            rsa_type_name = "_".join(rsa_type)
-            print(
-                f"Computing RSA {rsa_type_name} pairwise dissimilarities for subject {subject}..."
-            )
-            rsa_pairwise_dissimilarity = compute_rsa_pairwise_dissimilarities(
-                neural_data[subject_ids[i]], rois[subject], rsa_type[0], rsa_type[1]
-            )
-            matrix = _normalize_by_frobenius_norm(rsa_pairwise_dissimilarity)
-            stress = compute_stress(matrix, anatomy_final_matrices[subject])
-            rsa_final_matrices[subject][rsa_type_name]["matrix"] = matrix
-            rsa_final_matrices[subject][rsa_type_name]["stress"] = stress
-            print("done!")
-        print(f"finished RSA for subject{subject}.")
-    print(f"-----finished RSA computations for all subjects-----")
-    return rsa_final_matrices
-
-
-
-def rsa_pairwise_matrices(n_bootstrap_iterations=1000):
-    rsa_types = list(itertools.product(rdm_compute_types, rdm_compare_types))
-    rsa_types.remove(("spearman", "spearman"))  # WHY IS THIS ONE SO SLOW ???
+    #rsa_types.remove(("spearman", "spearman"))  # WHY IS THIS ONE SO SLOW ???
     rsa_final_matrices = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for i, subject in enumerate(subjects):
@@ -144,13 +134,13 @@ def rsa_pairwise_matrices(n_bootstrap_iterations=1000):
             print(f"Bootstrapping RSA {rsa_type_name} for subject {subject}...")
 
             # Bootstrap loop
-            for _ in range(n_bootstrap_iterations):
-                # Create a bootstrapped sample of neural_data
-                bootstrapped_neural_data = bootstrap_neural_data(neural_data[subject_ids[i]])
+            for boot_id in range(n_bootstrap_iterations):
+                
+                bootstrap_neural_data = bootstrapping_neural_data[boot_id][subject_ids[i]]
                 
                 # Compute RSA pairwise dissimilarities for the bootstrapped sample
                 rsa_pairwise_dissimilarity = compute_rsa_pairwise_dissimilarities(
-                    bootstrapped_neural_data, rois[subject], rsa_type[0], rsa_type[1]
+                    bootstrap_neural_data, rois[subject], rsa_type[0], rsa_type[1]
                 )
                 matrix = _normalize_by_frobenius_norm(rsa_pairwise_dissimilarity)
                 stress = compute_stress(matrix, anatomy_final_matrices[subject])
@@ -224,7 +214,7 @@ def shape_pairwise_matrices():
 
 if __name__ == "__main__":
     print("This script is being run directly.")
-    anatomy_final_matrices = anatomical_distance_matrices(subjects,rois)
+    anatomy_final_matrices = anatomical_distance_matrices()
     rsa_final_matrices = rsa_pairwise_matrices()
-    cka_final_matrices = cka_pairwise_matrices()
-    shape_final_matrices = shape_pairwise_matrices()
+    # cka_final_matrices = cka_pairwise_matrices()
+    # shape_final_matrices = shape_pairwise_matrices()
