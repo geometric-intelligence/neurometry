@@ -54,26 +54,14 @@ alphas = config.alphas
 cka_types = config.cka_types
 
 
-def _nested_dict_2():
-    return defaultdict(str)
-
-
-def _nested_dict_3():
-    return defaultdict(dict)
-
-
-# def _normalize_by_mean(matrix):
-#     mean_val = np.mean(matrix)
-#     return matrix / mean_val
-
 def _normalize_by_frobenius_norm(matrix):
     frobenius_norm = np.sqrt(np.sum(matrix ** 2))
     return matrix / frobenius_norm
 
 
 def anatomical_distance_matrices():
-    anatomy_final_matrices = defaultdict(_nested_dict_2)
-    empty_rois_dict = defaultdict(_nested_dict_2)
+    anatomy_final_matrices = defaultdict(lambda: defaultdict(str))
+    empty_rois_dict = defaultdict(lambda: defaultdict(str))
     for subject in subjects:
         print(f"Computing anatomical pairwise distance for subject {subject}...")
         cortex_pairwise_dists, empty_rois = compute_cortex_pairwise_geodesic_dist(
@@ -166,7 +154,8 @@ def rsa_pairwise_matrices():
 
 
 def cka_pairwise_matrices():
-    cka_final_matrices = defaultdict(_nested_dict_3)
+    cka_final_matrices = defaultdict(lambda: defaultdict(dict))
+
     for i, subject in enumerate(subjects):
         for cka_type in cka_types:
             print(
@@ -189,7 +178,8 @@ preprocessed_shape_neural_data, pcas = shape_preprocess(neural_data, subjects, r
 
 
 def shape_pairwise_matrices():
-    shape_final_matrices = defaultdict(_nested_dict_3)
+    shape_final_matrices = defaultdict(lambda: defaultdict(dict))
+
     for i, subject in enumerate(subjects):
         for alpha in alphas:
             print(

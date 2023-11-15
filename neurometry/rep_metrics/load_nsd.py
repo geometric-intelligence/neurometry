@@ -1,5 +1,6 @@
 from benchmarks import NSDBenchmark
 import pandas as pd
+from collections import defaultdict
 
 
 def load_nsd(target_regions):
@@ -26,20 +27,24 @@ def load_nsd(target_regions):
 
 def get_neural_data(subjects, rois, voxel_metadata, response_data):
     subject_ids = [int(s.split("subj")[1]) for s in subjects]
-
-    neural_data = {}
+    neural_data = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for i, subject_id in enumerate(subject_ids):
-        subject_neural_data = {}
         subject_rois = rois[subjects[i]]
         subject_dataframe = voxel_metadata[voxel_metadata["subj_id"] == subject_id]
         for region in subject_rois:
             region_voxel_idxs = subject_dataframe[
                 subject_dataframe[region] == True
             ].index
-            subject_neural_data[region] = response_data.loc[region_voxel_idxs]
+            neural_data_subject_roi = response_data.loc[region_voxel_idxs]
             print(
-                f"Subject {subject_id} has {len(subject_neural_data[region])} voxels in region {region}"
+                f"Subject {subject_id} has {len(neural_data_subject_roi)} voxels in region {region}"
             )
-        neural_data[subject_id] = subject_neural_data
+            x_values = neural_data_subject_roi.index.to_series().str.split("-", expand=True)[1].astype(int)
+            
+            left_hemisphere = neural_data_subject_roi[x_values < 40]
+            right_hemisphere = neural_data_subject_roi[x_values >= 40]
+            neural_data[subject_id]["left"][region] = left_hemisphere
+            neural_data[subject_id]["right"][region] = right_hemisphere
 
     return neural_data
+
