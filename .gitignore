@@ -5,6 +5,7 @@ neurometry/api_key.txt
 *viewer*
 *vizcortex*
 # Data files
+*.parquet
 *.mat
 *.npy
 *.pkl
