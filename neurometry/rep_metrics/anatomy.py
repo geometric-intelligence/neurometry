@@ -33,14 +33,14 @@ def get_roi_vertices(subject, rois):
     return left_rois_vertices, right_rois_vertices
 
 
-def get_subjects_rois(subjects):
+def get_subjects_anatomical_rois(subjects):
     subject_rois = {}
     for subject in subjects:
         subject_rois[subject] = list(cortex.get_roi_verts(subject).keys())
     return subject_rois
 
 
-def compute_frechet_mean(roi_surface, hemi="left"):
+def compute_frechet_mean(roi_surface):
     n_points = len(roi_surface.pts)
     dists = np.zeros((n_points, n_points))
     for point_id in range(n_points):
@@ -59,23 +59,23 @@ def compute_frechet_mean(roi_surface, hemi="left"):
 
 
 def compute_all_frechet_means(subject, surface, rois):
-    left_rois_frechet_mean_ids = {}
-    empty_rois = []
+    rois_frechet_mean_ids = {}
+    nonempty_rois = []
     for roi in rois:
         vertex_mask = cortex.get_roi_verts(subject, roi=roi, mask=True)[roi]
-        left_roi_surface = surface.create_subsurface(vertex_mask=vertex_mask)
+        roi_surface = surface.create_subsurface(vertex_mask=vertex_mask)
         roi_pts_ids = cortex.get_roi_verts(subject, roi=roi)[roi]
         print(f"computing Frechet mean of {roi}...")
-        frechet_mean_id = compute_frechet_mean(left_roi_surface)
+        frechet_mean_id = compute_frechet_mean(roi_surface)
         if frechet_mean_id is not None:
             print("done.")
-            frechet_mean_id_left = _ids_from_roi_to_hemi(roi_pts_ids, frechet_mean_id)
-            left_rois_frechet_mean_ids[roi] = frechet_mean_id_left
+            frechet_mean_id = _ids_from_roi_to_hemi(roi_pts_ids, frechet_mean_id)
+            rois_frechet_mean_ids[roi] = frechet_mean_id
+            nonempty_rois.append(roi)
         else:
             print("skipping...")
-            empty_rois.append(roi)
 
-    return left_rois_frechet_mean_ids, empty_rois
+    return rois_frechet_mean_ids, nonempty_rois
 
 
 def _compute_cortex_geodesic_dist(i, j, surface, frechet_mean_id_i, frechet_mean_id_j):
@@ -89,51 +89,86 @@ def _compute_cortex_geodesic_dist_star(args):
 
 
 def compute_cortex_pairwise_geodesic_dist(
-    subject, rois, frechet_means=None, processes=None
+    subject, rois, left_frechet_means=None, right_frechet_means=None, processes=None
 ):
-    surfs = [
+    left_surface, right_surface = (
         cortex.polyutils.Surface(*d) for d in cortex.db.get_surf(subject, "fiducial")
-    ]
-    left, right = surfs
-    if frechet_means is None:
-        left_rois_frechet_mean_ids, empty_rois = compute_all_frechet_means(
-            subject, left, rois
+    )
+
+    if left_frechet_means is None:
+        left_rois_frechet_mean_ids, left_nonempty_rois = compute_all_frechet_means(
+            subject, left_surface, rois
         )
-
-        rois = [roi for roi in rois if roi not in empty_rois]
     else:
-        left_rois_frechet_mean_ids = frechet_means
+        left_rois_frechet_mean_ids = left_frechet_means
+    
+    if right_frechet_means is None:
+        right_rois_frechet_mean_ids, right_nonempty_rois = compute_all_frechet_means(
+            subject, right_surface, rois
+        )
+    else:
+        right_rois_frechet_mean_ids = right_frechet_means
 
-    frechet_mean_ids_list = list(left_rois_frechet_mean_ids.values())
 
-    n = len(rois)
+    left_frechet_mean_ids_list = list(left_rois_frechet_mean_ids.values())
+    right_frechet_mean_ids_list = list(right_rois_frechet_mean_ids.values())
 
-    n_dists = n * (n - 1) / 2
+    left_n = len(left_nonempty_rois)
 
-    ij = itertools.combinations(range(n), 2)
+    left_n_dists = left_n * (left_n - 1) / 2
+
+    ij = itertools.combinations(range(left_n), 2)
     args = (
-        (i, j, left, frechet_mean_ids_list[i], frechet_mean_ids_list[j]) for i, j in ij
+        (i, j, left_surface, left_frechet_mean_ids_list[i], left_frechet_mean_ids_list[j]) for i, j in ij
     )
 
     print(
-        f"Parallelizing n(n-1)/2 = {int(n_dists)} distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes."
+        f"Parallelizing n(n-1)/2 = {int(left_n_dists)} left hemisphere distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes."
     )
-    pbar = lambda x: tqdm(x, total=n_dists, desc="Computing distances on left cortex")
+    pbar = lambda x: tqdm(x, total=left_n_dists, desc="Computing distances on left cortex")
 
     with ThreadPool(processes=processes) as pool:
         results = []
         for result in pbar(pool.imap(_compute_cortex_geodesic_dist_star, args)):
             results.append(result)
 
-    cortex_pairwise_dists = np.zeros((n, n))
+    left_cortex_pairwise_dists = np.zeros((left_n, left_n))
 
     for i, j, geodesic_dist in results:
-        cortex_pairwise_dists[i, j], cortex_pairwise_dists[j, i] = (
+        left_cortex_pairwise_dists[i, j], left_cortex_pairwise_dists[j, i] = (
             geodesic_dist,
             geodesic_dist,
         )
 
-    return cortex_pairwise_dists, empty_rois
+    right_n = len(right_nonempty_rois)
+
+    right_n_dists = right_n * (right_n - 1) / 2
+
+    ij = itertools.combinations(range(right_n), 2)
+    args = (
+        (i, j, right_surface, right_frechet_mean_ids_list[i], right_frechet_mean_ids_list[j]) for i, j in ij
+    )
+
+    print(
+        f"Parallelizing n(n-1)/2 = {int(right_n_dists)} right hemisphere distance calculations with {multiprocessing.cpu_count() if processes is None else processes} processes."
+    )
+    pbar = lambda x: tqdm(x, total=right_n_dists, desc="Computing distances on left cortex")
+
+    with ThreadPool(processes=processes) as pool:
+        results = []
+        for result in pbar(pool.imap(_compute_cortex_geodesic_dist_star, args)):
+            results.append(result)
+
+    right_cortex_pairwise_dists = np.zeros((right_n, right_n))
+
+    for i, j, geodesic_dist in results:
+        right_cortex_pairwise_dists[i, j], right_cortex_pairwise_dists[j, i] = (
+            geodesic_dist,
+            geodesic_dist,
+        )
+
+
+    return left_cortex_pairwise_dists, right_cortex_pairwise_dists, left_nonempty_rois, right_nonempty_rois
 
 
 def get_roi_list_intersection(roi_list1, roi_list2):

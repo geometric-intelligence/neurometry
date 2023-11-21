@@ -18,73 +18,80 @@ from .dim_reduction import compute_stress
 
 from .statistics import generate_multiple_bootstrap_samples
 
-
-# NSD data
-target_regions = config.target_regions
-subjects = config.subjects
-subject_ids = [int(s.split("subj")[1]) for s in subjects]
-response_data, voxel_metadata, stimulus_data, benchmark_rois = load_nsd(target_regions)
-
-# Anatomical data
-anatomical_rois = get_subjects_rois(subjects)
-
-# Consider only common ROIs (TODO: fix pycortex roi hand-drawn definitions)
-rois = {}
-for subject in subjects:
-    rois[subject] = get_roi_list_intersection(benchmark_rois, anatomical_rois[subject])
-
-# rois["subj02"].remove(
-#     "OPA"
-# )  # (sometimes) gives nans in many geodesic computations, not sure why
-
-neural_data = get_neural_data(subjects, rois, voxel_metadata, response_data)
-
-n_bootstrap_iterations = config.n_bootstrap_iterations
-
-bootstrapping_neural_data = generate_multiple_bootstrap_samples(neural_data,stimulus_data.shape[0],n_bootstrap_iterations)
-
-# RSA parameters
-rdm_compute_types = config.rdm_compute_types
-rdm_compare_types = config.rdm_compare_types
-
-# Shape Metrics parameters
-alphas = config.alphas
-
-# CKA parameters
-cka_types = config.cka_types
+def _nested_dict_2():
+    return defaultdict(str)
 
 
-def _normalize_by_frobenius_norm(matrix):
-    frobenius_norm = np.sqrt(np.sum(matrix ** 2))
-    return matrix / frobenius_norm
+def _nested_dict_3():
+    return defaultdict(dict)
 
 
-def anatomical_distance_matrices():
-    anatomy_final_matrices = defaultdict(lambda: defaultdict(str))
-    empty_rois_dict = defaultdict(lambda: defaultdict(str))
-    for subject in subjects:
-        print(f"Computing anatomical pairwise distance for subject {subject}...")
-        cortex_pairwise_dists, empty_rois = compute_cortex_pairwise_geodesic_dist(
-            subject, rois[subject]
-        )
-        anatomy_final_matrices[subject] = _normalize_by_frobenius_norm(cortex_pairwise_dists)[0]
-        empty_rois_dict[subject] = empty_rois
+# # NSD data
+# target_regions = config.target_regions
+# subjects = config.subjects
+# subject_ids = [int(s.split("subj")[1]) for s in subjects]
+# response_data, voxel_metadata, stimulus_data, benchmark_rois = load_nsd(target_regions)
 
-        print("done!")
-    print(f"-----finished anatomical computations for all subjects-----")
-    return anatomy_final_matrices, empty_rois_dict
+# # Anatomical data
+# anatomical_rois = get_subjects_rois(subjects)
+
+# # Consider only common ROIs (TODO: fix pycortex roi hand-drawn definitions)
+# rois = {}
+# for subject in subjects:
+#     rois[subject] = get_roi_list_intersection(benchmark_rois, anatomical_rois[subject])
+
+# # rois["subj02"].remove(
+# #     "OPA"
+# # )  # (sometimes) gives nans in many geodesic computations, not sure why
+
+# neural_data = get_neural_data(subjects, rois, voxel_metadata, response_data)
+
+# n_bootstrap_iterations = config.n_bootstrap_iterations
+
+# bootstrapping_neural_data = generate_multiple_bootstrap_samples(neural_data,stimulus_data.shape[0],n_bootstrap_iterations)
+
+# # RSA parameters
+# rdm_compute_types = config.rdm_compute_types
+# rdm_compare_types = config.rdm_compare_types
+
+# # Shape Metrics parameters
+# alphas = config.alphas
+
+# # CKA parameters
+# cka_types = config.cka_types
 
 
-anatomy_final_matrices, empty_rois_dict = anatomical_distance_matrices()
+# def _normalize_by_frobenius_norm(matrix):
+#     frobenius_norm = np.sqrt(np.sum(matrix ** 2))
+#     return matrix / frobenius_norm
+
+
+# def anatomical_distance_matrices():
+#     anatomy_final_matrices = defaultdict(lambda: defaultdict(str))
+#     empty_rois_dict = defaultdict(lambda: defaultdict(str))
+#     for subject in subjects:
+#         print(f"Computing anatomical pairwise distance for subject {subject}...")
+#         cortex_pairwise_dists, empty_rois = compute_cortex_pairwise_geodesic_dist(
+#             subject, rois[subject]
+#         )
+#         anatomy_final_matrices[subject] = _normalize_by_frobenius_norm(cortex_pairwise_dists)[0]
+#         empty_rois_dict[subject] = empty_rois
+
+#         print("done!")
+#     print(f"-----finished anatomical computations for all subjects-----")
+#     return anatomy_final_matrices, empty_rois_dict
+
+
+# anatomy_final_matrices, empty_rois_dict = anatomical_distance_matrices()
 
 # for subj01, pycortex returns empty vertices for some rois that should not be empty - why?
-nonempty_rois = {}
-for subject in subjects:
-    subject_rois = rois[subject]
-    subject_rois = [roi for roi in subject_rois if roi not in empty_rois_dict[subject]]
-    nonempty_rois[subject] = subject_rois
+# nonempty_rois = {}
+# for subject in subjects:
+#     subject_rois = rois[subject]
+#     subject_rois = [roi for roi in subject_rois if roi not in empty_rois_dict[subject]]
+#     nonempty_rois[subject] = subject_rois
 
-rois = nonempty_rois
+# rois = nonempty_rois
 
 
 # def rsa_pairwise_matrices():
@@ -174,7 +181,7 @@ def cka_pairwise_matrices():
     return cka_final_matrices
 
 
-preprocessed_shape_neural_data, pcas = shape_preprocess(neural_data, subjects, rois)
+#preprocessed_shape_neural_data, pcas = shape_preprocess(neural_data, subjects, rois)
 
 
 def shape_pairwise_matrices():
@@ -204,7 +211,7 @@ def shape_pairwise_matrices():
 
 if __name__ == "__main__":
     print("This script is being run directly.")
-    anatomy_final_matrices = anatomical_distance_matrices()
-    rsa_final_matrices = rsa_pairwise_matrices()
+    # anatomy_final_matrices = anatomical_distance_matrices()
+    # rsa_final_matrices = rsa_pairwise_matrices()
     # cka_final_matrices = cka_pairwise_matrices()
     # shape_final_matrices = shape_pairwise_matrices()

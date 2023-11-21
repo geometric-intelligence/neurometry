@@ -25,16 +25,17 @@ def load_nsd(target_regions):
     return response_data, voxel_metadata, stimulus_data, functional_rois
 
 
-def get_neural_data(subjects, rois, voxel_metadata, response_data):
-    subject_ids = [int(s.split("subj")[1]) for s in subjects]
+def get_neural_data(subject_ids, rois, voxel_metadata, response_data):
+    #subject_ids = [int(s.split("subj")[1]) for s in subjects]
     neural_data = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for i, subject_id in enumerate(subject_ids):
-        subject_rois = rois[subjects[i]]
+        subject_rois = rois[subject_id]
         subject_dataframe = voxel_metadata[voxel_metadata["subj_id"] == subject_id]
         for region in subject_rois:
             region_voxel_idxs = subject_dataframe[
                 subject_dataframe[region] == True
             ].index
+            
             neural_data_subject_roi = response_data.loc[region_voxel_idxs]
             print(
                 f"Subject {subject_id} has {len(neural_data_subject_roi)} voxels in region {region}"
