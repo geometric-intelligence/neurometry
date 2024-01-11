@@ -54,7 +54,7 @@ def hypertorus(intrinsic_dim,num_points,radii=None):
     factors = [Hypersphere(dim=1) for _ in range(intrinsic_dim)]
     unit_hypertorus = ProductManifold(factors=factors)
     unit_hypertorus_points = unit_hypertorus.random_point(n_samples=num_points)
-    hypertorus_points = gs.zeros_like(unit_hypertorus_points)
+    hypertorus_points = unit_hypertorus_points
     if radii is not None:
         assert len(radii)==intrinsic_dim, f"radii must be a list of length {intrinsic_dim}"
         for _ in range(intrinsic_dim):
