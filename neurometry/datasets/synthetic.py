@@ -1,0 +1,184 @@
+import os
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import geomstats.backend as gs
+from geomstats.geometry.hypersphere import Hypersphere
+from geomstats.geometry.euclidean import Euclidean
+from geomstats.geometry.product_manifold import ProductManifold
+
+
+### Synthetic Latent Manifolds ###
+
+def hypersphere(intrinsic_dim,num_points,radius=1):
+    """Generate points on a hypersphere of given intrinsic dimension and radius.
+
+    Parameters
+    ----------
+    intrinsic_dim : int
+        Intrinsic dimension of the hypersphere.
+    num_points : int
+        Number of points to generate.
+    radius : float, optional
+        Radius of the hypersphere. Default is 1.
+
+    Returns
+    -------
+    hypersphere_points : array-like, shape=[num_points, minimal_embedding_dim]
+        Points on the hypersphere.
+    
+    """
+    unit_hypersphere = Hypersphere(dim=intrinsic_dim)
+    unit_hypersphere_points = unit_hypersphere.random_point(n_samples=num_points)
+    hypersphere_points = radius*unit_hypersphere_points
+    return hypersphere_points
+
+def hypertorus(intrinsic_dim,num_points,radii=None):
+    """Generate points on a flat hypertorus of given intrinsic dimension and radii.
+
+    The n-hypertorus is the product manifold of n circles.
+
+    Parameters
+    ----------
+    intrinsic_dim : int
+        Intrinsic dimension of the hypertorus.
+    num_points : int
+        Number of points to generate.
+    radii : list of floats, optional
+        Radii of the circles. If None, the hypertorus is the unit hypertorus.
+
+    Returns
+    -------
+    hypertorus_points : array-like, shape=[num_points, 2*intrinsic_dim]
+        Points on the hypertorus.
+    """
+    factors = [Hypersphere(dim=1) for _ in range(intrinsic_dim)]
+    unit_hypertorus = ProductManifold(factors=factors)
+    unit_hypertorus_points = unit_hypertorus.random_point(n_samples=num_points)
+    hypertorus_points = unit_hypertorus_points
+    if radii is not None:
+        assert len(radii)==intrinsic_dim, f"radii must be a list of length {intrinsic_dim}"
+        for _ in range(intrinsic_dim):
+            hypertorus_points[:,_,:] = radii[_]*unit_hypertorus_points[:,_,:]
+    hypertorus_points = gs.reshape(hypertorus_points,(num_points,intrinsic_dim*2))
+    return hypertorus_points
+
+def cylinder(num_points,radius=1):
+    """Generate points on a cylinder of given radius.
+
+    The cylinder is the product manifold of a circle and the interval [-1,1].
+
+    Parameters
+    ----------
+    num_points : int
+        Number of points to generate.
+    radius : float, optional
+        Radius of the cylinder. Default is 1.
+    
+    """
+    factors = [Hypersphere(dim=1),Euclidean(dim=1)]
+    cylinder = ProductManifold(factors=factors)
+    cylinder_points = cylinder.random_point(n_samples=num_points,bound=1)
+    cylinder_points[:,:2] = radius*cylinder_points[:,:2]
+    return cylinder_points
+
+def klein_bottle():
+    # waiting for geomstats implementation 
+    return NotImplementedError
+
+
+### Synthetic Encoding Scheme ###
+
+def random_encoding_matrix(manifold_extrinsic_dim,encoding_dim):
+    """Generate a random encoding matrix.
+
+    Parameters
+    ----------
+    manifold_extrinsic_dim : int
+        Extrinsic dimension of the manifold. This is the minimal embedding dimension of the manifold.
+    encoding_dim : int
+        Dimension of the encoded points. This is the dimension of the neural state space. 
+    
+    Returns
+    -------
+    encoding_matrix : array-like, shape=[manifold_extrinsic_dim, encoding_dim]
+        Random encoding matrix.
+    """
+    return gs.random.uniform(-1,1,(manifold_extrinsic_dim,encoding_dim))
+
+
+def encode_points(manifold_points,encoding_matrix):
+    """Encode points on a manifold using a given encoding matrix.
+
+    Parameters
+    ----------
+    manifold_points : array-like, shape=[num_points, manifold_extrinsic_dim]
+        Points on the manifold.
+    encoding_matrix : array-like, shape=[manifold_extrinsic_dim, encoding_dim]
+        Encoding matrix.
+    
+    Returns
+    -------
+    encoded_points : array-like, shape=[num_points, encoding_dim]
+        Encoded points.
+    """
+    encoded_points = gs.einsum("ij,jk->ik",manifold_points,encoding_matrix)
+    return encoded_points
+
+    
+def apply_nonlinearity(encoded_points, nonlinearity, **kwargs):
+    """Apply a nonlinearity to the encoded points.
+
+    Parameters
+    ----------
+    encoded_points : array-like, shape=[num_points, encoding_dim]
+        Encoded points.
+    nonlinearity : str
+        Nonlinearity to apply. Must be one of 'relu', 'sigmoid', or 'tanh'.
+    **kwargs : dict
+        Keyword arguments for the nonlinearity.
+
+    Returns
+    -------
+    nonlinearity_points : array-like, shape=[num_points, encoding_dim]
+        Encoded points after applying the nonlinearity.
+    """
+    if nonlinearity == 'relu':
+        return relu(encoded_points, **kwargs)
+    elif nonlinearity == 'sigmoid':
+        return scaled_sigmoid(encoded_points, **kwargs)
+    elif nonlinearity == 'tanh':
+        return scaled_tanh(encoded_points, **kwargs)
+    else:
+        raise ValueError("Nonlinearity not recognized")
+
+
+def relu(tensor, threshold=0):
+    return gs.maximum(threshold, tensor)
+
+def scaled_sigmoid(tensor, scales):
+    assert(tensor.shape[1] == scales.shape[0]), "scales must have same shape as tensor"
+    return 1 / (1 + gs.exp(-scales*tensor))
+
+def scaled_tanh(tensor, scales):
+    assert(tensor.shape[1] == scales.shape[0]), "scales must have same shape as tensor"
+    return gs.tanh(scales*tensor)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
