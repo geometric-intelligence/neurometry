@@ -5,9 +5,39 @@ import geomstats.backend as gs
 from geomstats.geometry.hypersphere import Hypersphere
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.product_manifold import ProductManifold
+import torch
+
 
 
 ### Synthetic Latent Manifolds ###
+
+def synthetic_neural_manifold(points,encoding_dim,nonlinearity,**kwargs):
+    """Generate points on a synthetic neural manifold.
+
+    Parameters
+    ----------
+    points : array-like, shape=[num_points, intrinsic_dim]
+        Points on the manifold.
+    encoding_dim : int
+        Dimension of the encoded points. This is the dimension of the neural state space. 
+    nonlinearity : str
+        Nonlinearity to apply. Must be one of 'relu', 'sigmoid', or 'tanh'.
+    **kwargs : dict
+        Keyword arguments for the manifold generation.
+
+    Returns
+    -------
+    manifold_points : array-like, shape=[num_points, intrinsic_dim]
+        Points on the manifold.
+    """
+    manifold_extrinsic_dim = points.shape[1]
+    encoding_matrix = random_encoding_matrix(manifold_extrinsic_dim,encoding_dim)
+    encoded_points = encode_points(points,encoding_matrix)
+    manifold_points = apply_nonlinearity(encoded_points,nonlinearity,**kwargs)
+    noisy_points = poisson_spikes(manifold_points)
+
+    return noisy_points, manifold_points
+
 
 def hypersphere(intrinsic_dim,num_points,radius=1):
     """Generate points on a hypersphere of given intrinsic dimension and radius.
@@ -162,6 +192,25 @@ def scaled_sigmoid(tensor, scales):
 def scaled_tanh(tensor, scales):
     assert(tensor.shape[1] == scales.shape[0]), "scales must have same shape as tensor"
     return gs.tanh(scales*tensor)
+
+
+def poisson_spikes(data,multiplier=200):
+    """Generate Poisson spike trains from data.
+
+    Parameters
+    ----------
+    data : array-like, shape=[num_points, num_neurons]
+        Points on the manifold.
+    multiplier : int
+        Multiplier for the number of spikes to generate.
+    
+    Returns
+    -------
+    spikes : array-like, shape=[num_points, num_neurons]
+        Poisson spike trains.
+    """
+    return torch.poisson(data*multiplier)/multiplier
+
 
 
 
