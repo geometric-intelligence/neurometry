@@ -12,7 +12,7 @@ import torch
 
 
 def synthetic_neural_manifold(
-    points, encoding_dim, nonlinearity, poisson_multiplier=1, **kwargs
+    points, encoding_dim, nonlinearity, poisson_multiplier=1, ref_frequency=200,**kwargs
 ):
     """Generate points on a synthetic neural manifold.
 
@@ -35,7 +35,7 @@ def synthetic_neural_manifold(
     manifold_extrinsic_dim = points.shape[1]
     encoding_matrix = random_encoding_matrix(manifold_extrinsic_dim, encoding_dim)
     encoded_points = encode_points(points, encoding_matrix)
-    manifold_points = apply_nonlinearity(encoded_points, nonlinearity, **kwargs)
+    manifold_points = ref_frequency*apply_nonlinearity(encoded_points, nonlinearity, **kwargs)
     noisy_points = poisson_spikes(manifold_points, poisson_multiplier)
 
     return noisy_points, manifold_points
@@ -204,7 +204,7 @@ def scaled_tanh(tensor, scales):
     return gs.tanh(scales * tensor)
 
 
-def poisson_spikes(data, multiplier=200):
+def poisson_spikes(data, multiplier=1):
     """Generate Poisson spike trains from data.
 
     Parameters
