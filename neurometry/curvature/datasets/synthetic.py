@@ -6,7 +6,6 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 import numpy as np
 import pandas as pd
-import skimage
 import torch
 import torch.nn.functional as F
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
