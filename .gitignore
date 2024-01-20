@@ -23,7 +23,6 @@ neurometry/datasets/rnn_grid_cells/*
 
 
 
-
 # Wandb files
 wandb/*
 
