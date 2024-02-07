@@ -19,7 +19,11 @@ neurometry/rep_metrics/benchmarks/image_sets/*
 neurometry/rep_metrics/benchmarks/voxel_sets/*
 neurometry/rep_metrics/benchmarks/response/*
 neurometry/rep_metrics/benchmarks/stimulus/*
-neurometry/datasets/rnn_grid_cells/*
+neurometry/datasets/rnn_grid_cells/Dual agent path integration disjoint PCs/*
+neurometry/datasets/rnn_grid_cells/Single agent path integration/*
+
+
+
 
 
 
