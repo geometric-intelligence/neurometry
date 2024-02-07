@@ -6,6 +6,7 @@ import scipy
 import scipy.stats
 from imageio import imsave
 import cv2
+from tqdm import tqdm
 
 
 def concat_images(images, image_width, spacer_size):
@@ -86,7 +87,7 @@ def compute_ratemaps(model, trajectory_generator, options, res=20, n_avg=None, N
 
     model = model.double()
 
-    for index in range(n_avg):
+    for index in tqdm(range(n_avg), desc='Processing'):
         inputs, pos_batch, _ = trajectory_generator.get_test_batch()
         inputs = (inputs[0].double(),inputs[1].double())
         g_batch = model.g(inputs).detach().cpu().numpy()

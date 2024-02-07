@@ -1,5 +1,5 @@
 import numpy as np
-from .visualize import compute_ratemaps, plot_ratemaps
+from visualize import compute_ratemaps, plot_ratemaps
 import scipy
 
 
