@@ -5,6 +5,7 @@ import geomstats.backend as gs
 from geomstats.geometry.hypersphere import Hypersphere
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.product_manifold import ProductManifold
+
 import torch
 
 
