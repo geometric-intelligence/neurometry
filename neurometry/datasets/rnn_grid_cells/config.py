@@ -21,7 +21,7 @@ class Config:
     box_width = 2.2 # width of training environment
     box_height = 2.2 # height of training environment
     device = 'cuda' if torch.cuda.is_available() else 'cpu' # device to use for training
-    n_avg = 1 # number of trajectories to average over for rate maps
+    n_avg = 50 # number of trajectories to average over for rate maps
 
 # If you need to access the configuration as a dictionary
 config = Config.__dict__
