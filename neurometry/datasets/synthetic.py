@@ -37,7 +37,11 @@ def synthetic_neural_manifold(
     encoding_matrix = random_encoding_matrix(manifold_extrinsic_dim, encoding_dim)
     encoded_points = encode_points(points, encoding_matrix)
     manifold_points = ref_frequency*apply_nonlinearity(encoded_points, nonlinearity, **kwargs)
-    noisy_points = poisson_spikes(manifold_points, poisson_multiplier)
+    try:
+        noisy_points = poisson_spikes(manifold_points, poisson_multiplier)
+    except:
+        print("WARNING! Poisson spikes not generated: mean must be non-negative")
+        noisy_points = None
 
     return noisy_points, manifold_points
 
@@ -187,6 +191,8 @@ def apply_nonlinearity(encoded_points, nonlinearity, **kwargs):
         return scaled_sigmoid(encoded_points, **kwargs)
     elif nonlinearity == "tanh":
         return scaled_tanh(encoded_points, **kwargs)
+    elif nonlinearity == "linear":
+        return encoded_points
     else:
         raise ValueError("Nonlinearity not recognized")
 
