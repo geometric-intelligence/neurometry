@@ -7,10 +7,6 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-# import rnn_grid_cells.utils
-# import rnn_grid_cells.single_agent_activity
-# import rnn_grid_cells.dual_agent_activity
-
 from .rnn_grid_cells import utils, single_agent_activity, dual_agent_activity, config
 
 
@@ -99,9 +95,6 @@ def plot_rate_map(num_plots, activations):
     plt.tight_layout()
     plt.show()
 
-
-
-#plot_rate_map(40, activations)
 
 
 
