@@ -1,6 +1,5 @@
 import torch
 import argparse
-from .utils import generate_run_ID
 
 class Config:
     save_dir = 'models/' #directory to save trained models
