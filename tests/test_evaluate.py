@@ -7,7 +7,6 @@ import geomstats.backend as gs
 import torch
 from geomstats.geometry.hypersphere import Hypersphere
 from geomstats.geometry.pullback_metric import PullbackMetric
-
 from neuralgeom.datasets.synthetic import get_s1_synthetic_immersion
 from neuralgeom.evaluate import (
     compute_mean_curvature,
@@ -197,9 +196,7 @@ def test_metric_matrix_s2():
     theta, phi = point[0], point[1]
     matrix = metric.metric_matrix(point)
 
-    expected_matrix = gs.array(
-        [[radius**2, 0], [0, radius**2 * gs.sin(theta) ** 2]]
-    )
+    expected_matrix = gs.array([[radius**2, 0], [0, radius**2 * gs.sin(theta) ** 2]])
 
     assert gs.allclose(matrix.shape, expected_matrix.shape), matrix.shape
     print(matrix)
@@ -240,9 +237,7 @@ def test_inner_product_derivative_matrix_s2():
     derivative_matrix = metric.inner_product_derivative_matrix(point)
 
     # derivative with respect to theta
-    expected_1 = gs.array(
-        [[0, 0], [0, 2 * radius**2 * gs.cos(theta) * gs.sin(theta)]]
-    )
+    expected_1 = gs.array([[0, 0], [0, 2 * radius**2 * gs.cos(theta) * gs.sin(theta)]])
     # derivative with respect to phi
     expected_2 = gs.zeros(1)
 

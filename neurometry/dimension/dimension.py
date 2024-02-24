@@ -1,23 +1,31 @@
-import skdim
-import numpy as np
 import os
+
+import numpy as np
+import skdim
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
+import matplotlib.pyplot as plt
 
 import neurometry.datasets.synthetic as synthetic
-import matplotlib.pyplot as plt
 
 
 def skdim_dimension_estimation(
-    methods, dimensions, manifold_type, num_trials, num_points, num_neurons, poisson_multiplier=1,ref_frequency=200
+    methods,
+    dimensions,
+    manifold_type,
+    num_trials,
+    num_points,
+    num_neurons,
+    poisson_multiplier=1,
+    ref_frequency=200,
 ):
     if methods == "all":
         methods = [method for method in dir(skdim.id) if not method.startswith("_")]
 
     point_generator = getattr(synthetic, manifold_type)
 
-    noise_level = np.sqrt(1 / (ref_frequency*poisson_multiplier))
+    noise_level = np.sqrt(1 / (ref_frequency * poisson_multiplier))
 
     id_estimates = {}
     for method_name in methods:
@@ -41,7 +49,9 @@ def skdim_dimension_estimation(
     return id_estimates, noise_level
 
 
-def plot_dimension_experiments(dim_estimates, dimensions, max_id_dim, manifold_type, noise_level):
+def plot_dimension_experiments(
+    dim_estimates, dimensions, max_id_dim, manifold_type, noise_level
+):
     num_methods = len(dim_estimates)
 
     # Creating a subplot grid - adjust the number of rows and columns as needed
@@ -66,7 +76,7 @@ def plot_dimension_experiments(dim_estimates, dimensions, max_id_dim, manifold_t
     )
 
     for i, (method, estimates) in enumerate(dim_estimates.items()):
-        ax = axs[i // cols, i % cols] 
+        ax = axs[i // cols, i % cols]
         mean_dim = np.mean(estimates, axis=1)
         std_dim = np.std(estimates, axis=1)
 
@@ -97,5 +107,5 @@ def plot_dimension_experiments(dim_estimates, dimensions, max_id_dim, manifold_t
         ax.set_ylim(y_lim)
 
     plt.tight_layout()
-    
+
     plt.show()
