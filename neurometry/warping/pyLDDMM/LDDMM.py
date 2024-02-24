@@ -1,7 +1,7 @@
 import numpy as np
-from pyLDDMM.utils import sampler, grid
-from pyLDDMM.utils.grad import finite_difference
 from pyLDDMM.regularizer import BiharmonicReguarizer
+from pyLDDMM.utils import grid, sampler
+from pyLDDMM.utils.grad import finite_difference
 
 
 class LDDMM2D(object):

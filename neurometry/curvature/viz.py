@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
 import plotly.io as pio
-import torch
 import seaborn as sns
+import torch
 
 FIGURES = os.path.join(os.getcwd(), "results/figures/")
 if not os.path.exists(FIGURES):
