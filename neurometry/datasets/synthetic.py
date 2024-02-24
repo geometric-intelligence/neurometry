@@ -3,6 +3,7 @@ import os
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 from geomstats.geometry.hypersphere import Hypersphere
+from geomstats.geometry.klein_bottle import KleinBottle
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.product_manifold import ProductManifold
 
@@ -123,9 +124,26 @@ def cylinder(num_points, radius=1):
     return cylinder_points
 
 
-def klein_bottle():
-    # waiting for geomstats implementation
-    return NotImplementedError
+def klein_bottle(num_points, size_factor = 1, extrinsic = False, bagel_parametrization = False, bottle_parametrization = False):
+    """Generate points on a Klein bottle manifold.
+
+    Parameters
+    ----------
+    num_points : int
+        Number of points to generate.
+
+    Returns
+    -------
+    kleinbottle_points : array-like, shape=[num_points, 2] 
+        Points on the Klein bottle.
+    """
+    if extrinsic and bagel_parametrization:
+        raise Exception('Please pick a parametrization for the random points on the Klein Bottle')
+    unit_klein_bottle = KleinBottle() 
+    unit_klein_bottle_points = unit_klein_bottle.random_point(n_samples=num_points, extrinsic = extrinsic, bagel_parametrization = bagel_parametrization, bottle_parametrization = bottle_parametrization)
+    klein_bottle_points = size_factor * unit_klein_bottle_points
+
+    return klein_bottle_points
 
 
 ### Synthetic Encoding Scheme ###
