@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
 import imageio
+import matplotlib.pyplot as plt
 from PIL import Image
 
 

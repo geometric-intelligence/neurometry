@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-
 from neuralgeom.losses import latent_regularization_loss
 
 
