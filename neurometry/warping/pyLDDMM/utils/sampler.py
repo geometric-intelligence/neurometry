@@ -1,5 +1,5 @@
-import skimage.transform
 import numpy as np
+import skimage.transform
 
 
 def sample(array, coordinates):

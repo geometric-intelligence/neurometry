@@ -1,8 +1,6 @@
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-from decorators import timer
-
 import geomstats.backend as gs
 import gph
 import numpy as np
@@ -12,6 +10,7 @@ from datasets.synthetic import (
     get_s2_synthetic_immersion,
     get_t2_synthetic_immersion,
 )
+from decorators import timer
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 

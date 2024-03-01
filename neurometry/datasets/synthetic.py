@@ -4,17 +4,21 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 from geomstats.geometry.hypersphere import Hypersphere
 from geomstats.geometry.klein_bottle import KleinBottle
-from geomstats.geometry.euclidean import Euclidean
-from geomstats.geometry.product_manifold import ProductManifold
-
 import torch
-
+from geomstats.geometry.euclidean import Euclidean
+from geomstats.geometry.hypersphere import Hypersphere
+from geomstats.geometry.product_manifold import ProductManifold
 
 ### Synthetic Latent Manifolds ###
 
 
 def synthetic_neural_manifold(
-    points, encoding_dim, nonlinearity, poisson_multiplier=1, ref_frequency=200,**kwargs
+    points,
+    encoding_dim,
+    nonlinearity,
+    poisson_multiplier=1,
+    ref_frequency=200,
+    **kwargs,
 ):
     """Generate points on a synthetic neural manifold.
 
@@ -37,7 +41,9 @@ def synthetic_neural_manifold(
     manifold_extrinsic_dim = points.shape[1]
     encoding_matrix = random_encoding_matrix(manifold_extrinsic_dim, encoding_dim)
     encoded_points = encode_points(points, encoding_matrix)
-    manifold_points = ref_frequency*apply_nonlinearity(encoded_points, nonlinearity, **kwargs)
+    manifold_points = ref_frequency * apply_nonlinearity(
+        encoded_points, nonlinearity, **kwargs
+    )
     try:
         noisy_points = poisson_spikes(manifold_points, poisson_multiplier)
     except:

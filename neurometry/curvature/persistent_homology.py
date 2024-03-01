@@ -1,6 +1,6 @@
-from decorators import timer
 import gph
 import pandas as pd
+from decorators import timer
 
 
 @timer

@@ -1,12 +1,14 @@
 """Original MATLAB code for grid cells by Will Redman https://wredman4.wixsite.com/wtredman, modified and adapted to python by Francisco Acosta"""
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
+
 import neurometry.curvature.datasets.structures as structures
 
 

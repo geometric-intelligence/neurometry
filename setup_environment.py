@@ -1,14 +1,18 @@
+import os
 import subprocess
 import sys
-import os
+
 
 def is_cuda_available():
     """Check if CUDA is available on the system."""
     try:
-        subprocess.run(["nvidia-smi"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(
+            ["nvidia-smi"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         return True
     except Exception:
         return False
+
 
 def create_conda_environment(env_file_path):
     """Create a Conda environment from a yml file."""
@@ -22,7 +26,7 @@ def create_conda_environment(env_file_path):
 
 def install_cuda_packages(env_name):
     """Install CUDA-dependent packages in the specified Conda environment."""
-    cuda_packages = ['cupy-cuda11x'] 
+    cuda_packages = ["cupy-cuda11x"]
 
     for package in cuda_packages:
         cmd = f"conda run -n {env_name} pip install {package}"
@@ -35,7 +39,7 @@ def install_cuda_packages(env_name):
 
 
 def main():
-    env_file_path = "environment.yml"  
+    env_file_path = "environment.yml"
 
     # Create Conda environment
     create_conda_environment(env_file_path)
@@ -47,6 +51,6 @@ def main():
     else:
         print("CUDA not available. Skipping CUDA-dependent packages.")
 
+
 if __name__ == "__main__":
     main()
-
