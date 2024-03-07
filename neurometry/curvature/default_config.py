@@ -13,8 +13,8 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 # WANDB API KEY
 # Find it here: https://wandb.ai/authorize
 # Story it in file: api_key.txt (without extra line break)
-# with open("api_key.txt") as f:
-#     api_key = f.read()
+with open("api_key.txt") as f:
+    api_key = f.read()
 
 # Directories
 work_dir = os.getcwd()
@@ -48,6 +48,7 @@ manifold_dim = {
     "s1_synthetic": 1,
     "s2_synthetic": 2,
     "t2_synthetic": 2,
+    "kb_synthetic": 2,
     "grid_cells": 2,
     "three_place_cells_synthetic": 1,
 }
@@ -57,6 +58,7 @@ latent_dim = {
     "s1_synthetic": 2,
     "s2_synthetic": 3,
     "t2_synthetic": 3,
+    "kb_synthetic": 3,
     "grid_cells": 3,
     "three_place_cells_synthetic": 2,
 }
@@ -66,6 +68,7 @@ posterior_type = {
     "s1_synthetic": "hyperspherical",
     "s2_synthetic": "hyperspherical",
     "t2_synthetic": "toroidal",
+    "kb_synthetic": "klein_bottle",
     "grid_cells": "toroidal",
     "three_place_cells_synthetic": "hyperspherical",
 }
@@ -75,6 +78,7 @@ geodesic_distortion_func = {
     "s1_synthetic": "bump",
     "s2_synthetic": None,
     "t2_synthetic": None,
+    "kb_synthetic": None,
     "grid_cells": None,
     "three_place_cells_synthetic": None,
 }
@@ -84,6 +88,7 @@ n_wiggles = {
     "s1_synthetic": 3,
     "s2_synthetic": None,
     "t2_synthetic": None,
+    "kb_synthetic": None,
     "grid_cells": None,
     "three_place_cells_synthetic": None,
 }
@@ -93,6 +98,7 @@ radius = {
     "s1_synthetic": 1,
     "s2_synthetic": 1,
     "t2_synthetic": None,
+    "kb_synthetic": None,
     "grid_cells": None,
     "three_place_cells_synthetic": None,
 }
@@ -102,6 +108,7 @@ major_radius = {
     "s1_synthetic": None,
     "s2_synthetic": None,
     "t2_synthetic": 2,
+    "kb_synthetic": None,
     "grid_cells": 1,
     "three_place_cells_synthetic": None,
 }
@@ -111,6 +118,7 @@ minor_radius = {
     "s1_synthetic": None,
     "s2_synthetic": None,
     "t2_synthetic": 1,
+    "kb_synthetic": None,
     "grid_cells": 1,
     "three_place_cells_synthetic": None,
 }
@@ -120,6 +128,7 @@ synthetic_rotation = {
     "s1_synthetic": "random",
     "s2_synthetic": "random",
     "t2_synthetic": "random",
+    "kb_synthetic": "random",
     "grid_cells": None,
     "three_place_cells_synthetic": None,
 }
@@ -128,12 +137,14 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-dataset_name = ["s1_synthetic", "s2_synthetic"]
+#dataset_name = ["s1_synthetic", "s2_synthetic"]
+dataset_name = ["kb_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
         "s2_synthetic",
         "t2_synthetic",
+        "kb_synthetic",
         "experimental",
         "grid_cells",
         "three_place_cells_synthetic",
