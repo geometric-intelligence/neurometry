@@ -238,7 +238,7 @@ def scaled_sigmoid(tensor, scales):
 
 def scaled_tanh(tensor, scales):
     assert tensor.shape[1] == scales.shape[0], "scales must have same shape as tensor"
-    return gs.tanh(scales * tensor)
+    return 1 + gs.tanh(scales * tensor)
 
 
 def poisson_spikes(data, multiplier=1):

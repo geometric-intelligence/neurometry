@@ -14,6 +14,8 @@ from .rnn_grid_cells import config, dual_agent_activity, single_agent_activity, 
 
 parent_dir = os.getcwd() + "/datasets/rnn_grid_cells/"
 
+#parent_dir = "/scratch/facosta/rnn_grid_cells/"
+
 
 single_model_folder = "Single agent path integration/Seed 1 weight decay 1e-06/"
 single_model_parameters = "steps_20_batch_200_RNN_4096_relu_rf_012_DoG_True_periodic_False_lr_00001_weight_decay_1e-06/"
@@ -88,12 +90,18 @@ def load_activations(epochs, version="single", verbose=True):
 
     return activations, rate_maps, state_points
 
+def plot_rate_map(indices, num_plots, activations):
 
-def plot_rate_map(num_plots, activations):
-    idxs = np.random.randint(0, 4095, num_plots)
+    if indices is None:
+        idxs = np.random.randint(0, 4095, num_plots)
+    else:
+        idxs = indices
+        num_plots = len(indices)
 
     rows = 4
     cols = num_plots // rows + (num_plots % rows > 0)
+
+    plt.rcParams['text.usetex'] = False
 
     fig, axes = plt.subplots(rows, cols, figsize=(20, 8))
 
