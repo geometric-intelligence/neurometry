@@ -27,6 +27,7 @@ import viz
 import wandb
 from ray import air, tune
 # from ray.tune.integration.wandb import wandb_mixin
+import ray.air.integrations.wandb
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
