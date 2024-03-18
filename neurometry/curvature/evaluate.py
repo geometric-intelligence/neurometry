@@ -2,7 +2,7 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
-import gph
+#import gph
 import numpy as np
 import torch
 from datasets.synthetic import (
