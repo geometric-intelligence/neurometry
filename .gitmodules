@@ -1,0 +1,6 @@
+[submodule "neurometry/curvature/grid-cells-curvature/models/grid-cell-rnn"]
+	path = neurometry/curvature/grid-cells-curvature/models/grid-cell-rnn
+	url = https://github.com/DehongXu/grid-cell-rnn.git
+[submodule "neurometry/curvature/grid-cells-curvature/models/grid-pattern-formation"]
+	path = neurometry/curvature/grid-cells-curvature/models/grid-pattern-formation
+	url = https://github.com/ganguli-lab/grid-pattern-formation.git
