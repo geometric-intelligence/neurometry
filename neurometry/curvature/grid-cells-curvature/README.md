@@ -1,4 +1,3 @@
 # "Geometry of Representations in Path-Integrating RNNs"
 
-
-![](https://github.com/franciscoeacosta/grid-cells-curvature/blob/main/gaussian_bump_harmonics.gif)
+![](https://github.com/geometric-intelligence/neurometry/blob/main/neurometry/curvature/grid-cells-curvature/position_from_grid_cells.gif)
