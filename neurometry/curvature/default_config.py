@@ -29,6 +29,9 @@ curvature_profiles_dir = os.path.join(os.getcwd(), "results/curvature_profiles/"
 if not os.path.exists(curvature_profiles_dir):
     os.makedirs(curvature_profiles_dir)
 
+print(configs_dir)
+print(trained_models_dir)
+
 
 # Hardware
 device = "cuda" if torch.cuda.is_available() else "cpu"

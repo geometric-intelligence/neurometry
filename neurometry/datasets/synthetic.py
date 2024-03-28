@@ -3,7 +3,7 @@ import os
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 from geomstats.geometry.hypersphere import Hypersphere
-from geomstats.geometry.klein_bottle import KleinBottle
+#from geomstats.geometry.klein_bottle import KleinBottle
 import torch
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.hypersphere import Hypersphere
@@ -49,6 +49,9 @@ def synthetic_neural_manifold(
     except:
         print("WARNING! Poisson spikes not generated: mean must be non-negative")
         noisy_points = None
+
+    noise_level = gs.sqrt(1 / (ref_frequency * poisson_multiplier))
+    print(f"noise level: {100*noise_level:.2f}%") 
 
     return noisy_points, manifold_points
 
