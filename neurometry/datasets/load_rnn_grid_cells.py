@@ -12,9 +12,9 @@ from .rnn_grid_cells import config, dual_agent_activity, single_agent_activity, 
 
 # Loading single agent model
 
-parent_dir = os.getcwd() + "/datasets/rnn_grid_cells/"
+#parent_dir = os.getcwd() + "/datasets/rnn_grid_cells/"
 
-#parent_dir = "/scratch/facosta/rnn_grid_cells/"
+parent_dir = "/scratch/facosta/rnn_grid_cells/"
 
 
 single_model_folder = "Single agent path integration/Seed 1 weight decay 1e-06/"
