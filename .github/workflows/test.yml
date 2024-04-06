@@ -51,7 +51,7 @@ jobs:
 
       - name: Run tests [pytest]
         run: |
-          pytest --cov --cov-report=xml:coverage.xml tests/
+          pytest --cov --cov-report=xml:coverage.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
