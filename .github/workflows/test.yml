@@ -1,0 +1,61 @@
+name: Test
+
+on:
+  push:
+    branches: [main,github-actions-test]
+    paths-ignore:
+    - 'docs/**'
+    - 'README.md'
+    - 'LICENSE.txt'
+    - '.gitignore'
+
+  pull_request:
+    branches: [main]
+    paths-ignore:
+    - 'docs/**'
+    - 'README.md'
+    - 'LICENSE.txt'
+    - '.gitignore'
+
+
+jobs:
+
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11"]
+        flavor: ["dev", "all"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: "pyproject.toml"
+
+      - name: Install Package [${{ matrix.flavor }}]
+        run: |
+          pip install -e .[${{ matrix.flavor }}]
+
+      - name: Typecheck [mypy]
+        run: |
+          mypy -p neurometry
+        continue-on-error: true
+
+      - name: Run tests [pytest]
+        run: |
+          pytest --cov --cov-report=xml:coverage.xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.xml
+          fail_ci_if_error: false
