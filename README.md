@@ -1,6 +1,6 @@
 [![Test](https://github.com/geometric-intelligence/neurometry/actions/workflows/test.yml/badge.svg)](https://github.com/geometric-intelligence/neurometry/actions/workflows/test.yml)
 [![Lint](https://github.com/geometric-intelligence/neurometry/actions/workflows/lint.yml/badge.svg)](https://github.com/geometric-intelligence/neurometry/actions/workflows/lint.yml)
-[![Doc](https://img.shields.io/badge/docs-website-brightgreen?style=flat)](https://neurometry.github.io/?badge=latest)
+[![Doc](https://img.shields.io/badge/docs-website-brightgreen?style=flat)](https://geometric-intelligence.github.io/?badge=latest)
 [![Codecov](https://codecov.io/gh/geometric-intelligence/neurometry/branch/main/graph/badge.svg)](https://app.codecov.io/gh/geometric-intelligence/neurometry)
 [![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)](https://www.python.org/)
 
