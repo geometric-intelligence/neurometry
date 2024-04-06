@@ -2,11 +2,8 @@
 
 import torch
 
-from neurometry.curvature.hyperspherical.distributions import (
-    HypersphericalUniform,
-    VonMisesFisher,
-)
-
+from neurometry.curvature.hyperspherical.distributions import hyperspherical_uniform
+from neurometry.curvature.hyperspherical.distributions import von_mises_fisher
 
 def elbo(x, x_mu, posterior_params, z, labels, config):
     """Compute the ELBO for the VAE loss.
@@ -46,8 +43,8 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
 
     if config.posterior_type == "hyperspherical":
         z_mu, z_kappa = posterior_params
-        q_z = VonMisesFisher(z_mu, z_kappa)
-        p_z = HypersphericalUniform(config.latent_dim - 1, device=config.device)
+        q_z = von_mises_fisher.VonMisesFisher(z_mu, z_kappa)
+        p_z = hyperspherical_uniform.HypersphericalUniform(config.latent_dim - 1, device=config.device)
         kld = torch.distributions.kl.kl_divergence(q_z, p_z).mean()
 
     if config.posterior_type == "toroidal":
