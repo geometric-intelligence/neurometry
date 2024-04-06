@@ -1,3 +1,8 @@
+[![Test](https://github.com/geometric-intelligence/neurometry/actions/workflows/test.yml/badge.svg)](https://github.com/geometric-intelligence/neurometry/actions/workflows/test.yml)
+[![Lint](https://github.com/geometric-intelligence/neurometry/actions/workflows/lint.yml/badge.svg)](https://github.com/geometric-intelligence/neurometry/actions/workflows/lint.yml)
+[![Codecov](https://codecov.io/gh/geometric-intelligence/neurometry/branch/main/graph/badge.svg)](https://app.codecov.io/gh/geometric-intelligence/neurometry)
+[![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)](https://www.python.org/)
+
 <img width="1188" alt="Screen Shot 2024-04-05 at 8 50 36 PM" src="https://github.com/geometric-intelligence/neurometry/assets/8267869/f24ddbf2-78ce-4896-9417-ed966316af2e">
 
 **Neurometry** is a computational framework to quantify geometric intelligence in natural and artificial brains. Neurometry provides functionalities to analyze the geometric structures underlying computation in neural systems - neural representations and neural manifolds.

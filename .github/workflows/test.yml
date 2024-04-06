@@ -28,7 +28,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.11.3"]
-        flavor: ["dev", "all"]
+        flavor: ["all"]
 
     steps:
       - uses: actions/checkout@v3
