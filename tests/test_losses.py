@@ -1,6 +1,7 @@
 import numpy as np
 import torch
-from neuralgeom.losses import latent_regularization_loss
+
+from neurometry.losses import latent_regularization_loss
 
 
 class AttrDict(dict):
