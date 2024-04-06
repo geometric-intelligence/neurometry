@@ -71,6 +71,7 @@ test = [
     "pandas-stubs",
     "types-requests"
 ]
+gpu = ["cupy-cuda11x"]
 
 dev = ["neurometry[test, lint]"]
 all = ["neurometry[doc, dev]",]
