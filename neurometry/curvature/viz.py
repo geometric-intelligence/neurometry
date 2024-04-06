@@ -101,14 +101,14 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
         y_rec = rec[:, 1]
         y_rec = [y.item() for y in y_rec]
         ax_data.set_title("Synthetic data", fontsize=40)
-        sc_data = ax_data.scatter(
+        ax_data.scatter(
             x_data, y_data, s=400, c=labels["angles"], cmap=colormap
         )
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
         ax_rec = fig.add_subplot(1, 2, 2)
         ax_rec.set_title("Reconstruction", fontsize=40)
-        sc_rec = ax_rec.scatter(x_rec, y_rec, s=400, c=labels["angles"], cmap=colormap)
+        ax_rec.scatter(x_rec, y_rec, s=400, c=labels["angles"], cmap=colormap)
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
     elif config.dataset_name in (
@@ -263,7 +263,7 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z0 = [_.item() for _ in z0]
         z1 = z[:, 1]
         z1 = [_.item() for _ in z1]
-        sc = ax.scatter(z0, z1, c=labels["angles"], s=400, cmap=colormap)
+        ax.scatter(z0, z1, c=labels["angles"], s=400, cmap=colormap)
         ax.set_xlim(-1.2, 1.2)
         ax.set_ylim(-1.2, 1.2)
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic", "grid_cells"):
@@ -275,7 +275,7 @@ def plot_latent_space(model, dataset_torch, labels, config):
         z1 = [_.item() for _ in z1]
         z2 = z[:, 2]
         z2 = [_.item() for _ in z2]
-        sc = ax.scatter3D(z0, z1, z2, s=400)
+        ax.scatter3D(z0, z1, z2, s=400)
         ax.view_init(elev=60, azim=45, roll=0)
         if config.dataset_name == "t2_synthetic":
             ax.set_xlim(
@@ -403,7 +403,7 @@ def plot_curvature_norms(angles, curvature_norms, config, norm_val, profile_type
         plt.axis("off")
 
     if config.dataset_name in ["s2_synthetic", "t2_synthetic", "grid_cells"]:
-        if norm_val != None:
+        if norm_val is not None:
             plotly_fig = go.Figure(
                 data=[
                     go.Scatter3d(
@@ -643,7 +643,7 @@ def plot_persistence_diagrams(diagrams_df, density=False):
 
 def plot_grids(grids, arena_dims):
     """Visualize the the firing lattices for all grid cells."""
-    colormap = plt.get_cmap("hsv")
+    plt.get_cmap("hsv")
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)
     ax.set_aspect("equal")
@@ -679,7 +679,7 @@ def plot_activity_with_mi(
 
     vector = mutual_info
 
-    img1 = ax1.imshow(
+    ax1.imshow(
         vector[:, np.newaxis],
         aspect="auto",
         cmap="viridis",

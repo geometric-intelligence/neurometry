@@ -1,6 +1,5 @@
 """Sphinx configuration file."""
 
-import neurometry
 
 project = "neurometry"
 copyright = "2023, Geometric Intelligence Lab."

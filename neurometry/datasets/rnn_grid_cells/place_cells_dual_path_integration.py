@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 import scipy
 import torch
 from scipy.cluster.vq import kmeans
 
 
-class PlaceCells(object):
+class PlaceCells:
 
     def __init__(self, options, us=None):
         self.Np = options.Np
@@ -135,6 +134,5 @@ class PlaceCells(object):
             for j in range(res):
                 Cmean += np.roll(np.roll(Csquare[i, j], -i, axis=0), -j, axis=1)
 
-        Cmean = np.roll(np.roll(Cmean, res // 2, axis=0), res // 2, axis=1)
+        return np.roll(np.roll(Cmean, res // 2, axis=0), res // 2, axis=1)
 
-        return Cmean

@@ -24,6 +24,7 @@ def finite_difference(a):
         for c in range(1, C):
             grad += finite_difference(a[:, :, c])
         return grad
+    return None
 
 
 if __name__ == "__main__":

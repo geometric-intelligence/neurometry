@@ -23,6 +23,5 @@ def get_lattice(scale, lattice_type, dimensions):
         X = lx * N_x
         Y = ly * N_y
 
-    lattice = np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
+    return np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
 
-    return lattice

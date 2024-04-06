@@ -1,14 +1,10 @@
 """Utils to import data from matlab."""
 
-import curvature.datasets.experimental
-import curvature.datasets.gridcells
-import curvature.datasets.synthetic
 import mat73
 import numpy as np
 import scipy.io
 import torch
 from scipy.signal import savgol_filter
-from sklearn.decomposition import PCA
 
 
 def load(config):
@@ -40,7 +36,7 @@ def load(config):
         labels = labels[labels["velocities"] > 5]
         dataset = np.log(dataset.astype(np.float32) + 1)
 
-        if config.smooth == True:
+        if config.smooth is True:
             dataset_smooth = np.zeros_like(dataset)
             for _ in range(dataset.shape[1]):
                 dataset_smooth[:, _] = savgol_filter(
@@ -160,33 +156,26 @@ def load(config):
     test_labels = labels.iloc[test_indices]
 
     # The angles are positional angles in the lab frame
-    if config.dataset_name in ("experimental", "s1_synthetic"):
+    if config.dataset_name in ("experimental", "s1_synthetic") or config.dataset_name in ("three_place_cells_synthetic"):
         train = []
-        for d, l in zip(train_dataset, train_labels["angles"]):
+        for d, l in zip(train_dataset, train_labels["angles"], strict=False):
             train.append([d, float(l)])
         test = []
-        for d, l in zip(test_dataset, test_labels["angles"]):
-            test.append([d, float(l)])
-    elif config.dataset_name in ("three_place_cells_synthetic"):
-        train = []
-        for d, l in zip(train_dataset, train_labels["angles"]):
-            train.append([d, float(l)])
-        test = []
-        for d, l in zip(test_dataset, test_labels["angles"]):
+        for d, l in zip(test_dataset, test_labels["angles"], strict=False):
             test.append([d, float(l)])
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         train = []
-        for d, t, p in zip(train_dataset, train_labels["thetas"], train_labels["phis"]):
+        for d, t, p in zip(train_dataset, train_labels["thetas"], train_labels["phis"], strict=False):
             train.append([d, torch.tensor([float(t), float(p)])])
         test = []
-        for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"]):
+        for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"], strict=False):
             test.append([d, torch.tensor([float(t), float(p)])])
     elif config.dataset_name == "grid_cells":
         train = []
-        for d, l in zip(train_dataset, train_labels["no_labels"]):
+        for d, l in zip(train_dataset, train_labels["no_labels"], strict=False):
             train.append([d, float(l)])
         test = []
-        for d, l in zip(test_dataset, test_labels["no_labels"]):
+        for d, l in zip(test_dataset, test_labels["no_labels"], strict=False):
             test.append([d, float(l)])
 
     train_loader = torch.utils.data.DataLoader(train, batch_size=config.batch_size)

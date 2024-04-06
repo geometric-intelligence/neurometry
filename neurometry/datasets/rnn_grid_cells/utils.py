@@ -1,6 +1,6 @@
 import numpy as np
 import scipy
-from visualize import compute_ratemaps, plot_ratemaps
+from visualize import compute_ratemaps
 
 
 def generate_run_ID(options):
@@ -30,9 +30,8 @@ def generate_run_ID(options):
     ]
     separator = "_"
     run_ID = separator.join(params)
-    run_ID = run_ID.replace(".", "")
+    return run_ID.replace(".", "")
 
-    return run_ID
 
 
 def get_2d_sort(x1, x2):
@@ -47,8 +46,7 @@ def get_2d_sort(x1, x2):
     for i in range(n):
         row_order = x2[total_order.ravel()].reshape(n, n)[i].argsort()
         total_order[i] = total_order[i, row_order]
-    total_order = total_order.ravel()
-    return total_order
+    return total_order.ravel()
 
 
 def dft(N, real=False, scale="sqrtn"):

@@ -34,10 +34,7 @@ def main(options, epoch="final", res=20):
 
     model_dual_agent = model.to(options.device)
 
-    if epoch == "final":
-        model_name = "final_model.pth"
-    else:
-        model_name = f"epoch_{epoch}.pth"
+    model_name = "final_model.pth" if epoch == "final" else f"epoch_{epoch}.pth"
     saved_model_dual_agent = torch.load(
         parent_dir + model_folder + model_parameters + model_name
     )
@@ -76,11 +73,10 @@ def main(options, epoch="final", res=20):
 def compute_grid_scores(res, rate_map_dual_agent, scorer):
     print("Computing grid scores...")
     score_60_dual_agent, _, _, _, _, _ = zip(
-        *[scorer.get_scores(rm.reshape(res, res)) for rm in tqdm(rate_map_dual_agent)]
+        *[scorer.get_scores(rm.reshape(res, res)) for rm in tqdm(rate_map_dual_agent)], strict=False
     )
-    score_60_dual_agent = np.array(score_60_dual_agent)
+    return np.array(score_60_dual_agent)
 
-    return score_60_dual_agent
 
 
 def compute_border_scores(box_width, res, rate_map_dual_agent, scorer):
@@ -110,7 +106,7 @@ def compute_all_scores(options, res, rate_map_dual_agent):
     box_width = options.box_width
     box_height = options.box_height
     coord_range = ((-box_width / 2, box_width / 2), (-box_height / 2, box_height / 2))
-    masks_parameters = zip(starts, ends.tolist())
+    masks_parameters = zip(starts, ends.tolist(), strict=False)
     scorer = GridScorer(res, coord_range, masks_parameters)
     score_60_dual_agent = compute_grid_scores(res, rate_map_dual_agent, scorer)
     border_scores_dual_agent = compute_border_scores(

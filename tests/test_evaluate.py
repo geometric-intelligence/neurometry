@@ -1,7 +1,6 @@
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import itertools
 
 import geomstats.backend as gs
 import torch
@@ -63,7 +62,6 @@ def test_second_fundamental_form_s1():
 def test_second_fundamental_form_bump():
     dim = 1
     embedding_dim = 2
-    radius = 3
 
     point = gs.array([gs.pi / 3])
     print("point s1:", point.shape)
@@ -194,7 +192,7 @@ def test_metric_matrix_s2():
     immersion = get_sphere_immersion(radius=radius)
     metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
     point = gs.array([gs.pi / 3, gs.pi])
-    theta, phi = point[0], point[1]
+    theta, _phi = point[0], point[1]
     matrix = metric.metric_matrix(point)
 
     expected_matrix = gs.array(
@@ -212,7 +210,7 @@ def test_cometric_matrix_s2():
     immersion = get_sphere_immersion(radius=radius)
     metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
     point = gs.array([gs.pi / 3, gs.pi])
-    theta, phi = point[0], point[1]
+    theta, _phi = point[0], point[1]
 
     comatrix = metric.cometric_matrix(point)
 
@@ -230,7 +228,7 @@ def test_inner_product_derivative_matrix_s2():
     metric = PullbackMetric(dim=dim, embedding_dim=embedding_dim, immersion=immersion)
 
     point = gs.array([gs.pi / 3, gs.pi])
-    theta, phi = point[0], point[1]
+    theta, _phi = point[0], point[1]
 
     # PATCH: assign new method in pullback metric
     metric.inner_product_derivative_matrix = get_patch_inner_product_derivative_matrix(
@@ -252,7 +250,7 @@ def test_inner_product_derivative_matrix_s2():
 
 
 def test_christoffels_bump():
-    dim, embedding_dim, radius = 1, 2, 1
+    dim, embedding_dim, _radius = 1, 2, 1
     immersion = get_s1_synthetic_immersion(
         distortion_func="bump",
         radius=1,
@@ -267,7 +265,7 @@ def test_christoffels_bump():
         embedding_dim, dim, immersion
     )
     point = gs.array([gs.pi / 3])
-    christoffels = metric.christoffels(point)
+    metric.christoffels(point)
     print("WORKING WITH ONE POINT")
 
     # points =  gs.linspace(0,2*gs.pi,100)
@@ -295,7 +293,7 @@ def test_christoffels_s2():
         embedding_dim, dim, immersion
     )
     point = gs.array([gs.pi / 3, gs.pi])
-    theta, phi = point[0], point[1]
+    theta, _phi = point[0], point[1]
 
     christoffels = metric.christoffels(point)
 

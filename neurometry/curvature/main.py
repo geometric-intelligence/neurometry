@@ -6,7 +6,7 @@ import logging
 import os
 import time
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"  # NOQA
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import random
 
 import datasets.utils
@@ -15,19 +15,18 @@ import evaluate
 import geomstats.backend as gs
 import matplotlib
 import matplotlib.pyplot as plt
+import models.klein_bottle_vae
 import models.neural_vae
 import models.toroidal_vae
-import models.klein_bottle_vae
-
 import numpy as np
 import pandas as pd
+
+# from ray.tune.integration.wandb import wandb_mixin
 import torch
 import train
 import viz
 import wandb
 from ray import air, tune
-# from ray.tune.integration.wandb import wandb_mixin
-import ray.air.integrations.wandb
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
@@ -59,9 +58,9 @@ def main():
             ):
                 sweep_name = f"{dataset_name}_{expt_id}"
                 if select_gain_1:
-                    sweep_name += f"_gain_1"
+                    sweep_name += "_gain_1"
                 else:
-                    sweep_name += f"_other_gain"
+                    sweep_name += "_other_gain"
 
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
                 main_sweep(
@@ -335,7 +334,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
     The data_point variable is a tensor of shape (embedding_dim,)
     corresponding to a single data point.
     """
-    data_dim = tuple(train_loader.dataset[0][0].data.shape)[0]
+    data_dim = next(iter(train_loader.dataset[0][0].data.shape))
     # Create model
     if config.posterior_type in ("gaussian", "hyperspherical"):
         random.seed(0)

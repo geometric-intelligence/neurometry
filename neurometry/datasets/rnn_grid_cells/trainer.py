@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 
 import numpy as np
@@ -6,7 +5,7 @@ import torch
 from visualize import save_ratemaps
 
 
-class Trainer(object):
+class Trainer:
     def __init__(self, options, model, trajectory_generator, restore=False):
         self.options = options
         self.model = model
@@ -22,12 +21,12 @@ class Trainer(object):
         ckpt_path = os.path.join(self.ckpt_dir, "most_recent_model.pth")
         if restore and os.path.isdir(self.ckpt_dir) and os.path.isfile(ckpt_path):
             self.model.load_state_dict(torch.load(ckpt_path))
-            print("Restored trained model from {}".format(ckpt_path))
+            print(f"Restored trained model from {ckpt_path}")
         else:
             if not os.path.isdir(self.ckpt_dir):
                 os.makedirs(self.ckpt_dir, exist_ok=True)
             print("Initializing new model from scratch.")
-            print("Saving to: {}".format(self.ckpt_dir))
+            print(f"Saving to: {self.ckpt_dir}")
 
     def train_step(self, inputs, pc_outputs, pos):
         """
@@ -76,20 +75,13 @@ class Trainer(object):
                 # tbar.set_description('Error = ' + str(np.int(100*err)) + 'cm')
 
                 print(
-                    "Epoch: {}/{}. Step {}/{}. Loss: {}. Err: {}cm".format(
-                        epoch_idx,
-                        n_epochs,
-                        step_idx,
-                        n_steps,
-                        np.round(loss, 2),
-                        np.round(100 * err, 2),
-                    )
+                    f"Epoch: {epoch_idx}/{n_epochs}. Step {step_idx}/{n_steps}. Loss: {np.round(loss, 2)}. Err: {np.round(100 * err, 2)}cm"
                 )
 
             if save and (epoch_idx % 5) == 0:
                 # Save checkpoint
                 ckpt_path = os.path.join(
-                    self.ckpt_dir, "epoch_{}.pth".format(epoch_idx)
+                    self.ckpt_dir, f"epoch_{epoch_idx}.pth"
                 )
                 torch.save(self.model.state_dict(), ckpt_path)
                 torch.save(

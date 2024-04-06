@@ -25,3 +25,4 @@ def sample(array, coordinates):
                 skimage.transform.warp(array[:, :, c], coordinates, mode="edge")
             )
         return np.stack(samples_channels, axis=-1)
+    return None

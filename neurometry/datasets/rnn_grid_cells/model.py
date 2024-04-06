@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import torch
 
 
 class RNN(torch.nn.Module):
     def __init__(self, options, place_cells):
-        super(RNN, self).__init__()
+        super().__init__()
         self.Ng = options.Ng
         self.Np = options.Np
         self.sequence_length = options.sequence_length
@@ -48,9 +47,8 @@ class RNN(torch.nn.Module):
             place_preds: Predicted place cell activations with shape
                 [batch_size, sequence_length, Np].
         """
-        place_preds = self.decoder(self.g(inputs))
+        return self.decoder(self.g(inputs))
 
-        return place_preds
 
     def compute_loss(self, inputs, pc_outputs, pos):
         """

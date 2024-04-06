@@ -101,7 +101,7 @@ def plot_rate_map(indices, num_plots, activations):
     rows = 4
     cols = num_plots // rows + (num_plots % rows > 0)
 
-    plt.rcParams['text.usetex'] = False
+    plt.rcParams["text.usetex"] = False
 
     fig, axes = plt.subplots(rows, cols, figsize=(20, 8))
 

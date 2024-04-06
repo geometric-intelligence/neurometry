@@ -2,11 +2,9 @@
 
 import logging
 import os
-from datetime import datetime
 
 import numpy as np
 import torch
-from ray.tune.search.hyperopt import HyperOptSearch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 

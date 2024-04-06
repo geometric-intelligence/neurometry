@@ -2,7 +2,7 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
-from geomstats.geometry.hypersphere import Hypersphere
+
 #from geomstats.geometry.klein_bottle import KleinBottle
 import torch
 from geomstats.geometry.euclidean import Euclidean
@@ -51,7 +51,7 @@ def synthetic_neural_manifold(
         noisy_points = None
 
     noise_level = gs.sqrt(1 / (ref_frequency * poisson_multiplier))
-    print(f"noise level: {100*noise_level:.2f}%") 
+    print(f"noise level: {100*noise_level:.2f}%")
 
     return noisy_points, manifold_points
 
@@ -76,8 +76,7 @@ def hypersphere(intrinsic_dim, num_points, radius=1):
     """
     unit_hypersphere = Hypersphere(dim=intrinsic_dim)
     unit_hypersphere_points = unit_hypersphere.random_point(n_samples=num_points)
-    hypersphere_points = radius * unit_hypersphere_points
-    return hypersphere_points
+    return radius * unit_hypersphere_points
 
 
 def hypertorus(intrinsic_dim, num_points, radii=None):
@@ -109,8 +108,7 @@ def hypertorus(intrinsic_dim, num_points, radii=None):
         ), f"radii must be a list of length {intrinsic_dim}"
         for _ in range(intrinsic_dim):
             hypertorus_points[:, _, :] = radii[_] * unit_hypertorus_points[:, _, :]
-    hypertorus_points = gs.reshape(hypertorus_points, (num_points, intrinsic_dim * 2))
-    return hypertorus_points
+    return gs.reshape(hypertorus_points, (num_points, intrinsic_dim * 2))
 
 
 def cylinder(num_points, radius=1):
@@ -133,7 +131,7 @@ def cylinder(num_points, radius=1):
     return cylinder_points
 
 
-def klein_bottle(num_points, size_factor = 1, coords_type = 'bottle'):
+def klein_bottle(num_points, size_factor = 1, coords_type = "bottle"):
     """Generate points on a Klein bottle manifold.
 
     Parameters
@@ -150,15 +148,14 @@ def klein_bottle(num_points, size_factor = 1, coords_type = 'bottle'):
     kleinbottle_points : array-like, shape=[num_points, n] (n depends on the parametrization)
         Points on the Klein bottle.
     """
-    possible_coord_types = ['bottle', 'bagel', 'extrinsic']
+    possible_coord_types = ["bottle", "bagel", "extrinsic"]
     if coords_type not in possible_coord_types:
-        raise Exception('Please pick a valid parametrization for the random points on the Klein Bottle')
-    unit_klein_bottle = KleinBottle() 
+        raise Exception("Please pick a valid parametrization for the random points on the Klein Bottle")
+    unit_klein_bottle = KleinBottle()
     unit_klein_bottle_points = unit_klein_bottle.random_point(n_samples=num_points)
     unit_klein_bottle_points = unit_klein_bottle.to_coords(unit_klein_bottle_points, coords_type)
-    klein_bottle_points = size_factor * unit_klein_bottle_points
+    return size_factor * unit_klein_bottle_points
 
-    return klein_bottle_points
 
 
 ### Synthetic Encoding Scheme ###
@@ -197,8 +194,7 @@ def encode_points(manifold_points, encoding_matrix):
     encoded_points : array-like, shape=[num_points, encoding_dim]
         Encoded points.
     """
-    encoded_points = gs.einsum("ij,jk->ik", manifold_points, encoding_matrix)
-    return encoded_points
+    return gs.einsum("ij,jk->ik", manifold_points, encoding_matrix)
 
 
 def apply_nonlinearity(encoded_points, nonlinearity, **kwargs):

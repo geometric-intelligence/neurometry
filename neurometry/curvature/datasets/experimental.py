@@ -145,7 +145,7 @@ def load_neural_activity(expt_id=34, vel_threshold=5, timestep_microsec=int(1e5)
             qw = _average_variable(qw, tracked_times, sampling_times)
             success = _average_variable(success, tracked_times, sampling_times)
 
-            radius2 = [xx**2 + yy**2 for xx, yy in zip(x, y)]
+            radius2 = [xx**2 + yy**2 for xx, yy in zip(x, y, strict=False)]
             angles_tracked = np.arctan2(y, x)
 
             quat_head = np.stack([qx, qy, qz, qw], axis=1)  # scalar-last format
@@ -350,9 +350,8 @@ def _average_variable(variable_to_average, recorded_times, sampling_times):
             variable_averaged.append(averaged)
             cum_count += int(count)
 
-    variable_averaged = np.array(variable_averaged)
+    return np.array(variable_averaged)
 
-    return variable_averaged
 
 
 def get_place_field_centers(neural_activity, task_variable):

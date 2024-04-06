@@ -34,7 +34,7 @@ class NeuralVAE(torch.nn.Module):
         posterior_type="gaussian",
         drop_out_p=0.0,
     ):
-        super(NeuralVAE, self).__init__()
+        super().__init__()
         self.data_dim = data_dim
         self.sftbeta = sftbeta
         self.latent_dim = latent_dim
@@ -94,7 +94,7 @@ class NeuralVAE(torch.nn.Module):
         """
         h = F.softplus(self.encoder_fc(x.double()), beta=self.sftbeta)
 
-        for i_layer, layer in enumerate(self.encoder_linears):
+        for _i_layer, layer in enumerate(self.encoder_linears):
             # h = self.drop_out(h)
             h = layer(h)
             h = F.softplus(h, beta=self.sftbeta)
@@ -137,9 +137,8 @@ class NeuralVAE(torch.nn.Module):
             z_mu, z_kappa = posterior_params
             q_z = VonMisesFisher(z_mu, z_kappa)
 
-        z = q_z.rsample()
+        return q_z.rsample()
 
-        return z
 
     def decode(self, z):
         """Decode latent variable z into data.
@@ -157,14 +156,13 @@ class NeuralVAE(torch.nn.Module):
 
         h = F.softplus(self.decoder_fc(z), beta=self.sftbeta)
 
-        for i_layer, layer in enumerate(self.decoder_linears):
+        for _i_layer, layer in enumerate(self.decoder_linears):
             # h = self.drop_out(h)
             h = layer(h)
             h = F.softplus(h, beta=self.sftbeta)
 
-        x_mu = self.fc_x_mu(h)
+        return self.fc_x_mu(h)
 
-        return x_mu
 
     def forward(self, x):
         """Run VAE: Encode, sample and decode.
