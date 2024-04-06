@@ -90,8 +90,7 @@ class GridScorer:
             return np.minimum(corr[60], corr[120]) - np.maximum(
                 corr[30], np.maximum(corr[90], corr[150])
             )
-        else:
-            return (corr[60] + corr[120]) / 2 - (corr[30] + corr[90] + corr[150]) / 3
+        return (corr[60] + corr[120]) / 2 - (corr[30] + corr[90] + corr[150]) / 3
 
     def grid_score_90(self, corr):
         return corr[90] - (corr[45] + corr[135]) / 2
