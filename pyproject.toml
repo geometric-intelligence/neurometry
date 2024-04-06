@@ -39,6 +39,12 @@ dependencies=[
     "scikit-image",
     "scikit-learn",
     "seaborn",
+    "torch",
+    "torchmetrics",
+    "torchinfo",
+    "geomstats @ git+https://github.com/geomstats/geomstats.git",
+    "torchlens @ git+https://github.com/johnmarktaylor91/torchlens.git",
+    "netrep @ git+https://github.com/ahwillia/netrep.git"
 ]
 
 [project.optional-dependencies]
@@ -64,11 +70,6 @@ test = [
     "mypy > 1.6.0",
     "pandas-stubs",
     "types-requests"
-]
-torch = [
-    "torch",
-    "torchmetrics",
-    "torchinfo"
 ]
 
 dev = ["neurometry[test, lint]"]
@@ -150,10 +151,6 @@ exclude = [
 extra-index-url = "https://pypi.org/simple"
 
 [[tool.pip.dependencies]]
-name = "black"
-version = "*"
-
-[[tool.pip.dependencies]]
 name = "giotto-ph"
 version = "*"
 
@@ -162,19 +159,7 @@ name = "hyperopt"
 version = "0.2.5"
 
 [[tool.pip.dependencies]]
-name = "isort"
-version = "*"
-
-[[tool.pip.dependencies]]
 name = "mat73"
-version = "*"
-
-[[tool.pip.dependencies]]
-name = "pre-commit"
-version = "*"
-
-[[tool.pip.dependencies]]
-name = "pytest"
 version = "*"
 
 [[tool.pip.dependencies]]
@@ -188,16 +173,3 @@ version = "*"
 [[tool.pip.dependencies]]
 name = "mtalg"
 version = "*"
-
-[[tool.pip.dependencies]]
-name = "jupyter-black"
-version = "*"
-
-[tool.pip.dependencies.geomstats]
-git = "https://github.com/geomstats/geomstats.git"
-
-[tool.pip.dependencies.torchlens]
-git = "https://github.com/johnmarktaylor91/torchlens.git"
-
-[tool.pip.dependencies.netrep]
-git = "https://github.com/ahwillia/netrep.git"
