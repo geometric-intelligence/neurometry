@@ -6,7 +6,6 @@ This file gathers deep learning models related to G-manifold learning.
 import geomstats.backend as gs
 import torch
 from hyperspherical.distributions import VonMisesFisher
-from torch.distributions.normal import Normal
 from torch.nn import functional as F
 
 
@@ -34,7 +33,7 @@ class KleinBottleVAE(torch.nn.Module):
         decoder_depth,
         posterior_type,
     ):
-        super(KleinBottleVAE, self).__init__()
+        super().__init__()
         self.data_dim = data_dim
         self.sftbeta = sftbeta
         self.latent_dim = latent_dim
@@ -99,9 +98,8 @@ class KleinBottleVAE(torch.nn.Module):
         z_u_mu = self.fc_z_u_mu(h)
         z_u_kappa = F.softplus(self.fc_z_u_kappa(h)) + 1
 
-        posterior_params = z_theta_mu, z_theta_kappa, z_u_mu, z_u_kappa
+        return z_theta_mu, z_theta_kappa, z_u_mu, z_u_kappa
 
-        return posterior_params
 
     def _build_klein_bottle(self, z_theta, z_u):
         # theta = torch.atan2(z_theta[:, 1] / z_theta[:, 0])
@@ -151,9 +149,8 @@ class KleinBottleVAE(torch.nn.Module):
 
         z_u = q_z_u.rsample()
 
-        z = self._build_torus(z_theta, z_u)
+        return self._build_torus(z_theta, z_u)
 
-        return z
 
     def decode(self, z):
         """Decode latent variable z into data.
@@ -174,9 +171,8 @@ class KleinBottleVAE(torch.nn.Module):
         for layer in self.decoder_linears:
             h = F.softplus(layer(h), beta=self.sftbeta)
 
-        x_mu = self.fc_x_mu(h)
+        return self.fc_x_mu(h)
 
-        return x_mu
 
     def forward(self, x):
         """Run VAE: Encode, sample and decode.

@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
 import cv2
 import numpy as np
-import scipy
-import scipy.stats
 from imageio import imsave
 from matplotlib import pyplot as plt
 from tqdm import tqdm
@@ -20,8 +17,7 @@ def concat_images(images, image_width, spacer_size):
         if i != image_size - 1:
             # Add spacer
             images_with_spacers.append(spacer)
-    ret = np.hstack(images_with_spacers)
-    return ret
+    return np.hstack(images_with_spacers)
 
 
 def concat_images_in_rows(images, row_size, image_width, spacer_size=4):
@@ -49,14 +45,12 @@ def concat_images_in_rows(images, row_size, image_width, spacer_size=4):
         if row != row_size - 1:
             row_images_with_spacers.append(spacer_h)
 
-    ret = np.vstack(row_images_with_spacers)
-    return ret
+    return np.vstack(row_images_with_spacers)
 
 
 def convert_to_colormap(im, cmap):
     im = cmap(im)
-    im = np.uint8(im * 255)
-    return im
+    return np.uint8(im * 255)
 
 
 def rgb(im, cmap="jet", smooth=True):
@@ -66,14 +60,12 @@ def rgb(im, cmap="jet", smooth=True):
     if smooth:
         im = cv2.GaussianBlur(im, (3, 3), sigmaX=1, sigmaY=0)
     im = cmap(im)
-    im = np.uint8(im * 255)
-    return im
+    return np.uint8(im * 255)
 
 
 def plot_ratemaps(activations, n_plots, cmap="jet", smooth=True, width=16):
     images = [rgb(im, cmap, smooth) for im in activations[:n_plots]]
-    rm_fig = concat_images_in_rows(images, n_plots // width, activations.shape[-1])
-    return rm_fig
+    return concat_images_in_rows(images, n_plots // width, activations.shape[-1])
 
 
 def compute_ratemaps(
@@ -226,7 +218,7 @@ def save_autocorr(sess, model, save_name, trajectory_generator, step, flags):
     starts = [0.2] * 10
     ends = np.linspace(0.4, 1.0, num=10)
     coord_range = ((-1.1, 1.1), (-1.1, 1.1))
-    masks_parameters = zip(starts, ends.tolist())
+    masks_parameters = zip(starts, ends.tolist(), strict=False)
     latest_epoch_scorer = scores.GridScorer(20, coord_range, masks_parameters)
 
     res = dict()
@@ -244,6 +236,6 @@ def save_autocorr(sess, model, save_name, trajectory_generator, step, flags):
 
     filename = save_name + "/autocorrs_" + str(step) + ".pdf"
     imdir = flags.save_dir + "/"
-    out = utils.get_scores_and_plot(
+    utils.get_scores_and_plot(
         latest_epoch_scorer, res["pos_xy"], res["bottleneck"], imdir, filename
     )

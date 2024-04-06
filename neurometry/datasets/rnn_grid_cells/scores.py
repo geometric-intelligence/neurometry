@@ -16,7 +16,6 @@
 """Grid score calculations.
 """
 
-from __future__ import absolute_import, division, print_function
 
 import math
 
@@ -41,7 +40,7 @@ def circle_mask(size, radius, in_val=1.0, out_val=0.0):
     return vfunc(z)
 
 
-class GridScorer(object):
+class GridScorer:
     """Class for scoring ratemaps given trajectories."""
 
     def __init__(self, nbins, coords_range, mask_parameters, min_max=False):
@@ -147,8 +146,7 @@ class GridScorer(object):
         )
         x_coef = np.divide(covar, np.multiply(std_seq1, std_seq2))
         x_coef = np.real(x_coef)
-        x_coef = np.nan_to_num(x_coef)
-        return x_coef
+        return np.nan_to_num(x_coef)
 
     def rotated_sacs(self, sac, angles):
         return [
@@ -166,7 +164,7 @@ class GridScorer(object):
         masked_sac_centered = (masked_sac - masked_sac_mean) * mask
         variance = np.sum(masked_sac_centered**2) / ring_area + 1e-5
         corrs = dict()
-        for angle, rotated_sac in zip(self._corr_angles, rotated_sacs):
+        for angle, rotated_sac in zip(self._corr_angles, rotated_sacs, strict=False):
             masked_rotated_sac = (rotated_sac - masked_sac_mean) * mask
             cross_prod = np.sum(masked_sac_centered * masked_rotated_sac) / ring_area
             corrs[angle] = cross_prod / variance
@@ -182,7 +180,7 @@ class GridScorer(object):
             for mask, mask_params in self._masks  # pylint: disable=unused-variable
         ]
         scores_60, scores_90, variances = map(
-            np.asarray, zip(*scores)
+            np.asarray, zip(*scores, strict=False)
         )  # pylint: disable=unused-variable
         max_60_ind = np.argmax(scores_60)
         max_90_ind = np.argmax(scores_90)
@@ -342,7 +340,7 @@ class GridScorer(object):
         else:
             phi = np.zeros((3,))
             # print no phi found and the cell number
-            print("no 6 angles found for cell {}".format(cell))
+            print(f"no 6 angles found for cell {cell}")
 
         return phi, radial_values
 
@@ -379,9 +377,5 @@ class GridScorer(object):
             spacing_values[:, 0], prominence=0.05
         )
 
-        if spacing_peaks.size == 0:
-            spacing = 0
-        else:
-            spacing = 2 * spacing_vec[spacing_peaks][0]
+        return 0 if spacing_peaks.size == 0 else 2 * spacing_vec[spacing_peaks][0]
 
-        return spacing

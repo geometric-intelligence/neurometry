@@ -2,6 +2,7 @@ import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
+
 #import gph
 import numpy as np
 import torch
@@ -10,7 +11,6 @@ from datasets.synthetic import (
     get_s2_synthetic_immersion,
     get_t2_synthetic_immersion,
 )
-from decorators import timer
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
 
@@ -51,9 +51,8 @@ def get_learned_immersion(model, config):
             )
 
         z = z.to(config.device)
-        x_mu = model.decode(z)
+        return model.decode(z)
 
-        return x_mu
 
     return immersion
 
@@ -112,7 +111,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     neural_metric = PullbackMetric(
         dim=dim, embedding_dim=embedding_dim, immersion=immersion
     )
-    z0 = torch.unsqueeze(z_grid[0], dim=0)
+    torch.unsqueeze(z_grid[0], dim=0)
     if dim == 1:
         curv = gs.zeros(len(z_grid), embedding_dim)
         geodesic_dist = gs.zeros(len(z_grid))
@@ -214,8 +213,7 @@ def _integrate_s2(thetas, phis, h):
         sum_phis[t] = torch.trapz(
             y=h[len(phis) * t : len(phis) * (t + 1)], x=phis
         ) * np.sin(theta)
-    integral = torch.trapz(y=sum_phis, x=thetas)
-    return integral
+    return torch.trapz(y=sum_phis, x=thetas)
 
 
 def _compute_curvature_error_s2(thetas, phis, curv_norms_learned, curv_norms_true):
@@ -240,23 +238,17 @@ def _compute_curvature_error_t2(thetas, phis, curv_norms_learned, curv_norms_tru
 def compute_curvature_error(
     z_grid, curv_norms_learned, curv_norms_true, config
 ):  # Calculate method error
-    start_time = time.time()
+    time.time()
 
     if config.dataset_name == "s1_synthetic":
         thetas = z_grid
         error = _compute_curvature_error_s1(thetas, curv_norms_learned, curv_norms_true)
-    elif config.dataset_name == "s2_synthetic":
+    elif config.dataset_name == "s2_synthetic" or config.dataset_name == "t2_synthetic":
         thetas = z_grid[:, 0]
         phis = z_grid[:, 1]
         error = _compute_curvature_error_s2(
             thetas, phis, curv_norms_learned, curv_norms_true
         )
-    elif config.dataset_name == "t2_synthetic":
-        thetas = z_grid[:, 0]
-        phis = z_grid[:, 1]
-        error = _compute_curvature_error_s2(
-            thetas, phis, curv_norms_learned, curv_norms_true
-        )
-    end_time = time.time()
+    time.time()
     # print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return error

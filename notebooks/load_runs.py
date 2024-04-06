@@ -16,7 +16,7 @@ class AttrDict(dict):
     """
 
     def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__dict__ = self
 
 
@@ -37,10 +37,9 @@ def config_from_run_id(run_id):
         if run_id in config_file:
             # print(f"Found: {config_file}")
             run_id_config_file = config_file
-    with open(os.path.join(CONFIG_DIR, run_id_config_file), "r") as f:
+    with open(os.path.join(CONFIG_DIR, run_id_config_file)) as f:
         config_dict = json.load(f)
-    config = AttrDict(config_dict)
-    return config
+    return AttrDict(config_dict)
 
 
 def curvature_profiles_from_run_id(run_id, config):
@@ -61,10 +60,8 @@ def curvature_profiles_from_run_id(run_id, config):
     for curv_path in os.listdir(CURVATURE_PROFILES_DIR):
         if run_id in curv_path:
             # print(f"Found: {curv_path}")
-            if "learned" in curv_path:
-                learned_profile_path = curv_path
-            elif "true" in curv_path:
-                true_profile_path = curv_path
+            if "learned" in curv_path or "true" in curv_path:
+                pass
     learned_profile = pd.read_csv(
         os.path.join(
             CURVATURE_PROFILES_DIR,

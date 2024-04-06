@@ -24,9 +24,8 @@ class BiharmonicReguarizer:
         dyy = convolve(f[:, :, 1], w)
 
         dff = np.stack([dxx, dyy], axis=-1)
-        g = -self.alpha * dff + self.gamma * f
+        return -self.alpha * dff + self.gamma * f
 
-        return g
 
     def K(self, g):
         """
@@ -45,8 +44,7 @@ class BiharmonicReguarizer:
         F = G / self.A**2
 
         # transform back to normal domain
-        f = self.ifft2(F)
-        return f
+        return self.ifft2(F)
 
     def compute_A(self, shape):
         """
@@ -71,8 +69,7 @@ class BiharmonicReguarizer:
         A += self.gamma
 
         # expand dims to match G
-        A = np.stack([A, A], axis=-1)
-        return A
+        return np.stack([A, A], axis=-1)
 
     def fft2(self, a):
         """

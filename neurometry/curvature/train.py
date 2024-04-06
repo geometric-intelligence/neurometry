@@ -69,13 +69,7 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
         optimizer.step()
         if batch_idx % config.log_interval == 0:
             print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
-                    elbo_loss.item() / len(data),
-                )
+                f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} ({100.0 * batch_idx / len(train_loader):.0f}%)]\tLoss: {elbo_loss.item() / len(data):.6f}"
             )
 
     train_loss /= len(train_loader.dataset)
@@ -92,7 +86,7 @@ def train_one_epoch(epoch, model, train_loader, optimizer, config):
         step=epoch,
     )
 
-    print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss))
+    print(f"====> Epoch: {epoch} Average loss: {train_loss:.4f}")
     return train_loss
 
 
@@ -114,7 +108,7 @@ def test_one_epoch(epoch, model, test_loader, config):
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, batch_data in enumerate(test_loader):
+        for _i, batch_data in enumerate(test_loader):
             data, labels = batch_data
             data = data.to(config.device)
             labels = labels.float()
@@ -137,5 +131,5 @@ def test_one_epoch(epoch, model, test_loader, config):
         },
         step=epoch,
     )
-    print("====> Test set loss: {:.4f}".format(test_loss))
+    print(f"====> Test set loss: {test_loss:.4f}")
     return test_loss

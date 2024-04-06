@@ -22,7 +22,7 @@ class HypersphericalUniform(torch.distributions.Distribution):
         self._device = val if isinstance(val, torch.device) else torch.device(val)
 
     def __init__(self, dim, validate_args=None, device=None):
-        super(HypersphericalUniform, self).__init__(
+        super().__init__(
             torch.Size([dim]), validate_args=validate_args
         )
         self._dim = dim

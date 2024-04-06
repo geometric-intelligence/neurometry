@@ -2,7 +2,6 @@
 
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -65,9 +64,8 @@ def create_reference_lattice(lx, ly, arena_dims, lattice_type="hexagonal"):
         X = lx * N_x
     Y = ly * N_y
 
-    ref_lattice = np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
+    return np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
 
-    return ref_lattice
 
 
 def generate_all_grids(
@@ -79,7 +77,7 @@ def generate_all_grids(
     warp=None,
     lattice_type="hexagonal",
 ):
-    """Create lattices for all grid cells within a module, with varying phase & orientation.
+    r"""Create lattices for all grid cells within a module, with varying phase & orientation.
 
     Parameters
     ----------
@@ -105,9 +103,9 @@ def generate_all_grids(
         scale=grid_scale, lattice_type=lattice_type, dimensions=arena_dims
     )
 
-    grids = np.zeros((n_cells,) + np.shape(ref_lattice))
+    grids = np.zeros((n_cells, *np.shape(ref_lattice)))
 
-    grids_warped = np.zeros((n_cells,) + np.shape(ref_lattice))
+    grids_warped = np.zeros((n_cells, *np.shape(ref_lattice)))
 
     arena_dims = np.array(arena_dims)
 
@@ -122,7 +120,7 @@ def generate_all_grids(
         lattice_i = np.matmul(rot_i, ref_lattice.T).T + phase_i
         # lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
 
-        if warp == None:
+        if warp is None:
             pass
         else:
             for j, point in enumerate(lattice_i):

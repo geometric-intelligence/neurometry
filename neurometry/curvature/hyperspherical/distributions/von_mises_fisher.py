@@ -2,7 +2,7 @@ import math
 
 import torch
 from hyperspherical.distributions.hyperspherical_uniform import HypersphericalUniform
-from hyperspherical.ops.ive import ive, ive_fraction_approx, ive_fraction_approx2
+from hyperspherical.ops.ive import ive
 from torch.distributions.kl import register_kl
 
 
@@ -105,19 +105,18 @@ class VonMisesFisher(torch.distributions.Distribution):
     @staticmethod
     def first_nonzero(x, dim, invalid_val=-1):
         mask = x > 0
-        idx = torch.where(
+        return torch.where(
             mask.any(dim=dim),
             mask.float().argmax(dim=1).squeeze(),
             torch.tensor(invalid_val, device=x.device),
         )
-        return idx
 
     def __while_loop(self, b, a, d, shape, k=20, eps=1e-20):
         #  matrix while loop: samples a matrix of [A, k] samples, to avoid looping all together
-        b, a, d = [
+        b, a, d = (
             e.repeat(*shape, *([1] * len(self.scale.shape))).reshape(-1, 1)
             for e in (b, a, d)
-        ]
+        )
         w, e, bool_mask = (
             torch.zeros_like(b).to(self.device),
             torch.zeros_like(b).to(self.device),
@@ -167,8 +166,7 @@ class VonMisesFisher(torch.distributions.Distribution):
     def __householder_rotation(self, x):
         u = self.__e1 - self.loc
         u = u / (u.norm(dim=-1, keepdim=True) + 1e-5)
-        z = x - 2 * (x * u).sum(-1, keepdim=True) * u
-        return z
+        return x - 2 * (x * u).sum(-1, keepdim=True) * u
 
     def entropy(self):
         # option 1:

@@ -159,8 +159,7 @@ def moving_forward_loss(z, config):
     loss = -diff[mask]
     if len(loss) == 0:
         return torch.zeros(1).to(config.device)
-    mean_loss = torch.mean(loss)
-    return mean_loss
+    return torch.mean(loss)
 
 
 def dynamic_loss(labels, z, config):
@@ -177,7 +176,6 @@ def dynamic_loss(labels, z, config):
         # )
         return torch.zeros(1).to(config.device)
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)
-    diff = latent_angles[1:, :] - latent_angles[:-1, :]
+    latent_angles[1:, :] - latent_angles[:-1, :]
 
-    angular_velocity = 0.0  # placeholder: needs to get it from labels
     return 0.0

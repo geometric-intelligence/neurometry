@@ -22,7 +22,7 @@ class Regressor(torch.nn.Module):
     """
 
     def __init__(self, input_dim=2, h_dim=20, output_dim=4):
-        super(Regressor, self).__init__()
+        super().__init__()
         self.input_layer = torch.nn.Linear(input_dim, h_dim)
         self.layer1 = torch.nn.Linear(h_dim, h_dim)
         self.layer2 = torch.nn.Linear(h_dim, h_dim)
@@ -46,5 +46,4 @@ class Regressor(torch.nn.Module):
         x = F.relu(self.input_layer(x))
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        x = F.tanh(self.output_layer(x))
-        return x
+        return F.tanh(self.output_layer(x))

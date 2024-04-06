@@ -4,7 +4,7 @@ from pyLDDMM.utils import grid, sampler
 from pyLDDMM.utils.grad import finite_difference
 
 
-class LDDMM2D(object):
+class LDDMM2D:
     """
     2d LDDMM registration
     """
@@ -67,7 +67,7 @@ class LDDMM2D(object):
                 break
 
             # (9): Calculate the gradient
-            for t in range(0, self.T):
+            for t in range(self.T):
                 dv[t] = 2 * v[t] - self.regularizer.K(
                     2
                     / sigma**2
@@ -93,9 +93,7 @@ class LDDMM2D(object):
 
             # (12): iterate k = k+1
             print(
-                "iteration {:3d}, energy {:4.2f}, thereof {:4.2f} regularization and {:4.2f} intensity difference".format(
-                    k, E, E_regularizer, E_intensity
-                )
+                f"iteration {k:3d}, energy {E:4.2f}, thereof {E_regularizer:4.2f} regularization and {E_intensity:4.2f} intensity difference"
             )
             # end of for loop block
 
@@ -150,7 +148,7 @@ class LDDMM2D(object):
         @return:
         """
         alpha = np.zeros(v_t.shape)
-        for i in range(5):
+        for _i in range(5):
             alpha = sampler.sample(v_t, x + 0.5 * alpha)
         return alpha
 
@@ -168,7 +166,7 @@ class LDDMM2D(object):
         # Phi0_0 is the identity mapping
         Phi0[0] = x
 
-        for t in range(0, self.T - 1):
+        for t in range(self.T - 1):
             alpha = self.forward_alpha(v[t], x)
             Phi0[t + 1] = sampler.sample(Phi0[t], x - alpha)
 
@@ -182,7 +180,7 @@ class LDDMM2D(object):
         @return:
         """
         alpha = np.zeros(v_t.shape)
-        for i in range(5):
+        for _i in range(5):
             alpha = sampler.sample(v_t, x - 0.5 * alpha)
         return alpha
 
@@ -193,9 +191,9 @@ class LDDMM2D(object):
         @param Phi0: flow
         @return: sequence of forward pushed images J0
         """
-        J0 = np.zeros((self.T,) + I0.shape)
+        J0 = np.zeros((self.T, *I0.shape))
 
-        for t in range(0, self.T):
+        for t in range(self.T):
             J0[t] = sampler.sample(I0, Phi0[t])
 
         return J0
@@ -207,7 +205,7 @@ class LDDMM2D(object):
         @param Phi1: flow
         @return: sequence of back-pulled images J1
         """
-        J1 = np.zeros((self.T,) + I1.shape)
+        J1 = np.zeros((self.T, *I1.shape))
 
         for t in range(self.T - 1, -1, -1):
             J1[t] = sampler.sample(I1, Phi1[t])
@@ -220,7 +218,7 @@ class LDDMM2D(object):
         @param J0: sequence of forward pushed images J0
         @return: dJ0: gradients of J0
         """
-        dJ0 = np.zeros(J0.shape + (2,))
+        dJ0 = np.zeros((*J0.shape, 2))
 
         for t in range(self.T):
             dJ0[t] = finite_difference(J0[t])

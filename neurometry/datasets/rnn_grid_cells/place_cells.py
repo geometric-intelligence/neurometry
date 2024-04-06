@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 import scipy
 import torch
 
 
-class PlaceCells(object):
+class PlaceCells:
 
     def __init__(self, options, us=None):
         self.Np = options.Np
@@ -75,8 +74,7 @@ class PlaceCells(object):
             pred_pos: Predicted 2d position with shape [batch_size, sequence_length, 2].
         """
         _, idxs = torch.topk(activation, k=k)
-        pred_pos = self.us[idxs].mean(-2)
-        return pred_pos
+        return self.us[idxs].mean(-2)
 
     def grid_pc(self, pc_outputs, res=32):
         """Interpolate place cell outputs onto a grid"""
@@ -121,6 +119,5 @@ class PlaceCells(object):
             for j in range(res):
                 Cmean += np.roll(np.roll(Csquare[i, j], -i, axis=0), -j, axis=1)
 
-        Cmean = np.roll(np.roll(Cmean, res // 2, axis=0), res // 2, axis=1)
+        return np.roll(np.roll(Cmean, res // 2, axis=0), res // 2, axis=1)
 
-        return Cmean

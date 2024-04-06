@@ -6,7 +6,7 @@ def is_cuda_available():
     """Check if CUDA is available on the system."""
     try:
         subprocess.run(
-            ["nvidia-smi"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["nvidia-smi"], check=True, capture_output=True
         )
         return True
     except Exception:

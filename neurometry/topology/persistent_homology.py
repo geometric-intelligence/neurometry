@@ -1,8 +1,8 @@
-import persim
-import gph
 import numpy as np
+import persim
 
-def distance(diagrams1, diagrams2, dist_type = 'bottleneck'):
+
+def distance(diagrams1, diagrams2, dist_type = "bottleneck"):
     maxdim1 = len(diagrams1)
     maxdim2 = len(diagrams2)
     assert maxdim1 == maxdim2
@@ -10,19 +10,19 @@ def distance(diagrams1, diagrams2, dist_type = 'bottleneck'):
     total_distance = 0
 
     for dim in range(maxdim1):
-        if dist_type == 'bottleneck':
+        if dist_type == "bottleneck":
             bottleneck_dist_dim = persim.bottleneck(diagrams1[dim], diagrams2[dim])
             total_distance += bottleneck_dist_dim
-        elif dist_type == 'sliced_wasserstein':
+        elif dist_type == "sliced_wasserstein":
             sliced_wasserstein_dist_dim = persim.sliced_wasserstein(diagrams1[dim], diagrams2[dim])
             total_distance += sliced_wasserstein_dist_dim
         else:
-            raise ValueError('Invalid distance type')
+            raise ValueError("Invalid distance type")
 
     return total_distance
 
 
-def distances_to_reference(diagrams_list, reference_diagrams, dist_type = 'bottleneck'):
+def distances_to_reference(diagrams_list, reference_diagrams, dist_type = "bottleneck"):
     num_diagrams = len(diagrams_list)
     distances = np.zeros(num_diagrams)
 

@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-import os
 
 import numpy as np
 import torch
 
 
-class TrajectoryGenerator(object):
+class TrajectoryGenerator:
 
     def __init__(self, options, place_cells):
         self.options = options

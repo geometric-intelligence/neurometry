@@ -1,6 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+
 
 def klein_sphere_points(num_points, radius = 1):
     """
@@ -15,14 +15,13 @@ def klein_sphere_points(num_points, radius = 1):
     # Generate random points on a 2D plane
     theta = np.random.uniform(0, 2*np.pi, num_points)
     phi = np.random.uniform(0, 2*np.pi, num_points)
-    
+
     # Parametric equations for a Klein sphere
     x = radius * (np.cos(theta) * (1 + np.sin(phi)))
     y = radius * (np.sin(theta) * (1 + np.sin(phi)))
     z = radius * (np.sin(phi) * np.cos(phi))
 
-    points = np.column_stack((x, y, z))
-    return points
+    return np.column_stack((x, y, z))
 
 
 def plot_klein_sphere(points):
@@ -33,16 +32,16 @@ def plot_klein_sphere(points):
     - points: Array of points to plot.
     """
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    
-    ax.scatter(points[:,0], points[:,1], points[:,2], c='r', marker='o')
-    
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    
-    ax.set_title('Klein Sphere')
-    
+    ax = fig.add_subplot(111, projection="3d")
+
+    ax.scatter(points[:,0], points[:,1], points[:,2], c="r", marker="o")
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+
+    ax.set_title("Klein Sphere")
+
     plt.show()
 
 # Generate points on the Klein sphere
@@ -68,13 +67,13 @@ def klein_bottle_points(num_points, scale=1):
 
 def plot_klein_bottle(X, Y, Z):
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(X, Y, Z, cmap='viridis', alpha = 0.7)
+    ax = fig.add_subplot(111, projection="3d")
+    ax.plot_surface(X, Y, Z, cmap="viridis", alpha = 0.7)
 
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_title('Klein Bottle')
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+    ax.set_title("Klein Bottle")
     plt.show()
 
 # Example usage
