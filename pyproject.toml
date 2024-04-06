@@ -36,7 +36,7 @@ dependencies=[
     "matplotlib",
     "nibabel",
     "numpy",
-    "scikit-image"
+    "scikit-image",
     "scikit-learn",
     "seaborn",
 ]
