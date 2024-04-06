@@ -49,7 +49,6 @@ class RNN(torch.nn.Module):
         """
         return self.decoder(self.g(inputs))
 
-
     def compute_loss(self, inputs, pc_outputs, pos):
         """
         Compute avg. loss and decoding error.

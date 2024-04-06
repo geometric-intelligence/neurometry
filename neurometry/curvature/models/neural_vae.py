@@ -139,7 +139,6 @@ class NeuralVAE(torch.nn.Module):
 
         return q_z.rsample()
 
-
     def decode(self, z):
         """Decode latent variable z into data.
 
@@ -162,7 +161,6 @@ class NeuralVAE(torch.nn.Module):
             h = F.softplus(h, beta=self.sftbeta)
 
         return self.fc_x_mu(h)
-
 
     def forward(self, x):
         """Run VAE: Encode, sample and decode.

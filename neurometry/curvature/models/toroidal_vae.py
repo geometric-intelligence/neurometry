@@ -100,7 +100,6 @@ class ToroidalVAE(torch.nn.Module):
 
         return z_theta_mu, z_theta_kappa, z_phi_mu, z_phi_kappa
 
-
     def _build_torus(self, z_theta, z_phi):
         # theta = torch.atan2(z_theta[:, 1] / z_theta[:, 0])
         # phi = torch.atan2(z_phi[:, 1] / z_phi[:, 0])
@@ -150,7 +149,6 @@ class ToroidalVAE(torch.nn.Module):
 
         return self._build_torus(z_theta, z_phi)
 
-
     def decode(self, z):
         """Decode latent variable z into data.
 
@@ -171,7 +169,6 @@ class ToroidalVAE(torch.nn.Module):
             h = F.softplus(layer(h), beta=self.sftbeta)
 
         return self.fc_x_mu(h)
-
 
     def forward(self, x):
         """Run VAE: Encode, sample and decode.

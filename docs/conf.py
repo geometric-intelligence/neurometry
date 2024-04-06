@@ -1,6 +1,5 @@
 """Sphinx configuration file."""
 
-
 project = "neurometry"
 copyright = "2023, Geometric Intelligence Lab."
 author = "GI Authors"

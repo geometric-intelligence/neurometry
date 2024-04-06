@@ -26,7 +26,6 @@ class BiharmonicReguarizer:
         dff = np.stack([dxx, dyy], axis=-1)
         return -self.alpha * dff + self.gamma * f
 
-
     def K(self, g):
         """
         The K = (LL)^-1 operator.

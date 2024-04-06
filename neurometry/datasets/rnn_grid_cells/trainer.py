@@ -80,9 +80,7 @@ class Trainer:
 
             if save and (epoch_idx % 5) == 0:
                 # Save checkpoint
-                ckpt_path = os.path.join(
-                    self.ckpt_dir, f"epoch_{epoch_idx}.pth"
-                )
+                ckpt_path = os.path.join(self.ckpt_dir, f"epoch_{epoch_idx}.pth")
                 torch.save(self.model.state_dict(), ckpt_path)
                 torch.save(
                     self.model.state_dict(),

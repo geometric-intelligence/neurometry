@@ -12,7 +12,7 @@ from .rnn_grid_cells import config, dual_agent_activity, single_agent_activity, 
 
 # Loading single agent model
 
-#parent_dir = os.getcwd() + "/datasets/rnn_grid_cells/"
+# parent_dir = os.getcwd() + "/datasets/rnn_grid_cells/"
 
 parent_dir = "/scratch/facosta/rnn_grid_cells/"
 
@@ -90,8 +90,8 @@ def load_activations(epochs, version="single", verbose=True):
 
     return activations, rate_maps, state_points
 
-def plot_rate_map(indices, num_plots, activations):
 
+def plot_rate_map(indices, num_plots, activations):
     if indices is None:
         idxs = np.random.randint(0, 4095, num_plots)
     else:

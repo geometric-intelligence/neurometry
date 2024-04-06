@@ -78,10 +78,13 @@ def main(options, epoch="final", res=20):
 def compute_grid_scores(res, rate_map_single_agent, scorer):
     print("Computing grid scores...")
     score_60_single_agent, _, _, _, _, _ = zip(
-        *[scorer.get_scores(rm.reshape(res, res)) for rm in tqdm(rate_map_single_agent)], strict=False
+        *[
+            scorer.get_scores(rm.reshape(res, res))
+            for rm in tqdm(rate_map_single_agent)
+        ],
+        strict=False,
     )
     return np.array(score_60_single_agent)
-
 
 
 def compute_border_scores(box_width, res, rate_map_single_agent, scorer):

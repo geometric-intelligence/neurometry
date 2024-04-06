@@ -13,9 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Grid score calculations.
-"""
-
+"""Grid score calculations."""
 
 import math
 
@@ -178,9 +176,7 @@ class GridScorer:
             self.get_grid_scores_for_mask(sac, rotated_sacs, mask)
             for mask, mask_params in self._masks  # pylint: disable=unused-variable
         ]
-        scores_60, scores_90, variances = map(
-            np.asarray, zip(*scores, strict=False)
-        )  # pylint: disable=unused-variable
+        scores_60, scores_90, variances = map(np.asarray, zip(*scores, strict=False))  # pylint: disable=unused-variable
         max_60_ind = np.argmax(scores_60)
         max_90_ind = np.argmax(scores_90)
 
@@ -193,9 +189,7 @@ class GridScorer:
             max_60_ind,
         )
 
-    def plot_ratemap(
-        self, ratemap, ax=None, title=None, *args, **kwargs
-    ):  # pylint: disable=keyword-arg-before-vararg
+    def plot_ratemap(self, ratemap, ax=None, title=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
         """Plot ratemaps."""
         if ax is None:
             ax = plt.gca()
@@ -206,9 +200,7 @@ class GridScorer:
         if title is not None:
             ax.set_title(title)
 
-    def plot_sac(
-        self, sac, mask_params=None, ax=None, title=None, *args, **kwargs
-    ):  # pylint: disable=keyword-arg-before-vararg
+    def plot_sac(self, sac, mask_params=None, ax=None, title=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
         """Plot spatial autocorrelogram."""
         if ax is None:
             ax = plt.gca()
@@ -377,4 +369,3 @@ class GridScorer:
         )
 
         return 0 if spacing_peaks.size == 0 else 2 * spacing_vec[spacing_peaks][0]
-

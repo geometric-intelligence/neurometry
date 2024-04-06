@@ -1,10 +1,8 @@
-
 import numpy as np
 import torch
 
 
 class TrajectoryGenerator:
-
     def __init__(self, options, place_cells):
         self.options = options
         self.place_cells = place_cells

@@ -156,7 +156,10 @@ def load(config):
     test_labels = labels.iloc[test_indices]
 
     # The angles are positional angles in the lab frame
-    if config.dataset_name in ("experimental", "s1_synthetic") or config.dataset_name in ("three_place_cells_synthetic"):
+    if config.dataset_name in (
+        "experimental",
+        "s1_synthetic",
+    ) or config.dataset_name in ("three_place_cells_synthetic"):
         train = []
         for d, l in zip(train_dataset, train_labels["angles"], strict=False):
             train.append([d, float(l)])
@@ -165,10 +168,14 @@ def load(config):
             test.append([d, float(l)])
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         train = []
-        for d, t, p in zip(train_dataset, train_labels["thetas"], train_labels["phis"], strict=False):
+        for d, t, p in zip(
+            train_dataset, train_labels["thetas"], train_labels["phis"], strict=False
+        ):
             train.append([d, torch.tensor([float(t), float(p)])])
         test = []
-        for d, t, p in zip(test_dataset, test_labels["thetas"], test_labels["phis"], strict=False):
+        for d, t, p in zip(
+            test_dataset, test_labels["thetas"], test_labels["phis"], strict=False
+        ):
             test.append([d, torch.tensor([float(t), float(p)])])
     elif config.dataset_name == "grid_cells":
         train = []

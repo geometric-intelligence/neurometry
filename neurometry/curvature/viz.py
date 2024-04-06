@@ -101,9 +101,7 @@ def plot_recon_per_positional_angle(model, dataset_torch, labels, config):
         y_rec = rec[:, 1]
         y_rec = [y.item() for y in y_rec]
         ax_data.set_title("Synthetic data", fontsize=40)
-        ax_data.scatter(
-            x_data, y_data, s=400, c=labels["angles"], cmap=colormap
-        )
+        ax_data.scatter(x_data, y_data, s=400, c=labels["angles"], cmap=colormap)
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
         ax_rec = fig.add_subplot(1, 2, 2)

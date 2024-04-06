@@ -32,4 +32,3 @@ def compute_persistence_diagrams(point_cloud, maxdim=2, n_threads=-1):
         dfs.append(df)
 
     return pd.concat(dfs, ignore_index=True)
-

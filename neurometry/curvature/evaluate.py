@@ -3,7 +3,7 @@ import os
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 
-#import gph
+# import gph
 import numpy as np
 import torch
 from datasets.synthetic import (
@@ -52,7 +52,6 @@ def get_learned_immersion(model, config):
 
         z = z.to(config.device)
         return model.decode(z)
-
 
     return immersion
 
