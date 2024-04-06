@@ -100,7 +100,6 @@ class KleinBottleVAE(torch.nn.Module):
 
         return z_theta_mu, z_theta_kappa, z_u_mu, z_u_kappa
 
-
     def _build_klein_bottle(self, z_theta, z_u):
         # theta = torch.atan2(z_theta[:, 1] / z_theta[:, 0])
         # phi = torch.atan2(z_u[:, 1] / z_u[:, 0])
@@ -151,7 +150,6 @@ class KleinBottleVAE(torch.nn.Module):
 
         return self._build_torus(z_theta, z_u)
 
-
     def decode(self, z):
         """Decode latent variable z into data.
 
@@ -172,7 +170,6 @@ class KleinBottleVAE(torch.nn.Module):
             h = F.softplus(layer(h), beta=self.sftbeta)
 
         return self.fc_x_mu(h)
-
 
     def forward(self, x):
         """Run VAE: Encode, sample and decode.

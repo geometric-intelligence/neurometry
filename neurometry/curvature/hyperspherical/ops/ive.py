@@ -70,11 +70,7 @@ def ive_fraction_approx2(v, z, eps=1e-20):
 
     delta_0 = delta_a(0.0)
     delta_2 = delta_a(2.0)
-    B_0 = z / (
-        delta_0 + torch.sqrt(torch.pow(delta_0, 2) + torch.pow(z, 2)).clamp(eps)
-    )
-    B_2 = z / (
-        delta_2 + torch.sqrt(torch.pow(delta_2, 2) + torch.pow(z, 2)).clamp(eps)
-    )
+    B_0 = z / (delta_0 + torch.sqrt(torch.pow(delta_0, 2) + torch.pow(z, 2)).clamp(eps))
+    B_2 = z / (delta_2 + torch.sqrt(torch.pow(delta_2, 2) + torch.pow(z, 2)).clamp(eps))
 
     return (B_0 + B_2) / 2.0

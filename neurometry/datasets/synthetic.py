@@ -128,7 +128,7 @@ def cylinder(num_points, radius=1):
     return cylinder_points
 
 
-def klein_bottle(num_points, size_factor = 1, coords_type = "bottle"):
+def klein_bottle(num_points, size_factor=1, coords_type="bottle"):
     """Generate points on a Klein bottle manifold.
 
     Parameters
@@ -147,15 +147,15 @@ def klein_bottle(num_points, size_factor = 1, coords_type = "bottle"):
     """
     possible_coord_types = ["bottle", "bagel", "extrinsic"]
     if coords_type not in possible_coord_types:
-        raise Exception("Please pick a valid parametrization for the random points on the Klein Bottle")
+        raise Exception(
+            "Please pick a valid parametrization for the random points on the Klein Bottle"
+        )
     unit_klein_bottle = KleinBottle()
     unit_klein_bottle_points = unit_klein_bottle.random_point(n_samples=num_points)
-    unit_klein_bottle_points = unit_klein_bottle.to_coords(unit_klein_bottle_points, coords_type)
+    unit_klein_bottle_points = unit_klein_bottle.to_coords(
+        unit_klein_bottle_points, coords_type
+    )
     return size_factor * unit_klein_bottle_points
-
-
-
-### Synthetic Encoding Scheme ###
 
 
 def random_encoding_matrix(manifold_extrinsic_dim, encoding_dim):

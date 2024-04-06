@@ -353,7 +353,6 @@ def _average_variable(variable_to_average, recorded_times, sampling_times):
     return np.array(variable_averaged)
 
 
-
 def get_place_field_centers(neural_activity, task_variable):
     """Get the center of mass of the place fields of a list of neurons.
 

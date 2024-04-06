@@ -33,7 +33,6 @@ def generate_run_ID(options):
     return run_ID.replace(".", "")
 
 
-
 def get_2d_sort(x1, x2):
     """
     Reshapes x1 and x2 into square arrays, and then sorts
@@ -110,7 +109,6 @@ def calc_err():
 
 
 def compute_variance(res, n_avg):
-
     activations, rate_map, g, pos = compute_ratemaps(
         model, data_manager, options, res=res, n_avg=n_avg
     )

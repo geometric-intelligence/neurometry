@@ -67,7 +67,6 @@ def create_reference_lattice(lx, ly, arena_dims, lattice_type="hexagonal"):
     return np.hstack((np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1))))
 
 
-
 def generate_all_grids(
     grid_scale,
     arena_dims,

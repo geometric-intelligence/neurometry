@@ -138,7 +138,7 @@ synthetic_rotation = {
 ### ---> Lists of values to try for each parameter
 
 # Datasets
-#dataset_name = ["s1_synthetic", "s2_synthetic"]
+# dataset_name = ["s1_synthetic", "s2_synthetic"]
 dataset_name = ["kb_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [

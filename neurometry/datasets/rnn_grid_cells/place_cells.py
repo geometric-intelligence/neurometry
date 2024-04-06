@@ -4,7 +4,6 @@ import torch
 
 
 class PlaceCells:
-
     def __init__(self, options, us=None):
         self.Np = options.Np
         self.sigma = options.place_cell_rf
@@ -120,4 +119,3 @@ class PlaceCells:
                 Cmean += np.roll(np.roll(Csquare[i, j], -i, axis=0), -j, axis=1)
 
         return np.roll(np.roll(Cmean, res // 2, axis=0), res // 2, axis=1)
-
