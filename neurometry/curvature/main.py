@@ -17,6 +17,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import models.neural_vae
 import models.toroidal_vae
+import models.klein_bottle_vae
+
 import numpy as np
 import pandas as pd
 import torch
@@ -24,7 +26,8 @@ import train
 import viz
 import wandb
 from ray import air, tune
-from ray.tune.integration.wandb import wandb_mixin
+# from ray.tune.integration.wandb import wandb_mixin
+import ray.air.integrations.wandb
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
@@ -246,7 +249,7 @@ def main_sweep(
         "n_grid_points": default_config.n_grid_points,
     }
 
-    @wandb_mixin
+    # @wandb_mixin
     def main_run(sweep_config):
         wandb.init()
         wandb_config = wandb.config
@@ -356,6 +359,21 @@ def create_model_and_train_test(config, train_loader, test_loader):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(0)
         model = models.toroidal_vae.ToroidalVAE(
+            data_dim=data_dim,
+            latent_dim=config.latent_dim,
+            sftbeta=config.sftbeta,
+            encoder_width=config.encoder_width,
+            encoder_depth=config.encoder_depth,
+            decoder_width=config.decoder_width,
+            decoder_depth=config.decoder_depth,
+            posterior_type=config.posterior_type,
+        ).to(config.device)
+    elif config.posterior_type == "klein_bottle":
+        random.seed(0)
+        torch.manual_seed(0)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(0)
+        model = models.klein_bottle_vae.KleinBottleVAE(
             data_dim=data_dim,
             latent_dim=config.latent_dim,
             sftbeta=config.sftbeta,
