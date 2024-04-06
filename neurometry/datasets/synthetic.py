@@ -1,15 +1,12 @@
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
-
-#from geomstats.geometry.klein_bottle import KleinBottle
-import torch
-from geomstats.geometry.euclidean import Euclidean
-from geomstats.geometry.hypersphere import Hypersphere
-from geomstats.geometry.product_manifold import ProductManifold
-
-### Synthetic Latent Manifolds ###
+import geomstats.backend as gs  # noqa: E402
+import torch  # noqa: E402
+from geomstats.geometry.euclidean import Euclidean  # noqa: E402
+from geomstats.geometry.hypersphere import Hypersphere  # noqa: E402
+from geomstats.geometry.klein_bottle import KleinBottle  # noqa: E402
+from geomstats.geometry.product_manifold import ProductManifold  # noqa: E402
 
 
 def synthetic_neural_manifold(
@@ -46,7 +43,7 @@ def synthetic_neural_manifold(
     )
     try:
         noisy_points = poisson_spikes(manifold_points, poisson_multiplier)
-    except:
+    except Exception:
         print("WARNING! Poisson spikes not generated: mean must be non-negative")
         noisy_points = None
 
@@ -216,14 +213,13 @@ def apply_nonlinearity(encoded_points, nonlinearity, **kwargs):
     """
     if nonlinearity == "relu":
         return relu(encoded_points, **kwargs)
-    elif nonlinearity == "sigmoid":
+    if nonlinearity == "sigmoid":
         return scaled_sigmoid(encoded_points, **kwargs)
-    elif nonlinearity == "tanh":
+    if nonlinearity == "tanh":
         return scaled_tanh(encoded_points, **kwargs)
-    elif nonlinearity == "linear":
+    if nonlinearity == "linear":
         return encoded_points
-    else:
-        raise ValueError("Nonlinearity not recognized")
+    raise ValueError("Nonlinearity not recognized")
 
 
 def relu(tensor, threshold=0):

@@ -4,10 +4,10 @@ import numpy as np
 import skdim
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
-import matplotlib.pyplot as plt
+import geomstats.backend as gs  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 
-import neurometry.datasets.synthetic as synthetic
+import neurometry.datasets.synthetic as synthetic  # noqa: E402
 
 
 def skdim_dimension_estimation(
