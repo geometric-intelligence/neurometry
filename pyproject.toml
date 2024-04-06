@@ -58,7 +58,8 @@ doc = [
     "pydata-sphinx-theme"
 ]
 lint = [
-    "pre-commit"
+    "pre-commit",
+    "ruff"
 ]
 test = [
     "pytest",
