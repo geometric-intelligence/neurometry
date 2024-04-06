@@ -1,10 +1,13 @@
-# Neurometry #
+<img width="1188" alt="Screen Shot 2024-04-05 at 8 50 36 PM" src="https://github.com/geometric-intelligence/neurometry/assets/8267869/f24ddbf2-78ce-4896-9417-ed966316af2e">
 
-Neurometry is a Python repository for analysis of the geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
+**Neurometry** is a computational framework to quantify geometric intelligence in natural and artificial brains. Neurometry provides functionalities to analyze the geometric structures underlying computation in neural systems - neural representations and neural manifolds. 
 
-This repository containts the official PyTorch implementation of the paper "Quantifying Extrinsic Curvature in Neural Manifolds" (2023).
-
+This repository contains the official PyTorch implementation of the papers:
+- **Quantifying Extrinsic Curvature in Neural Manifolds**. CVPR Workshop on Topology, Algebra and Geometry 2023.
 [Francisco Acosta](https://web.physics.ucsb.edu/~facosta/), [Sophia Sanborn](https://www.sophiasanborn.com/), [Khanh Dao Duc](https://kdaoduc.com/), [Manu Mahdav](https://www.manusmad.com/) and [Nina Miolane](https://www.ninamiolane.com/).
+- **Relating Representational Geometry to Cortical Geometry in the Visual Cortex**. NeurIPS Workshop on Unifying Representations in Neural Models 2023.
+[Francisco Acosta](https://web.physics.ucsb.edu/~facosta/), [Colin Conwell](https://colinconwell.github.io/), [Sophia Sanborn](https://www.sophiasanborn.com/), [David Klindt](https://david-klindt.github.io/) and [Nina Miolane](https://www.ninamiolane.com/).
+
 
 The neural manifold hypothesis postulates that the activity of a neural population forms a low-dimensional manifold within the larger neural state space, whose structure reflects the structure of the encoded task variables. Many dimensionality reduction techniques have been used to study the structure of neural manifolds, but these methods do not provide an explicit parameterization of the manifold, and may not capture the global structure of topologically nontrivial manifolds. Topological data analysis methods can reveal the shared topological structure between neural manifolds and the task variables they represent, but may not to capture much of the geometric information including distance, angles, and curvature. 
 
