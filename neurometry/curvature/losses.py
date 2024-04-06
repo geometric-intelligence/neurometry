@@ -1,7 +1,11 @@
 """Losses."""
 
 import torch
-from hyperspherical.distributions import HypersphericalUniform, VonMisesFisher
+
+from neurometry.curvature.hyperspherical.distributions import (
+    HypersphericalUniform,
+    VonMisesFisher,
+)
 
 
 def elbo(x, x_mu, posterior_params, z, labels, config):

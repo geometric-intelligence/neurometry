@@ -1,9 +1,12 @@
 import math
 
 import torch
-from hyperspherical.distributions.hyperspherical_uniform import HypersphericalUniform
-from hyperspherical.ops.ive import ive
 from torch.distributions.kl import register_kl
+
+from neurometry.curvature.hyperspherical.distributions.hyperspherical_uniform import (
+    HypersphericalUniform,
+)
+from neurometry.curvature.hyperspherical.ops.ive import ive
 
 
 class VonMisesFisher(torch.distributions.Distribution):
