@@ -92,7 +92,8 @@ def main():
                         f"Manifold cannot be embedded in {embedding_dim} dimensions"
                     )
                     continue
-                sweep_name = f"{dataset_name}_noise_var_{noise_var}_embedding_dim_{embedding_dim}"
+                sweep_name = f"{dataset_name}_noise_var_{noise_var}"
+                sweep_name += f"_embedding_dim_{embedding_dim}"
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
                 main_sweep(
                     sweep_name=sweep_name,
@@ -120,7 +121,8 @@ def main():
                 default_config.field_width,
                 default_config.resolution,
             ):
-                sweep_name = f"{dataset_name}_orientation_std_{grid_orientation_std}_ncells_{n_cells}"
+                sweep_name = f"{dataset_name}_orientation_std_{grid_orientation_std}"
+                sweep_name += f"_ncells_{n_cells}"
                 logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
                 main_sweep(
                     sweep_name=sweep_name,
@@ -219,7 +221,8 @@ def main_sweep(
         "grid_orientation_std": grid_orientation_std,
         "field_width": field_width,
         "resolution": resolution,
-        # Parameters fixed across runs and sweeps (unique value depending on dataset_name):
+        # Parameters fixed across runs and sweeps
+        # (unique value depending on dataset_name):
         "manifold_dim": default_config.manifold_dim[dataset_name],
         "latent_dim": default_config.latent_dim[dataset_name],
         "posterior_type": default_config.posterior_type[dataset_name],

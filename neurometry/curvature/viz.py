@@ -629,10 +629,8 @@ def plot_persistence_diagrams(diagrams_df, density=False):
 
     handles, _ = ax.get_legend_handles_labels()
 
-    legend_labels = []
-    legend_labels.append("Infinity")
-    for dimension in plot_df["Dimension"].unique():
-        legend_labels.append(f"Dimension {dimension}")
+    legend_labels = ["Infinity"] + [
+        f"Dimension {dimension}" for dimension in plot_df["Dimension"].unique()]
 
     ax.legend(handles, legend_labels, loc="lower right")
 
