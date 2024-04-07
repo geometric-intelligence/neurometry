@@ -4,12 +4,13 @@ import logging
 import os
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
-import numpy as np
-import pandas as pd
-import torch
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
-from torch.distributions.multivariate_normal import MultivariateNormal
+import geomstats.backend as gs  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import skimage  # noqa: E402
+import torch  # noqa: E402
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
+from torch.distributions.multivariate_normal import MultivariateNormal  # noqa: E402
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
