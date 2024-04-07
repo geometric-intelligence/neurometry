@@ -1,6 +1,5 @@
 import numpy as np
 import scipy
-from visualize import compute_ratemaps
 
 
 def generate_run_ID(options):
@@ -51,26 +50,23 @@ def get_2d_sort(x1, x2):
 def dft(N, real=False, scale="sqrtn"):
     if not real:
         return scipy.linalg.dft(N, scale)
-    else:
-        cosines = np.cos(
-            2 * np.pi * np.arange(N // 2 + 1)[None, :] / N * np.arange(N)[:, None]
-        )
-        sines = np.sin(
-            2
-            * np.pi
-            * np.arange(1, (N - 1) // 2 + 1)[None, :]
-            / N
-            * np.arange(N)[:, None]
-        )
-        if N % 2 == 0:
-            cosines[:, -1] /= np.sqrt(2)
-        F = np.concatenate((cosines, sines[:, ::-1]), 1)
-        F[:, 0] /= np.sqrt(N)
-        F[:, 1:] /= np.sqrt(N / 2)
-        return F
+
+    cosines = np.cos(
+        2 * np.pi * np.arange(N // 2 + 1)[None, :] / N * np.arange(N)[:, None]
+    )
+    sines = np.sin(
+        2 * np.pi * np.arange(1, (N - 1) // 2 + 1)[None, :] / N * np.arange(N)[:, None]
+    )
+    if N % 2 == 0:
+        cosines[:, -1] /= np.sqrt(2)
+    F = np.concatenate((cosines, sines[:, ::-1]), 1)
+    F[:, 0] /= np.sqrt(N)
+    F[:, 1:] /= np.sqrt(N / 2)
+    return F
 
 
 def skaggs_power(Jsort):
+    N = 1  # FIXME: Placeholder N
     F = dft(int(np.sqrt(N)), real=True)
     F2d = F[:, None, :, None] * F[None, :, None, :]
 
@@ -83,6 +79,8 @@ def skaggs_power(Jsort):
 
 
 def skaggs_power_2(Jsort):
+    n = 1  # FIXME: Placeholder
+
     J_square = np.reshape(Jsort, (n, n, n, n))
     Jmean = np.zeros([n, n])
     for i in range(n):
@@ -101,40 +99,41 @@ def skaggs_power_2(Jsort):
     return sk_power
 
 
-def calc_err():
-    inputs, _, pos = next(gen)
-    pred = model(inputs)
-    pred_pos = place_cells.get_nearest_cell_pos(pred)
-    return tf.reduce_mean(tf.sqrt(tf.reduce_sum((pos - pred_pos) ** 2, axis=-1)))
+# TODO: Fix this function
+# def calc_err():
+#     inputs, _, pos = next(gen)
+#     pred = model(inputs)
+#     pred_pos = place_cells.get_nearest_cell_pos(pred)
+#     return tf.reduce_mean(tf.sqrt(tf.reduce_sum((pos - pred_pos) ** 2, axis=-1)))
 
+# TODO: FIX this function.
+# def compute_variance(res, n_avg):
+#     activations, rate_map, g, pos = compute_ratemaps(
+#         model, data_manager, options, res=res, n_avg=n_avg
+#     )
 
-def compute_variance(res, n_avg):
-    activations, rate_map, g, pos = compute_ratemaps(
-        model, data_manager, options, res=res, n_avg=n_avg
-    )
+#     counts = np.zeros([res, res])
+#     variance = np.zeros([res, res])
 
-    counts = np.zeros([res, res])
-    variance = np.zeros([res, res])
+#     x_all = (pos[:, 0] + options["box_width"] / 2) / options["box_width"] * res
+#     y_all = (pos[:, 1] + options["box_height"] / 2) / options["box_height"] * res
+#     for i in tqdm(range(len(g))):
+#         x = int(x_all[i])
+#         y = int(y_all[i])
+#         if x >= 0 and x < res and y >= 0 and y < res:
+#             counts[x, y] += 1
+#             variance[x, y] += (
+#                 np.linalg.norm(g[i] - activations[:, x, y])
+#                 / np.linalg.norm(g[i])
+#                 / np.linalg.norm(activations[:, x, y])
+#             )
 
-    x_all = (pos[:, 0] + options["box_width"] / 2) / options["box_width"] * res
-    y_all = (pos[:, 1] + options["box_height"] / 2) / options["box_height"] * res
-    for i in tqdm(range(len(g))):
-        x = int(x_all[i])
-        y = int(y_all[i])
-        if x >= 0 and x < res and y >= 0 and y < res:
-            counts[x, y] += 1
-            variance[x, y] += (
-                np.linalg.norm(g[i] - activations[:, x, y])
-                / np.linalg.norm(g[i])
-                / np.linalg.norm(activations[:, x, y])
-            )
+#     for x in range(res):
+#         for y in range(res):
+#             if counts[x, y] > 0:
+#                 variance[x, y] /= counts[x, y]
 
-    for x in range(res):
-        for y in range(res):
-            if counts[x, y] > 0:
-                variance[x, y] /= counts[x, y]
-
-    return variance
+#     return variance
 
 
 def load_trained_weights(model, trainer, weight_dir):
