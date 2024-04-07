@@ -6,6 +6,8 @@ import scipy.io
 import torch
 from scipy.signal import savgol_filter
 
+import neurometry.curvature.datasets as datasets
+
 
 def load(config):
     """Load dataset according to configuration in config.
@@ -161,29 +163,29 @@ def load(config):
         "s1_synthetic",
     ) or config.dataset_name in ("three_place_cells_synthetic"):
         train = []
-        for d, l in zip(train_dataset, train_labels["angles"], strict=False):
-            train.append([d, float(l)])
+        for data, label in zip(train_dataset, train_labels["angles"], strict=False):
+            train.append([data, float(label)])
         test = []
-        for d, l in zip(test_dataset, test_labels["angles"], strict=False):
-            test.append([d, float(l)])
+        for data, label in zip(test_dataset, test_labels["angles"], strict=False):
+            test.append([data, float(label)])
     elif config.dataset_name in ("s2_synthetic", "t2_synthetic"):
         train = []
-        for d, t, p in zip(
+        for data, theta, phi in zip(
             train_dataset, train_labels["thetas"], train_labels["phis"], strict=False
         ):
-            train.append([d, torch.tensor([float(t), float(p)])])
+            train.append([data, torch.tensor([float(theta), float(phi)])])
         test = []
-        for d, t, p in zip(
+        for data, theta, phi in zip(
             test_dataset, test_labels["thetas"], test_labels["phis"], strict=False
         ):
-            test.append([d, torch.tensor([float(t), float(p)])])
+            test.append([data, torch.tensor([float(theta), float(phi)])])
     elif config.dataset_name == "grid_cells":
         train = []
-        for d, l in zip(train_dataset, train_labels["no_labels"], strict=False):
-            train.append([d, float(l)])
+        for data, label in zip(train_dataset, train_labels["no_labels"], strict=False):
+            train.append([data, float(label)])
         test = []
-        for d, l in zip(test_dataset, test_labels["no_labels"], strict=False):
-            test.append([d, float(l)])
+        for data, label in zip(test_dataset, test_labels["no_labels"], strict=False):
+            test.append([data, float(label)])
 
     train_loader = torch.utils.data.DataLoader(train, batch_size=config.batch_size)
     test_loader = torch.utils.data.DataLoader(test, batch_size=config.batch_size)

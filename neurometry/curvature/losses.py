@@ -2,8 +2,10 @@
 
 import torch
 
-from neurometry.curvature.hyperspherical.distributions import hyperspherical_uniform
-from neurometry.curvature.hyperspherical.distributions import von_mises_fisher
+from neurometry.curvature.hyperspherical.distributions import (
+    hyperspherical_uniform,
+    von_mises_fisher,
+)
 
 
 def elbo(x, x_mu, posterior_params, z, labels, config):
@@ -25,9 +27,11 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
     x : array-like, shape=[batch_size, data_dim]
         Input data.
     gen_likelihood_params : tuple
-        Learned distributional parameters of generative model. (e.g., (x_mu,x_logvar) for Gaussian).
+        Learned distributional parameters of generative model.
+        (e.g., (x_mu,x_logvar) for Gaussian).
     posterior_params : tuple
-        Learned distributional parameters of approximate posterior. (e.g., (z_mu,z_logvar) for Gaussian).
+        Learned distributional parameters of approximate posterior.
+        (e.g., (z_mu,z_logvar) for Gaussian).
     config : module
         Module specifying various model hyperparameters
 
@@ -52,9 +56,10 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
 
     if config.posterior_type == "toroidal":
         z_theta_mu, z_theta_kappa, z_phi_mu, z_phi_kappa = posterior_params
-        q_z_theta = VonMisesFisher(z_theta_mu, z_theta_kappa)
-        q_z_phi = VonMisesFisher(z_phi_mu, z_phi_kappa)
-        p_z = HypersphericalUniform(config.latent_dim - 1, device=config.device)
+        q_z_theta = von_mises_fisher.VonMisesFisher(z_theta_mu, z_theta_kappa)
+        q_z_phi = von_mises_fisher.VonMisesFisher(z_phi_mu, z_phi_kappa)
+        p_z = hyperspherical_uniform.HypersphericalUniform(
+            config.latent_dim - 1, device=config.device)
         kld_theta = torch.distributions.kl.kl_divergence(q_z_theta, p_z).mean()
         kld_phi = torch.distributions.kl.kl_divergence(q_z_phi, p_z).mean()
         kld = kld_theta + kld_phi
@@ -149,7 +154,8 @@ def moving_forward_loss(z, config):
     """
     if config.dataset_name != "experimental":
         # print(
-        #     "WARNING: Moving forward loss only implemented for experimental data --> Skipped."
+        #     "WARNING: Moving forward loss only implemented for experimental data
+        #     --> Skipped."
         # )
         return torch.zeros(1).to(config.device)
     if len(z) == 1:
@@ -176,7 +182,8 @@ def dynamic_loss(labels, z, config):
     """
     if config.dataset_name != "experimental":
         # print(
-        #     "WARNING: Dynamic loss only implemented for experimental data --> Skipped."
+        #     "WARNING: Dynamic loss only implemented for experimental data
+        #     --> Skipped."
         # )
         return torch.zeros(1).to(config.device)
     latent_angles = (torch.atan2(z[:, 1], z[:, 0]) + 2 * torch.pi) % (2 * torch.pi)

@@ -214,28 +214,29 @@ def save_ratemaps(model, trajectory_generator, options, step, res=20, n_avg=None
     # imsave(imdir + "/" + str(step) + '_single_agent_ratemap' + ".png", rm_fig_single_agent)
 
 
-def save_autocorr(sess, model, save_name, trajectory_generator, step, flags):
-    starts = [0.2] * 10
-    ends = np.linspace(0.4, 1.0, num=10)
-    coord_range = ((-1.1, 1.1), (-1.1, 1.1))
-    masks_parameters = zip(starts, ends.tolist(), strict=False)
-    latest_epoch_scorer = scores.GridScorer(20, coord_range, masks_parameters)
+# TODO: FIX this function
+# def save_autocorr(sess, model, save_name, trajectory_generator, step, flags):
+#     starts = [0.2] * 10
+#     ends = np.linspace(0.4, 1.0, num=10)
+#     coord_range = ((-1.1, 1.1), (-1.1, 1.1))
+#     masks_parameters = zip(starts, ends.tolist(), strict=False)
+#     latest_epoch_scorer = scores.GridScorer(20, coord_range, masks_parameters)
 
-    res = dict()
-    index_size = 100
-    for _ in range(index_size):
-        feed_dict = trajectory_generator.feed_dict(flags.box_width, flags.box_height)
-        mb_res = sess.run(
-            {
-                "pos_xy": model.target_pos,
-                "bottleneck": model.g,
-            },
-            feed_dict=feed_dict,
-        )
-        res = utils.concat_dict(res, mb_res)
+#     res = dict()
+#     index_size = 100
+#     for _ in range(index_size):
+#         feed_dict = trajectory_generator.feed_dict(flags.box_width, flags.box_height)
+#         mb_res = sess.run(
+#             {
+#                 "pos_xy": model.target_pos,
+#                 "bottleneck": model.g,
+#             },
+#             feed_dict=feed_dict,
+#         )
+#         res = utils.concat_dict(res, mb_res)
 
-    filename = save_name + "/autocorrs_" + str(step) + ".pdf"
-    imdir = flags.save_dir + "/"
-    utils.get_scores_and_plot(
-        latest_epoch_scorer, res["pos_xy"], res["bottleneck"], imdir, filename
-    )
+#     filename = save_name + "/autocorrs_" + str(step) + ".pdf"
+#     imdir = flags.save_dir + "/"
+#     utils.get_scores_and_plot(
+#         latest_epoch_scorer, res["pos_xy"], res["bottleneck"], imdir, filename
+#     )

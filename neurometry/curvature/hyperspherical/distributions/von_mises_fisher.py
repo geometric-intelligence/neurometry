@@ -44,11 +44,15 @@ class VonMisesFisher(torch.distributions.Distribution):
 
         super().__init__(self.loc.size(), validate_args=validate_args)
 
-    def sample(self, shape=torch.Size()):
+    def sample(self, shape=None):
+        if shape is None:
+            shape = torch.Size()
         with torch.no_grad():
             return self.rsample(shape)
 
-    def rsample(self, shape=torch.Size()):
+    def rsample(self, shape=None):
+        if shape is None:
+            shape = torch.Size()
         shape = shape if isinstance(shape, torch.Size) else torch.Size([shape])
 
         w = (

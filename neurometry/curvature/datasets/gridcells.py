@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
+import geomstats.backend as gs  # noqa: E402
 
-import neurometry.curvature.datasets.structures as structures
+import neurometry.curvature.datasets.structures as structures  # noqa: E402
 
 
 # TODO
@@ -96,7 +96,7 @@ def generate_all_grids(
     grids : numpy.ndarray, shape=(num_cells, num_fields_per_cell = (ceil(dims[0]/lx)+1)*(ceil(dims[1]/ly)+1),2)
         All the grid cell lattices.
     """
-
+    lx = ly = 10   # TODO: FIX, these values are only placeholders.
     # ref_lattice = create_reference_lattice(lx, ly, arena_dims, lattice_type = lattice_type)
     ref_lattice = structures.get_lattice(
         scale=grid_scale, lattice_type=lattice_type, dimensions=arena_dims

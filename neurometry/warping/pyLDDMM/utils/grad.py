@@ -16,7 +16,7 @@ def finite_difference(a):
         gx = convolve(a, wx)
         gy = convolve(a, wy)
         return np.stack([gx, gy], axis=-1)
-    elif a.ndim == 3:
+    if a.ndim == 3:
         # the last dimension is the channel dimension.
         # We calculate the gradient of each channel independently, then add them together.
         C = a.shape[-1]

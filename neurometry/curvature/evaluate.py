@@ -1,18 +1,20 @@
 import os
+import time
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
-
-# import gph
 import numpy as np
 import torch
-from datasets.synthetic import (
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import geomstats.backend as gs  # noqa: E402
+
+# import gph
+from datasets.synthetic import (  # noqa: E402
     get_s1_synthetic_immersion,
     get_s2_synthetic_immersion,
     get_t2_synthetic_immersion,
 )
-from geomstats.geometry.pullback_metric import PullbackMetric
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # NOQA
+from geomstats.geometry.pullback_metric import PullbackMetric  # noqa: E402
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
 
 
 def get_learned_immersion(model, config):

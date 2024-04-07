@@ -41,7 +41,7 @@ def pairwise_distances(diagrams_list):
 
     for i in range(num_diagrams):
         for j in range(i + 1, num_diagrams):
-            distances[i][j] = bottleneck_distance(diagrams_list[i], diagrams_list[j])
+            distances[i][j] = persim.bottleneck(diagrams_list[i], diagrams_list[j])
             distances[j][i] = distances[i][j]
 
     return distances
