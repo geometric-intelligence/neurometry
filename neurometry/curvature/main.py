@@ -4,20 +4,11 @@ import itertools
 import json
 import logging
 import os
+import random
 import time
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import random
-
-import datasets.utils
-import default_config
-import evaluate
-import geomstats.backend as gs
 import matplotlib
 import matplotlib.pyplot as plt
-import models.klein_bottle_vae
-import models.neural_vae
-import models.toroidal_vae
 import numpy as np
 import pandas as pd
 
@@ -29,6 +20,15 @@ import wandb
 from ray import air, tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import datasets.utils  # noqa: E402
+import default_config  # noqa: E402
+import evaluate  # noqa: E402
+import geomstats.backend as gs  # noqa: E402
+import models.klein_bottle_vae  # noqa: E402
+import models.neural_vae  # noqa: E402
+import models.toroidal_vae  # noqa: E402
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
