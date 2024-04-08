@@ -107,6 +107,7 @@ select = [
 ignore = [
     "E501",    # line too long
     "PERF203", # allow try-except within loops
+    "RUF012",  # force typing
 ]
 
 [tool.ruff.lint.pydocstyle]
