@@ -1,14 +1,16 @@
 import os
 import random
-import sys
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.append(str(Path(__file__).parent.parent))
-
-from .rnn_grid_cells import config, dual_agent_activity, single_agent_activity, utils
+# sys.path.append(str(Path(__file__).parent.parent))
+from .rnn_grid_cells import (
+    config,
+    dual_agent_activity,
+    single_agent_activity,
+    utils,
+)
 
 # Loading single agent model
 
@@ -62,9 +64,10 @@ def load_activations(epochs, version="single", verbose=True):
             options, _ = parser.parse_known_args()
             options.run_ID = utils.generate_run_ID(options)
             if type == "single":
-                activations_single_agent, rate_map_single_agent = (
-                    single_agent_activity.main(options, epoch=epoch)
-                )
+                (
+                    activations_single_agent,
+                    rate_map_single_agent,
+                ) = single_agent_activity.main(options, epoch=epoch)
                 activations.append(activations_single_agent)
                 rate_maps.append(rate_map_single_agent)
             elif type == "dual":
@@ -92,8 +95,9 @@ def load_activations(epochs, version="single", verbose=True):
 
 
 def plot_rate_map(indices, num_plots, activations):
+    rng = np.random.default_rng(seed=0)
     if indices is None:
-        idxs = np.random.randint(0, 4095, num_plots)
+        idxs = rng.integers(0, 4095, num_plots)
     else:
         idxs = indices
         num_plots = len(indices)

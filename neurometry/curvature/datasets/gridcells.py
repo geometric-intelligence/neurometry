@@ -96,7 +96,7 @@ def generate_all_grids(
     grids : numpy.ndarray, shape=(num_cells, num_fields_per_cell = (ceil(dims[0]/lx)+1)*(ceil(dims[1]/ly)+1),2)
         All the grid cell lattices.
     """
-    lx = ly = 10   # TODO: FIX, these values are only placeholders.
+    lx = ly = 10  # TODO: FIX, these values are only placeholders.
     # ref_lattice = create_reference_lattice(lx, ly, arena_dims, lattice_type = lattice_type)
     ref_lattice = structures.get_lattice(
         scale=grid_scale, lattice_type=lattice_type, dimensions=arena_dims
@@ -107,15 +107,16 @@ def generate_all_grids(
     grids_warped = np.zeros((n_cells, *np.shape(ref_lattice)))
 
     arena_dims = np.array(arena_dims)
+    rng = np.random.default_rng(seed=0)
 
     for i in range(n_cells):
-        angle_i = np.random.normal(grid_orientation_mean, grid_orientation_std) * (
+        angle_i = rng.normal(grid_orientation_mean, grid_orientation_std) * (
             np.pi / 180
         )
         rot_i = np.array(
             [[np.cos(angle_i), -np.sin(angle_i)], [np.sin(angle_i), np.cos(angle_i)]]
         )
-        phase_i = np.multiply([lx, ly], np.random.rand(2))
+        phase_i = np.multiply([lx, ly], rng.random(2))
         lattice_i = np.matmul(rot_i, ref_lattice.T).T + phase_i
         # lattice_i = np.where(abs(lattice_i) < arena_dims / 2, lattice_i, None)
 

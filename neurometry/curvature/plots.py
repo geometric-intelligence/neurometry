@@ -4,13 +4,14 @@ import plotly.io as pio
 
 # Generate some sample data
 
-theta = np.random.uniform(0, 2 * np.pi, 1000)
+rng = np.random.default_rng(seed=0)
+theta = rng.uniform(0, 2 * np.pi, 1000)
 
-r = np.random.normal(1, 0.1, 1000)
+r = rng.normal(1, 0.1, 1000)
 
 x = r * np.cos(theta)
 y = r * np.sin(theta)
-z = np.random.normal(0, 0.1, 1000)
+z = rng.normal(0, 0.1, 1000)
 
 
 # Create a 3D scatter plot

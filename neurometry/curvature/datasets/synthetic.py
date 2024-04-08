@@ -70,13 +70,14 @@ def load_images(n_scalars=10, n_angles=1000, img_size=256):
     images = []
     angles = []
     scalars = []
+    rng = np.random.default_rng(seed=0)
     for i_angle in range(n_angles):
         angle = 360 * i_angle / n_angles
         rot_image = skimage.transform.rotate(image, angle)
         for i_scalar in range(n_scalars):
             scalar = 1 + 0.2 * i_scalar
             blur_image = skimage.filters.gaussian(rot_image, sigma=scalar)
-            noise = np.random.normal(loc=0.0, scale=0.05, size=blur_image.shape)
+            noise = rng.normal(loc=0.0, scale=0.05, size=blur_image.shape)
             images.append((blur_image + noise).astype(np.float32))
             angles.append(angle)
             scalars.append(scalar)
@@ -240,40 +241,41 @@ def load_place_cells(n_times=10000, n_cells=40):
     n_firing_per_cell = int(n_times / n_cells)
     place_cells = []
     labels = []
+    rng = np.random.default_rng(seed=0)
     for _ in range(n_firing_per_cell):
         for i_cell in range(n_cells):
             cell_firings = np.zeros(n_cells)
 
             if i_cell == 0:
-                cell_firings[-2] = np.random.poisson(1.0)
-                cell_firings[-1] = np.random.poisson(2.0)
-                cell_firings[0] = np.random.poisson(4.0)
-                cell_firings[1] = np.random.poisson(2.0)
-                cell_firings[2] = np.random.poisson(1.0)
+                cell_firings[-2] = rng.poisson(1.0)
+                cell_firings[-1] = rng.poisson(2.0)
+                cell_firings[0] = rng.poisson(4.0)
+                cell_firings[1] = rng.poisson(2.0)
+                cell_firings[2] = rng.poisson(1.0)
             elif i_cell == 1:
-                cell_firings[-1] = np.random.poisson(1.0)
-                cell_firings[0] = np.random.poisson(2.0)
-                cell_firings[1] = np.random.poisson(4.0)
-                cell_firings[2] = np.random.poisson(2.0)
-                cell_firings[3] = np.random.poisson(1.0)
+                cell_firings[-1] = rng.poisson(1.0)
+                cell_firings[0] = rng.poisson(2.0)
+                cell_firings[1] = rng.poisson(4.0)
+                cell_firings[2] = rng.poisson(2.0)
+                cell_firings[3] = rng.poisson(1.0)
             elif i_cell == n_cells - 2:
-                cell_firings[-4] = np.random.poisson(1.0)
-                cell_firings[-3] = np.random.poisson(2.0)
-                cell_firings[-2] = np.random.poisson(4.0)
-                cell_firings[-1] = np.random.poisson(2.0)
-                cell_firings[0] = np.random.poisson(1.0)
+                cell_firings[-4] = rng.poisson(1.0)
+                cell_firings[-3] = rng.poisson(2.0)
+                cell_firings[-2] = rng.poisson(4.0)
+                cell_firings[-1] = rng.poisson(2.0)
+                cell_firings[0] = rng.poisson(1.0)
             elif i_cell == n_cells - 1:
-                cell_firings[-3] = np.random.poisson(1.0)
-                cell_firings[-2] = np.random.poisson(2.0)
-                cell_firings[-1] = np.random.poisson(4.0)
-                cell_firings[0] = np.random.poisson(2.0)
-                cell_firings[1] = np.random.poisson(1.0)
+                cell_firings[-3] = rng.poisson(1.0)
+                cell_firings[-2] = rng.poisson(2.0)
+                cell_firings[-1] = rng.poisson(4.0)
+                cell_firings[0] = rng.poisson(2.0)
+                cell_firings[1] = rng.poisson(1.0)
             else:
-                cell_firings[i_cell - 2] = np.random.poisson(1.0)
-                cell_firings[i_cell - 1] = np.random.poisson(2.0)
-                cell_firings[i_cell] = np.random.poisson(4.0)
-                cell_firings[i_cell + 1] = np.random.poisson(2.0)
-                cell_firings[i_cell - 3] = np.random.poisson(1.0)
+                cell_firings[i_cell - 2] = rng.poisson(1.0)
+                cell_firings[i_cell - 1] = rng.poisson(2.0)
+                cell_firings[i_cell] = rng.poisson(4.0)
+                cell_firings[i_cell + 1] = rng.poisson(2.0)
+                cell_firings[i_cell - 3] = rng.poisson(1.0)
             place_cells.append(cell_firings)
             labels.append(i_cell / n_cells * 360)
 

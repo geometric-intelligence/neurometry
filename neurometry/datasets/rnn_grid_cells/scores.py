@@ -189,26 +189,21 @@ class GridScorer:
             max_60_ind,
         )
 
-    def plot_ratemap(self, ratemap, ax=None, title=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
+    def plot_ratemap(self, ratemap, ax=None, title=None, *args, **kwargs):
         """Plot ratemaps."""
         if ax is None:
             ax = plt.gca()
-        # Plot the ratemap
-        ax.imshow(ratemap, interpolation="none", *args, **kwargs)
-        # ax.pcolormesh(ratemap, *args, **kwargs)
+        ax.imshow(ratemap, *args, interpolation="none", **kwargs)
         ax.axis("off")
         if title is not None:
             ax.set_title(title)
 
-    def plot_sac(self, sac, mask_params=None, ax=None, title=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
+    def plot_sac(self, sac, mask_params=None, ax=None, title=None, *args, **kwargs):
         """Plot spatial autocorrelogram."""
         if ax is None:
             ax = plt.gca()
-        # Plot the sac
         useful_sac = sac * self._plotting_sac_mask
-        ax.imshow(useful_sac, interpolation="none", *args, **kwargs)
-        # ax.pcolormesh(useful_sac, *args, **kwargs)
-        # Plot a ring for the adequate mask
+        ax.imshow(useful_sac, *args, interpolation="none", **kwargs)
         if mask_params is not None:
             center = self._nbins - 1
             ax.add_artist(
@@ -304,11 +299,11 @@ class GridScorer:
         yy = np.linspace(-1, 1, 99)
         return scipy.interpolate.RegularGridInterpolator((xx, yy), sac)
 
-    def get_phi(
-        self, cell, interp=None, spacing_values=np.arange(0.01, 1.0, 0.01)
-    ):  # 0.15
+    def get_phi(self, cell, interp=None, spacing_values=None):  # 0.15
         """Get orientation of grid cell."""
 
+        if spacing_values is None:
+            spacing_values = np.arange(0.01, 1.0, 0.01)
         if interp is None:
             interp = self.get_sac_interp(cell)
 

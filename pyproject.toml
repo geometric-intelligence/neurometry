@@ -83,7 +83,7 @@ repository="https://github.com/geometric-intelligence/neurometry"
 
 [tool.ruff]
 target-version = "py311"
-extend-include = ["*.ipynb"]
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -107,6 +107,7 @@ select = [
 ignore = [
     "E501",    # line too long
     "PERF203", # allow try-except within loops
+    "RUF012",  # force typing
 ]
 
 [tool.ruff.lint.pydocstyle]

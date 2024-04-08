@@ -141,9 +141,10 @@ def load(config):
     indices = np.arange(len(dataset))
 
     train_indices = np.arange(train_num)
+    rng = np.random.default_rng(seed=0)
     if config.batch_shuffle:
         # Note: this breaks the temporal ordering.
-        train_indices = np.random.choice(indices, train_num, replace=False)
+        train_indices = rng.choice(indices, train_num, replace=False)
 
     test_indices = np.delete(indices, train_indices)
     train_dataset = dataset[train_indices]
