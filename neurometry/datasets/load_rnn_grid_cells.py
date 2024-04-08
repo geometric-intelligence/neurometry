@@ -1,14 +1,11 @@
 import os
 import random
-import sys
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.append(str(Path(__file__).parent.parent))
-
-from .rnn_grid_cells import (  # noqa: E402
+# sys.path.append(str(Path(__file__).parent.parent))
+from .rnn_grid_cells import (
     config,
     dual_agent_activity,
     single_agent_activity,

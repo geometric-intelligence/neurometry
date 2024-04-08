@@ -12,9 +12,10 @@ def klein_sphere_points(num_points, radius=1):
     Returns:
     - points: Array of points on the Klein sphere.
     """
+    rng = np.random.default_rng(seed=0)
     # Generate random points on a 2D plane
-    theta = np.random.uniform(0, 2 * np.pi, num_points)
-    phi = np.random.uniform(0, 2 * np.pi, num_points)
+    theta = rng.uniform(0, 2 * np.pi, num_points)
+    phi = rng.uniform(0, 2 * np.pi, num_points)
 
     # Parametric equations for a Klein sphere
     x = radius * (np.cos(theta) * (1 + np.sin(phi)))

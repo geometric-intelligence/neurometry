@@ -58,10 +58,8 @@ def curvature_profiles_from_run_id(run_id, config):
         True curvature profile (norms).
     """
     for curv_path in os.listdir(CURVATURE_PROFILES_DIR):
-        if run_id in curv_path:
-            # print(f"Found: {curv_path}")
-            if "learned" in curv_path or "true" in curv_path:
-                pass
+        if (run_id in curv_path) and ("learned" in curv_path or "true" in curv_path):
+            pass
     learned_profile = pd.read_csv(
         os.path.join(
             CURVATURE_PROFILES_DIR,

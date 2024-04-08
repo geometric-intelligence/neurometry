@@ -83,7 +83,7 @@ repository="https://github.com/geometric-intelligence/neurometry"
 
 [tool.ruff]
 target-version = "py311"
-extend-include = ["*.ipynb"]
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.format]
 docstring-code-format = true
