@@ -32,14 +32,14 @@ We hope to open new avenues of inquiry exploring geometric neural correlates of 
 We recommend using Anaconda for easy installation and use of the method. To create the necessary conda environment, run:
 
 ```
-conda create -n neurometry python=3.11.3 -y
+conda create -n neurometry python=3.11.3 cmake boost -c conda-forge -y
 conda activate neurometry
 pip install -e '.[all]'
 ```
 
 If cuda is available, run instead:
 ```
-conda create -n neurometry python=3.11.3 -y
+conda create -n neurometry python=3.11.3 cmake boost -c conda-forge -y
 conda activate neurometry
 pip install -e '.[all,gpu]'
 ```
