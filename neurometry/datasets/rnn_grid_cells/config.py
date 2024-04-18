@@ -21,9 +21,10 @@ class Config:
     periodic = False  # trajectories with periodic boundary conditions
     box_width = 2.2  # width of training environment
     box_height = 2.2  # height of training environment
-    device = (
-        "cuda" if torch.cuda.is_available() else "cpu"
-    )  # device to use for training
+    # device = (
+    #     "cuda" if torch.cuda.is_available() else "cpu"
+    # )  # device to use for training
+    device = torch.device('cuda:8')
     n_avg = 50  # number of trajectories to average over for rate maps
 
 
