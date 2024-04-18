@@ -42,6 +42,13 @@ dependencies=[
     "torch",
     "torchmetrics",
     "torchinfo",
+    "opencv-python",
+    "scikit-dimension",
+    "umap-learn",
+    "ripser",
+    "giotto-ph @ git+https://github.com/alibayeh/giotto-ph.git",
+    "pyflagser @ git+https://github.com/alibayeh/pyflagser.git",
+    "giotto-tda @ git+https://github.com/alibayeh/giotto-tda.git",
     "geomstats @ git+https://github.com/geomstats/geomstats.git",
     "torchlens @ git+https://github.com/johnmarktaylor91/torchlens.git",
     "netrep @ git+https://github.com/ahwillia/netrep.git"
@@ -152,10 +159,6 @@ exclude = [
 
 [tool.pip]
 extra-index-url = "https://pypi.org/simple"
-
-[[tool.pip.dependencies]]
-name = "giotto-ph"
-version = "*"
 
 [[tool.pip.dependencies]]
 name = "hyperopt"
