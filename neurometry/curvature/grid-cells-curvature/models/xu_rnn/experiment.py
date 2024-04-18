@@ -121,13 +121,17 @@ class Experiment:
           train_metrics = []
 
         if step % config.steps_per_large_logging == 0:
+          ckpt_dir = os.path.join(workdir, 'ckpt')
+          if not tf.io.gfile.exists(ckpt_dir):
+            tf.io.gfile.makedirs(ckpt_dir)
+          self._save_checkpoint(step, ckpt_dir)
           # visualize v, u and heatmaps.
           with torch.no_grad():
-            def visualize(weights, name):
-              weights = weights.data.cpu().detach().numpy()
-              weights = weights.reshape(
+            def visualize(activations, name):
+              activations = activations.data.cpu().detach().numpy()
+              activations = activations.reshape(
                   (-1, block_size, num_grid, num_grid))[:10, :10]
-              writer.write_images(step, {name: utils.draw_heatmap(weights)})
+              writer.write_images(step, {name: utils.draw_heatmap(activations)})
 
             visualize(self.model.encoder.v, 'v')
             visualize(self.model.decoder.u, 'u')
@@ -221,6 +225,7 @@ class Experiment:
             tf.io.gfile.makedirs(ckpt_dir)
           self._save_checkpoint(step, ckpt_dir)
 
+
   def grid_scale(self): 
     num_interval = self.model_config.num_grid
     block_size = self.model_config.block_size
@@ -291,6 +296,21 @@ class Experiment:
         'optimizer': self.optimizer.state_dict(),
         'config': self.config
     }
-    filename = os.path.join(ckpt_dir, 'checkpoint-step{}.pth'.format(step))
-    torch.save(state, filename)
-    logging.info("Saving checkpoint: {} ...".format(filename))
+    model_dir = os.path.join(ckpt_dir, 'model')
+    if not tf.io.gfile.exists(model_dir):
+      tf.io.gfile.makedirs(model_dir)
+    model_filename = os.path.join(model_dir, 'checkpoint-step{}.pth'.format(step))
+    torch.save(state, model_filename)
+    logging.info("Saving model checkpoint: {} ...".format(model_filename))
+
+    activations_dir = os.path.join(ckpt_dir, 'activations')
+    if not tf.io.gfile.exists(activations_dir):
+      tf.io.gfile.makedirs(activations_dir)
+    activations_filename = os.path.join(activations_dir, 'activations-step{}.pkl'.format(step))
+    activations = {
+        'v': self.model.encoder.v.data.cpu().detach().numpy(),
+        'u': self.model.decoder.u.data.cpu().detach().numpy(),
+    }
+    with tf.io.gfile.GFile(activations_filename, 'wb') as f:
+      pickle.dump(activations, f)
+    logging.info("Saving activations: {} ...".format(activations_filename))
