@@ -161,7 +161,7 @@ class GridScorer:
         masked_sac_centered = (masked_sac - masked_sac_mean) * mask
         variance = np.sum(masked_sac_centered**2) / ring_area + 1e-5
         corrs = dict()
-        for angle, rotated_sac in zip(self._corr_angles, rotated_sacs, strict=False):
+        for angle, rotated_sac in zip(self._corr_angles, rotated_sacs,strict=False):
             masked_rotated_sac = (rotated_sac - masked_sac_mean) * mask
             cross_prod = np.sum(masked_sac_centered * masked_rotated_sac) / ring_area
             corrs[angle] = cross_prod / variance
