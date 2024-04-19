@@ -17,11 +17,15 @@ import input_pipeline
 import model as model
 import utils
 import pickle
+import wandb
 
 class Experiment:
   def __init__(self, config: ml_collections.ConfigDict, device):
+
     self.config = config
     self.device = device
+
+    wandb.init(project='grid-cell-rnns', entity='bioshape-lab', config=config.to_dict())
 
     # initialize models
     logging.info("==== initialize model ====")
@@ -118,6 +122,7 @@ class Experiment:
         if step % config.steps_per_logging == 0 or step == 1:
           train_metrics = utils.average_appended_metrics(train_metrics)
           writer.write_scalars(step, train_metrics)
+          wandb.log({key: value for key, value in train_metrics.items()}, step=step)
           train_metrics = []
 
         if step % config.steps_per_large_logging == 0:
@@ -131,7 +136,9 @@ class Experiment:
               activations = activations.data.cpu().detach().numpy()
               activations = activations.reshape(
                   (-1, block_size, num_grid, num_grid))[:10, :10]
-              writer.write_images(step, {name: utils.draw_heatmap(activations)})
+              images = utils.draw_heatmap(activations)
+              writer.write_images(step, {name: images})
+              wandb.log({name: wandb.Image(images)}, step=step)
 
             visualize(self.model.encoder.v, 'v')
             visualize(self.model.decoder.u, 'u')
@@ -172,11 +179,13 @@ class Experiment:
             heatmaps = heatmaps.cpu().detach().numpy()[None, ...]
             writer.write_images(
                 step, {'vu_heatmap': utils.draw_heatmap(heatmaps)})
+            wandb.log({'vu_heatmap': wandb.Image(utils.draw_heatmap(heatmaps))}, step=step)
 
             err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
             writer.write_scalars(step, {'pred_x': err.item()})
             writer.write_scalars(step, {'error_fixed': error_fixed.item()})
             writer.write_scalars(step, {'error_fixed_zero': error_fixed_zero.item()})
+            wandb.log({'pred_x': err.item(), 'error_fixed': error_fixed.item(), 'error_fixed_zero': error_fixed_zero.item()}, step=step)
 
         if step % config.steps_per_integration == 0 or step == 1:
           # perform path integration
@@ -193,6 +202,7 @@ class Experiment:
               writer.write_scalars(step, {'score': score.item()})
               writer.write_scalars(step, {'scale': scale_tensor[0].item() * num_grid})
               writer.write_scalars(step, {'scale_mean': torch.mean(scale_tensor).item() * num_grid})
+              wandb.log({'score': score.item(), 'scale': scale_tensor[0].item() * num_grid, 'scale_mean': torch.mean(scale_tensor).item() * num_grid}, step=step)
 
             # for visualization
             if self.config.model.trans_type == 'nonlinear_simple': 
@@ -209,6 +219,7 @@ class Experiment:
                 'heatmaps': utils.draw_heatmap(outputs['heatmaps'][:, ::5]),
             }
             writer.write_images(step, images)
+            wandb.log({key: wandb.Image(value) for key, value in images.items()}, step=step)
 
             # for quantitative evaluation
             if self.config.model.trans_type == 'nonlinear_simple': 
@@ -218,6 +229,7 @@ class Experiment:
 
             err = utils.dict_to_numpy(outputs['err'])
             writer.write_scalars(step, err)
+            wandb.log({key: value for key, value in err.items()}, step=step)
 
         if step == config.num_steps_train:
           ckpt_dir = os.path.join(workdir, 'ckpt')
@@ -300,8 +312,9 @@ class Experiment:
     if not tf.io.gfile.exists(model_dir):
       tf.io.gfile.makedirs(model_dir)
     model_filename = os.path.join(model_dir, 'checkpoint-step{}.pth'.format(step))
-    torch.save(state, model_filename)
     logging.info("Saving model checkpoint: {} ...".format(model_filename))
+    torch.save(state, model_filename)
+    wandb.save(model_filename)
 
     activations_dir = os.path.join(ckpt_dir, 'activations')
     if not tf.io.gfile.exists(activations_dir):

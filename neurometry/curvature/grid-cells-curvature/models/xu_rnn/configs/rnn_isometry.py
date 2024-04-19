@@ -13,11 +13,11 @@ def get_config():
 
   # training config
   config.train = d(
-      num_steps_train=20, #100000
+      num_steps_train=25000, #100000
       lr=0.006,
       lr_decay_from=10000,
       steps_per_logging=20,
-      steps_per_large_logging=5, #500
+      steps_per_large_logging=500, #500
       steps_per_integration=2000,
       norm_v=True,
       positive_v=True,

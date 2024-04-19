@@ -23,7 +23,11 @@ neurometry/datasets/rnn_grid_cells/Dual agent path integration disjoint PCs/*
 neurometry/datasets/rnn_grid_cells/Single agent path integration/*
 
 # Wandb files
-wandb/*
+*wandb/*
+*logs/*
+
+neurometry/curvature/grid-cells-curvature/models/xu_rnn/logs/*
+neurometry/curvature/grid-cells-curvature/models/xu_rnn/wandb/*
 
 
 # Result files
