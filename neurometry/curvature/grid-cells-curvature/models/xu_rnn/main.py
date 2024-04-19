@@ -13,7 +13,7 @@ import utils
 FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file(
     "config", None, "Training configuration.", lock_config=True)
-flags.DEFINE_string("workdir", "../logs", "Work unit directory.")
+flags.DEFINE_string("workdir", "logs", "Work unit directory.")
 flags.mark_flags_as_required(["config"])
 flags.DEFINE_string("mode", 'train', "train / visualize / integration / correction")
 
