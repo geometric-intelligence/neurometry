@@ -6,6 +6,12 @@ import skdim
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.multioutput import MultiOutputRegressor
 
 import neurometry.datasets.synthetic as synthetic  # noqa: E402
 
@@ -109,3 +115,93 @@ def plot_dimension_experiments(
     plt.tight_layout()
 
     plt.show()
+
+
+def evaluate_pls_with_different_K(X, Y, K_values):
+    """
+    Evaluate PLS Regression followed by Multi-Output Regression for different numbers of components (K).
+
+    Parameters:
+    - X: Neural activity data (predictors)
+    - Y: Continuous 2D outcomes
+    - K_values: A list of integers representing different numbers of PLS components to evaluate
+
+    Returns:
+    - A list of R^2 scores corresponding to each K-value
+    """
+    r2_scores = []
+    projected_X = []
+
+    # Split data into training and test sets
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, Y, test_size=0.2, random_state=42
+    )
+
+    for K in K_values:
+        # Initialize and fit PLS Regression
+        pls = PLSRegression(n_components=K)
+        pls.fit(X_train, Y_train)
+
+        # Project both training and test data using the PLS model
+        X_train_pls = pls.transform(X_train)
+        X_test_pls = pls.transform(X_test)
+        projected_X.append(pls.inverse_transform(X_test_pls))
+
+        # Fit the Multi-Output Regression model on the reduced data
+        multi_output_reg = MultiOutputRegressor(LinearRegression()).fit(
+            X_train_pls, Y_train
+        )
+
+        # Predict and evaluate using R^2 score
+        Y_pred = multi_output_reg.predict(X_test_pls)
+        score = r2_score(
+            Y_test, Y_pred, multioutput="uniform_average"
+        )  # Average R^2 score across all outputs
+        r2_scores.append(score)
+
+    return r2_scores, projected_X
+
+
+def evaluate_PCA_with_different_K(X, Y, K_values):
+    """
+    Evaluate PCA for different numbers of components (K).
+
+    Parameters:
+    - X: Data to perform PCA on
+    - K_values: A list of integers representing different numbers of PCA components to evaluate
+
+    Returns:
+    - A list of R^2 scores corresponding to each K-value
+    """
+    r2_scores = []
+    projected_X = []
+
+    # Split data into training and test sets
+
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, Y, test_size=0.2, random_state=42
+    )
+
+    for K in K_values:
+        # Initialize and fit PCA
+        pca = PCA(n_components=K)
+        pca.fit(X_train)
+
+        # Project both training and test data using the PCA model
+        X_train_pca = pca.transform(X_train)
+        X_test_pca = pca.transform(X_test)
+        projected_X.append(pca.inverse_transform(X_test_pca))
+
+        # Fit the Multi-Output Regression model on the reduced data
+        multi_output_reg = MultiOutputRegressor(LinearRegression()).fit(
+            X_train_pca, Y_train
+        )
+
+        # Predict and evaluate using R^2 score
+        Y_pred = multi_output_reg.predict(X_test_pca)
+        score = r2_score(
+            Y_test, Y_pred, multioutput="uniform_average"
+        )  # Average R^2 score across all outputs
+        r2_scores.append(score)
+
+    return r2_scores, projected_X
