@@ -12,12 +12,8 @@ from .trajectory_generator_dual_path_integration import TrajectoryGenerator
 from .utils import generate_run_ID
 from .visualize import compute_ratemaps
 
-parent_dir = os.getcwd() + "/"
-model_folder = "Dual agent path integration disjoint PCs/Seed 1 weight decay 1e-06/"
-model_parameters = "steps_20_batch_200_RNN_4096_relu_rf_012_DoG_True_periodic_False_lr_00001_weight_decay_1e-06/"
 
-
-def main(options, epoch="final", res=20):
+def main(options, file_path, epoch="final", res=20):
     print("Evaluating DUAL agent model.")
 
     place_cells = PlaceCells(options)
@@ -35,16 +31,15 @@ def main(options, epoch="final", res=20):
     model_dual_agent = model.to(options.device)
 
     model_name = "final_model.pth" if epoch == "final" else f"epoch_{epoch}.pth"
-    saved_model_dual_agent = torch.load(
-        parent_dir + model_folder + model_parameters + model_name
-    )
+    model_path = os.path.join(file_path, model_name)
+    saved_model_dual_agent = torch.load(model_path)
     model_dual_agent.load_state_dict(saved_model_dual_agent)
 
     print("Computing ratemaps and activations...")
 
     Ng = options.Ng
     n_avg = options.n_avg
-    activations_dual_agent, rate_map_dual_agent, _, positions_dual_agent = compute_ratemaps(
+    activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = compute_ratemaps(
         model_dual_agent,
         trajectory_generator,
         options,
@@ -54,24 +49,13 @@ def main(options, epoch="final", res=20):
         all_activations_flag=True,
     )
 
-    activations_dir = parent_dir + model_folder + model_parameters + "activations/"
+    activations_dir = os.path.join(file_path, "activations")
 
-    np.save(
-        activations_dir + f"activations_dual_agent_epoch_{epoch}.npy",
-        activations_dual_agent,
-    )
-    np.save(
-        activations_dir + f"rate_map_dual_agent_epoch_{epoch}.npy", rate_map_dual_agent
-    )
-    np.save(
-        activations_dir + f"positions_dual_agent_epoch_{epoch}.npy",
-        positions_dual_agent,
-    )
+    np.save(os.path.join(activations_dir, f"activations_dual_agent_epoch_{epoch}.npy"), activations_dual_agent)
+    np.save(os.path.join(activations_dir, f"rate_map_dual_agent_epoch_{epoch}.npy"), rate_map_dual_agent)
+    np.save(os.path.join(activations_dir, f"positions_dual_agent_epoch_{epoch}.npy"), positions_dual_agent)
 
-    # #   activations is in the shape [number of grid cells (Ng) x res x res x n_avg]
-    # #   ratemap is in the shape [Ng x res^2]
-
-    return activations_dual_agent, rate_map_dual_agent, positions_dual_agent
+    return activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent
 
 
 def compute_grid_scores(res, rate_map_dual_agent, scorer):
@@ -147,7 +131,7 @@ if __name__ == "__main__":
 
     for epoch in epochs:
         print(f"Loading dual agent activations for epoch {epoch} ...")
-        activations_dual_agent, rate_map_dual_agent = main(options, epoch, res)
+        activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = main(options, epoch, res)
 
         print(f"Computing dual agent scores for epoch {epoch} ...")
         score_60_dual_agent, border_scores_dual_agent, band_scores_dual_agent = (
