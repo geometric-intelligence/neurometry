@@ -66,6 +66,8 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
 
     if config.gen_likelihood_type == "gaussian":
         recon_loss = torch.mean((x - x_mu).pow(2))
+    else:
+        raise NotImplementedError
 
     if config.dataset_name == "s1_synthetic":
         recon_loss = recon_loss / (config.radius**2)
