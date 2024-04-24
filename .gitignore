@@ -1,6 +1,9 @@
 # API KEY
 *api_key.txt
 
+neurometry/results/*
+neurometry/wandb/*
+
 
 *viewer*
 *vizcortex*
