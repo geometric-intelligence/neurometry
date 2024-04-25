@@ -44,6 +44,36 @@ conda activate neurometry
 pip install -e '.[all,gpu]'
 ```
 
+## 🏡 Installation with locks ##
+
+```shell
+$ conda create -n neurometry --file conda-linux-64.lock
+$ conda activate neurometry
+$ poetry install
+```
+
+If you are on Mac, make and use `conda-osx-64.lock` instead.
+If you have GPU, run `poetry install -E gpu` instead.
+
+### Dev
+
+Only run if changes are made to the environment files.
+
+To recreate the conda lock, after modifying conda.yaml:
+```shell
+pip install conda-lock
+make conda-linux-64.lock
+```
+Note that you may need to install conda-lock not in your base env.
+
+To recreate the poetry lock, after modifying pyproject.toml:
+```shell
+make poetry.lock
+```
+
+To
+
+
 ## 🌎 Bibtex ##
 
 If this code is useful to your research, please cite:
@@ -56,8 +86,7 @@ If this code is useful to your research, please cite:
   year = {2023},
   pages = {610--619},
   urldate = {2023-07-07},
-  langid = {english},
-  file = {/Users/facosta/Zotero/storage/BUNYT2IF/Acosta et al. - 2023 - Quantifying Extrinsic Curvature in Neural Manifold.pdf}
+  langid = {english}
 }
 ```
 

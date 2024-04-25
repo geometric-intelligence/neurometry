@@ -1,15 +1,15 @@
-import os
 
 # from neurometry.datasets.rnn_grid_cells.utils import generate_run_ID
 import random
 
 import numpy as np
 import torch
+from tqdm import tqdm
+
 from .config import parser
 from .model import RNN
 from .place_cells import PlaceCells
 from .scores import GridScorer
-from tqdm import tqdm
 from .trajectory_generator import TrajectoryGenerator
 from .utils import generate_run_ID
 from .visualize import compute_ratemaps
@@ -39,7 +39,6 @@ def main(options, epoch="final", res=20):
 
     model_single_agent = model.to(options.device)
 
-
     model_name = "final_model.pth" if epoch == "final" else f"epoch_{epoch}.pth"
     saved_model_single_agent = torch.load(
         parent_dir + model_folder + model_parameters + model_name
@@ -51,14 +50,16 @@ def main(options, epoch="final", res=20):
     Ng = options.Ng
     n_avg = options.n_avg
 
-    activations_single_agent, rate_map_single_agent, _, positions_single_agent = compute_ratemaps(
-        model_single_agent,
-        trajectory_generator,
-        options,
-        res=res,
-        n_avg=n_avg,
-        Ng=Ng,
-        all_activations_flag=True,
+    activations_single_agent, rate_map_single_agent, _, positions_single_agent = (
+        compute_ratemaps(
+            model_single_agent,
+            trajectory_generator,
+            options,
+            res=res,
+            n_avg=n_avg,
+            Ng=Ng,
+            all_activations_flag=True,
+        )
     )
 
     activations_dir = parent_dir + model_folder + model_parameters + "activations/"
@@ -72,7 +73,10 @@ def main(options, epoch="final", res=20):
         rate_map_single_agent,
     )
 
-    np.save(activations_dir + f"positions_single_agent_epoch_{epoch}.npy", positions_single_agent)
+    np.save(
+        activations_dir + f"positions_single_agent_epoch_{epoch}.npy",
+        positions_single_agent,
+    )
     # #   activations is in the shape [number of grid cells (Ng) x res x res x n_avg]
     # #   ratemap is in the shape [Ng x res^2]
 

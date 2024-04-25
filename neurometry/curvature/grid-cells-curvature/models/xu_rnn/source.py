@@ -1,5 +1,4 @@
-
-'''
+"""
 ===============================================================
 :mod:`gridcells.analysis.fields` - grid field related analysis
 ===============================================================
@@ -17,24 +16,22 @@ Functions
     spatialAutoCorrelation
     spatialRateMap
 
-'''
+"""
 
+import math
 import os
 
-import numpy    as np
+import numpy as np
 import numpy.ma as ma
-import math
-
-from scipy.integrate import trapz
-from scipy.signal import correlate2d
 from scipy.ndimage.interpolation import rotate
+from scipy.signal import correlate2d
 
 # Do not import when in RDT environment
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 
 def spatialRateMap(spikeTimes, positions, arena, sigma):
-    '''Compute spatial rate map for spikes of a given neuron.
+    """Compute spatial rate map for spikes of a given neuron.
 
     Preprocess neuron spike times into a smoothed spatial rate map, given arena
     parameters.  Both spike times and positional data must be aligned in time!
@@ -57,20 +54,19 @@ def spatialRateMap(spikeTimes, positions, arena, sigma):
     rateMap : np.ma.MaskedArray
         The 2D spatial firing rate map. The shape will be determined by the
         arena type.
-    '''
+    """
     spikeTimes = np.asarray(spikeTimes, dtype=np.double)
     edges = arena.getDiscretisation()
-    rateMap = _fields.spatialRateMap(spikeTimes,
-                                     positions.x, positions.y, positions.dt,
-                                     edges.x, edges.y,
-                                     sigma)
+    rateMap = _fields.spatialRateMap(
+        spikeTimes, positions.x, positions.y, positions.dt, edges.x, edges.y, sigma
+    )
     # Mask values which are outside the arena
     rateMap = np.ma.MaskedArray(rateMap, mask=arena.getMask(), copy=False)
     return rateMap.T
 
 
 def spatialAutoCorrelation(rateMap, arenaDiam, h):
-    '''Compute autocorrelation function of the spatial firing rate map.
+    """Compute autocorrelation function of the spatial firing rate map.
 
     This function assumes that the arena is a circle and masks all values of
     the autocorrelation that are outside the `arenaDiam`.
@@ -97,31 +93,36 @@ def spatialAutoCorrelation(rateMap, arenaDiam, h):
     xedges, yedges : np.ndarray
         Values of the spatial lags for the correlation function. The same shape
         as `corr.shape[0]`.
-    '''
+    """
     precision = arenaDiam / h
     xedges = np.linspace(-arenaDiam, arenaDiam, precision * 2 + 1)
     yedges = np.linspace(-arenaDiam, arenaDiam, precision * 2 + 1)
     X, Y = np.meshgrid(xedges, yedges)
 
-    corr = ma.masked_array(correlate2d(rateMap, rateMap), mask=np.sqrt(X ** 2 + Y ** 2) > arenaDiam)
+    corr = ma.masked_array(
+        correlate2d(rateMap, rateMap), mask=np.sqrt(X**2 + Y**2) > arenaDiam
+    )
 
     return corr, xedges, yedges
 
 
 def SNAutoCorr(rateMap, arenaDiam, h):
-    precision = arenaDiam/h
-    xedges = np.linspace(-arenaDiam, arenaDiam, int(precision*2 + 1))
-    yedges = np.linspace(-arenaDiam, arenaDiam, int(precision*2 + 1))
+    precision = arenaDiam / h
+    xedges = np.linspace(-arenaDiam, arenaDiam, int(precision * 2 + 1))
+    yedges = np.linspace(-arenaDiam, arenaDiam, int(precision * 2 + 1))
     X, Y = np.meshgrid(xedges, yedges)
 
-    corr = ma.masked_array(correlate2d(rateMap, rateMap, mode='full'), mask = np.sqrt(X**2 + Y**2) > arenaDiam)
+    corr = ma.masked_array(
+        correlate2d(rateMap, rateMap, mode="full"),
+        mask=np.sqrt(X**2 + Y**2) > arenaDiam,
+    )
 
     return corr, xedges, yedges
 
 
 def compute_angle(v1, v2):
-    norm1 = np.sqrt(np.sum(v1 ** 2))
-    norm2 = np.sqrt(np.sum(v2 ** 2))
+    norm1 = np.sqrt(np.sum(v1**2))
+    norm2 = np.sqrt(np.sum(v2**2))
     return math.acos(np.sum(v1 * v2) / (norm1 * norm2))
 
 
@@ -136,9 +137,12 @@ def compute_scale_orientation(autoCorr):
     while count < 6:
         add = True
         for i in range(count):
-            if autoCorr.mask[idx_x[iter], idx_y[iter]]:
-                add = False
-            elif np.sqrt((peak[i, 0] - idx_x[iter]) ** 2 + (peak[i, 1] - idx_y[iter]) ** 2) < 10.0:
+            if autoCorr.mask[idx_x[iter], idx_y[iter]] or (
+                np.sqrt(
+                    (peak[i, 0] - idx_x[iter]) ** 2 + (peak[i, 1] - idx_y[iter]) ** 2
+                )
+                < 10.0
+            ):
                 add = False
         if add:
             peak[count, 0], peak[count, 1] = idx_x[iter], idx_y[iter]
@@ -162,7 +166,7 @@ def compute_scale_orientation(autoCorr):
 
 
 def gridnessScore(rateMap, arenaDiam, h, corr_cutRmin):
-    '''Calculate gridness score of a spatial firing rate map.
+    """Calculate gridness score of a spatial firing rate map.
 
     Parameters
     ----------
@@ -199,14 +203,14 @@ def gridnessScore(rateMap, arenaDiam, h, corr_cutRmin):
     ----------
     .. [1] Hafting, T. et al., 2005. Microstructure of a spatial map in the
        entorhinal cortex. Nature, 436(7052), pp.801-806.
-    '''
+    """
     rateMap_mean = rateMap - np.mean(np.reshape(rateMap, (1, rateMap.size)))
     autoCorr, autoC_xedges, autoC_yedges = SNAutoCorr(rateMap_mean, arenaDiam, h)
 
     # Remove the center point and
     X, Y = np.meshgrid(autoC_xedges, autoC_yedges)
     autoCorr_ori = autoCorr.copy()
-    autoCorr[np.sqrt(X ** 2 + Y ** 2) < corr_cutRmin] = 0
+    autoCorr[np.sqrt(X**2 + Y**2) < corr_cutRmin] = 0
     scale, orientation, peaks = compute_scale_orientation(autoCorr)
 
     da = 3
@@ -215,8 +219,10 @@ def gridnessScore(rateMap, arenaDiam, h, corr_cutRmin):
     # Rotate and compute correlation coefficient
     for angle in angles:
         autoCorrRot = rotate(autoCorr, angle, reshape=False)
-        C = np.corrcoef(np.reshape(autoCorr, (1, autoCorr.size)),
-                        np.reshape(autoCorrRot, (1, autoCorrRot.size)))
+        C = np.corrcoef(
+            np.reshape(autoCorr, (1, autoCorr.size)),
+            np.reshape(autoCorrRot, (1, autoCorrRot.size)),
+        )
         crossCorr.append(C[0, 1])
 
     max_angles_i = (np.array([30, 90, 150]) / da).astype(np.int32)
@@ -231,7 +237,7 @@ def gridnessScore(rateMap, arenaDiam, h, corr_cutRmin):
 
 
 def occupancy_prob_dist(arena, pos):
-    '''Calculate a probability distribution for animal positions in an arena.
+    """Calculate a probability distribution for animal positions in an arena.
 
     Parameters
     ----------
@@ -247,7 +253,7 @@ def occupancy_prob_dist(arena, pos):
         discretisation of the arena. The first dimension is the y axis, the
         second dimension is the x axis. The shape of the distribution is equal
         to the number of items in the discretised edges of the arena.
-    '''
+    """
     edges = arena.getDiscretisation()
     dx = arena.getDiscretisationSteps()
     xedges = np.hstack((edges.x, [edges.x[-1] + dx.x]))

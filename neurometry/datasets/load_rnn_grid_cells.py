@@ -56,9 +56,11 @@ def load_activations(epochs, version="single", verbose=True):
             activations_dir + f"positions_{version}_agent_epoch_{epoch}.npy"
         )
 
-        if os.path.exists(activations_epoch_path) and os.path.exists(
-            rate_map_epoch_path
-        ) and os.path.exists(positions_epoch_path):
+        if (
+            os.path.exists(activations_epoch_path)
+            and os.path.exists(rate_map_epoch_path)
+            and os.path.exists(positions_epoch_path)
+        ):
             activations.append(np.load(activations_epoch_path))
             rate_maps.append(np.load(rate_map_epoch_path))
             positions.append(np.load(positions_epoch_path))
@@ -79,8 +81,8 @@ def load_activations(epochs, version="single", verbose=True):
                 rate_maps.append(rate_map_single_agent)
                 positions.append(positions_single_agent)
             elif version == "dual":
-                activations_dual_agent, rate_map_dual_agent, positions_dual_agent = dual_agent_activity.main(
-                    options, epoch=epoch
+                activations_dual_agent, rate_map_dual_agent, positions_dual_agent = (
+                    dual_agent_activity.main(options, epoch=epoch)
                 )
                 activations.append(activations_dual_agent)
                 rate_maps.append(rate_map_dual_agent)
@@ -134,13 +136,12 @@ def load_activations(epochs, version="single", verbose=True):
 #     plt.tight_layout()
 #     plt.show()
 
-import numpy as np
-import matplotlib.pyplot as plt
+
 
 def plot_rate_map(indices, num_plots, activations, title):
     rng = np.random.default_rng(seed=0)
     if indices is None:
-        idxs = rng.integers(0, activations.shape[0]-1, num_plots)
+        idxs = rng.integers(0, activations.shape[0] - 1, num_plots)
     else:
         idxs = indices
         num_plots = len(indices)
@@ -172,7 +173,6 @@ def plot_rate_map(indices, num_plots, activations, title):
                 else:
                     axes[i * cols + j].axis("off")
 
-    fig.suptitle(title, fontsize=30) 
+    fig.suptitle(title, fontsize=30)
     plt.tight_layout()
     plt.show()
-

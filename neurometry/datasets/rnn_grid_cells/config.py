@@ -24,7 +24,7 @@ class Config:
     # device = (
     #     "cuda" if torch.cuda.is_available() else "cpu"
     # )  # device to use for training
-    device = torch.device('cuda:8')
+    device = torch.device("cuda:8")
     n_avg = 50  # number of trajectories to average over for rate maps
 
 
