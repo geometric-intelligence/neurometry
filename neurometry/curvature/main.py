@@ -189,7 +189,8 @@ def main_sweep(
         Variance of the noise.
     """
     sweep_config = {
-        "lr": tune.loguniform(default_config.lr_min, default_config.lr_max),
+        # "lr": tune.loguniform(default_config.lr_min, default_config.lr_max),
+        "lr": tune.choice(default_config.lr_min),
         "batch_size": tune.choice(default_config.batch_size),
         "encoder_width": tune.choice(default_config.encoder_width),
         "encoder_depth": tune.choice(default_config.encoder_depth),
@@ -197,7 +198,6 @@ def main_sweep(
         "decoder_depth": tune.choice(default_config.decoder_depth),
         "drop_out_p": tune.choice(default_config.drop_out_p),
         "wandb": {
-            "project": default_config.project,
             "api_key": default_config.api_key,
         },
     }
@@ -253,7 +253,7 @@ def main_sweep(
 
     # @wandb_mixin
     def main_run(sweep_config):
-        wandb.init()
+        wandb.init(project="topo-vae", entity="bioshape-lab")
         wandb_config = wandb.config
         wandb_config.update(fixed_config)
         wandb_config.update(sweep_config)
@@ -290,7 +290,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        #curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -563,8 +563,8 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     wandb.log(
         {
             "comp_time_curv_learned": comp_time_learned,
-            "average_curv_norms_learned": gs.mean(curv_norms_learned),
-            "std_curv_norms_learned": gs.std(curv_norms_learned),
+            "average_curv_norms_learned": torch.mean(curv_norms_learned),
+            "std_curv_norms_learned": torch.std(curv_norms_learned),
             "fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned),
         }
     )
@@ -572,8 +572,8 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         wandb.log(
             {
                 "comp_time_curv_true": comp_time_true,
-                "average_curv_norms_true": gs.mean(curv_norms_true),
-                "std_curv_norms_true": gs.std(curv_norms_true),
+                "average_curv_norms_true": torch.mean(curv_norms_true),
+                "std_curv_norms_true": torch.std(curv_norms_true),
                 "curvature_error": curvature_error,
                 "fig_curv_norms_true": wandb.Image(fig_curv_norms_true),
             }

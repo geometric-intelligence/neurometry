@@ -28,10 +28,6 @@ curvature_profiles_dir = os.path.join(os.getcwd(), "results/curvature_profiles/"
 if not os.path.exists(curvature_profiles_dir):
     os.makedirs(curvature_profiles_dir)
 
-print(configs_dir)
-print(trained_models_dir)
-
-
 # Hardware
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -39,7 +35,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 logging.basicConfig(level=logging.INFO)
 
 # Results
-project = "neurometry"
+project = "topo-vae"
 trained_model_path = None
 
 ### Fixed experiment parameters ###
@@ -164,10 +160,10 @@ select_gain_1 = [True]  # , False]  # , False]
 
 # Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
 n_times = [2500]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [5]  # for s1 stopped at 5 (not done, but 3 was done)
+embedding_dim = [3]  # for s1 stopped at 5 (not done, but 3 was done)
 geodesic_distortion_amp = [0.4]
 # TODO: Add 0.03, possibly 0,000[1
-noise_var = [0.1]  # , 1e-2, 1e-1] 0.075, 0.1] #[
+noise_var = [1e-5]  # , 1e-2, 1e-1] 0.075, 0.1] #[
 
 # Only used if dataset_name == "grid_cells"
 grid_scale = [1.0]
@@ -188,7 +184,7 @@ batch_shuffle = (
 scheduler = False
 log_interval = 20
 checkpt_interval = 20
-n_epochs = 60  # 00  # 00  # 50  # 200  # 150  # 240
+n_epochs = 400  # 00  # 00  # 50  # 200  # 150  # 240
 sftbeta = 4.5  # beta parameter for softplus
 alpha = 1.0  # weight for the reconstruction loss
 beta = 0.03  # 0.03  # weight for KL loss
@@ -202,14 +198,14 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
 # Except for lr_min and lr_max which are floats
-lr_min = 0.0001
+lr_min = [0.001] # 0.0001
 lr_max = 0.1
-batch_size = [16, 64, 128]  # [16,32,64]
-encoder_width = [200, 400]  # [100,400]  # , 100, 200, 300]
-encoder_depth = [4, 10, 12]  # [4,6,8]  # , 10, 20, 50, 100]
-decoder_width = [200, 400]  # [100,400]  # , 100, 200, 300]
-decoder_depth = [4, 6, 8]  # [4,6,8]  # , 10, 20, 50, 100]
-drop_out_p = [0, 0.1]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
+batch_size = [64]  # [16,32,64]
+encoder_width = [400]  # [100,400]  # , 100, 200, 300]
+encoder_depth = [10]  # [4,6,8]  # , 10, 20, 50, 100]
+decoder_width = [200]  # [100,400]  # , 100, 200, 300]
+decoder_depth = [6]  # [4,6,8]  # , 10, 20, 50, 100]
+drop_out_p = [0]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
