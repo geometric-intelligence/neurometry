@@ -1,0 +1,12 @@
+name: neurometry
+channels:
+  - conda-forge
+dependencies:
+  - boost
+  - cmake
+  - python=3.11.3
+  - pip
+  - numpy
+  - jupyterlab
+  - pytorch
+  - poetry
