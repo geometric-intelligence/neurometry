@@ -55,8 +55,7 @@ def load_activations(epochs, file_path, version="single", verbose=True, save = T
                 g_s.append(g_single_agent)
             elif version == "dual":
                 activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = dual_agent_activity.main(
-                    options, file_path, epoch=epoch
-                )
+                    options, file_path, epoch=epoch)
                 activations.append(activations_dual_agent)
                 rate_maps.append(rate_map_dual_agent)
                 positions.append(positions_dual_agent)
@@ -118,10 +117,11 @@ def load_activations(epochs, file_path, version="single", verbose=True, save = T
 #     plt.tight_layout()
 #     plt.show()
 
+
 def plot_rate_map(indices, num_plots, activations, title, seed=None):
     rng = np.random.default_rng(seed=seed)
     if indices is None:
-        idxs = rng.integers(0, activations.shape[0]-1, num_plots)
+        idxs = rng.integers(0, activations.shape[0] - 1, num_plots)
     else:
         idxs = indices
         num_plots = len(indices)
@@ -153,7 +153,6 @@ def plot_rate_map(indices, num_plots, activations, title, seed=None):
                 else:
                     axes[i * cols + j].axis("off")
 
-    fig.suptitle(title, fontsize=30) 
+    fig.suptitle(title, fontsize=30)
     plt.tight_layout()
     plt.show()
-
