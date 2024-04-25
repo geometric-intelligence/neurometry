@@ -20,6 +20,50 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 
+requires-python = ">= 3.9"
+dependencies=[
+    "adjustText",
+    "cython",
+    "fastparquet",
+    "gdown",
+    "jupyterlab",
+    "kneed",
+    "pip",
+    "pandas",
+    "plotly",
+    "pycortex",
+    "matplotlib",
+    "nibabel",
+    "numpy",
+    "scikit-image",
+    "scikit-learn",
+    "seaborn",
+    "torch",
+    "torchmetrics",
+    "torchinfo",
+    "opencv-python",
+    "scikit-dimension",
+    "umap-learn",
+    "ripser",
+    "absl-py",
+    "ml-collections",
+    "tensowflow-cpu",
+    "clu",
+    "labml-helpers",
+    "ray",
+    "pyarrow",
+    "mat73",
+    "hyperopt",
+    "wandb",
+    "jupyter-black",
+    "giotto-ph @ git+https://github.com/alibayeh/giotto-ph.git",
+    "pyflagser @ git+https://github.com/alibayeh/pyflagser.git",
+    "giotto-tda @ git+https://github.com/alibayeh/giotto-tda.git",
+    "geomstats @ git+https://github.com/geomstats/geomstats.git",
+    "torchlens @ git+https://github.com/johnmarktaylor91/torchlens.git",
+    "netrep @ git+https://github.com/ahwillia/netrep.git"
+]
+
 [tool.poetry.dependencies]
 python = "^3.9"
 adjustText = "*"

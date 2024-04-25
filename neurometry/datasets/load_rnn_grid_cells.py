@@ -12,60 +12,31 @@ from .rnn_grid_cells import (
     utils,
 )
 
-# Loading single agent model
 
-# parent_dir = os.getcwd() + "/datasets/rnn_grid_cells/"
-
-parent_dir = "/scratch/facosta/rnn_grid_cells/"
-
-
-single_model_folder = "Single agent path integration/Seed 1 weight decay 1e-06/"
-single_model_parameters = "steps_20_batch_200_RNN_4096_relu_rf_012_DoG_True_periodic_False_lr_00001_weight_decay_1e-06/"
-
-
-dual_model_folder = (
-    "Dual agent path integration disjoint PCs/Seed 1 weight decay 1e-06/"
-)
-dual_model_parameters = "steps_20_batch_200_RNN_4096_relu_rf_012_DoG_True_periodic_False_lr_00001_weight_decay_1e-06/"
-
-
-def load_activations(epochs, version="single", verbose=True):
+def load_activations(epochs, file_path, version="single", verbose=True, save = True):
     activations = []
     rate_maps = []
     state_points = []
     positions = []
+    g_s = []
 
-    if version == "single":
-        activations_dir = (
-            parent_dir + single_model_folder + single_model_parameters + "activations/"
-        )
-    elif version == "dual":
-        activations_dir = (
-            parent_dir + dual_model_folder + dual_model_parameters + "activations/"
-        )
+    activations_dir = os.path.join(file_path, "activations")
 
-    random.seed(0)
     for epoch in epochs:
-        activations_epoch_path = (
-            activations_dir + f"activations_{version}_agent_epoch_{epoch}.npy"
-        )
-        rate_map_epoch_path = (
-            activations_dir + f"rate_map_{version}_agent_epoch_{epoch}.npy"
-        )
-        positions_epoch_path = (
-            activations_dir + f"positions_{version}_agent_epoch_{epoch}.npy"
-        )
+        activations_epoch_path = os.path.join(activations_dir, f"activations_{version}_agent_epoch_{epoch}.npy")
+        rate_map_epoch_path = os.path.join(activations_dir, f"rate_map_{version}_agent_epoch_{epoch}.npy")
+        positions_epoch_path = os.path.join(activations_dir, f"positions_{version}_agent_epoch_{epoch}.npy")
+        gs_epoch_path = os.path.join(activations_dir, f"g_{version}_agent_epoch_{epoch}.npy")
 
-        if (
-            os.path.exists(activations_epoch_path)
-            and os.path.exists(rate_map_epoch_path)
-            and os.path.exists(positions_epoch_path)
-        ):
+        if os.path.exists(activations_epoch_path) and os.path.exists(
+            rate_map_epoch_path
+        ) and os.path.exists(positions_epoch_path) and os.path.exists(gs_epoch_path):
             activations.append(np.load(activations_epoch_path))
             rate_maps.append(np.load(rate_map_epoch_path))
             positions.append(np.load(positions_epoch_path))
+            g_s.append(np.load(gs_epoch_path))
             if verbose:
-                print(f"Epoch {epoch} found!")
+                print(f"Epoch {epoch} found.")
         else:
             print(f"Epoch {epoch} not found. Loading ...")
             parser = config.parser
@@ -75,21 +46,31 @@ def load_activations(epochs, version="single", verbose=True):
                 (
                     activations_single_agent,
                     rate_map_single_agent,
+                    g_single_agent,
                     positions_single_agent,
-                ) = single_agent_activity.main(options, epoch=epoch)
+                ) = single_agent_activity.main(options, file_path, epoch=epoch)
                 activations.append(activations_single_agent)
                 rate_maps.append(rate_map_single_agent)
                 positions.append(positions_single_agent)
+                g_s.append(g_single_agent)
             elif version == "dual":
-                activations_dual_agent, rate_map_dual_agent, positions_dual_agent = (
-                    dual_agent_activity.main(options, epoch=epoch)
-                )
+                activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = dual_agent_activity.main(
+                    options, file_path, epoch=epoch)
                 activations.append(activations_dual_agent)
                 rate_maps.append(rate_map_dual_agent)
                 positions.append(positions_dual_agent)
-        print(len(activations))
+                g_s.append(g_dual_agent)
+
+            if save:
+                np.save(activations_epoch_path, activations[-1])
+                np.save(rate_map_epoch_path, rate_maps[-1])
+                np.save(positions_epoch_path, positions[-1])
+                np.save(gs_epoch_path, g_s[-1])
+        
         state_points_epoch = activations[-1].reshape(activations[-1].shape[0], -1)
         state_points.append(state_points_epoch)
+
+
 
     if verbose:
         print(f"Loaded epochs {epochs} of {version} agent model.")
@@ -104,7 +85,7 @@ def load_activations(epochs, version="single", verbose=True):
         )
         print(f"positions has shape {positions[0].shape}.")
 
-    return activations, rate_maps, state_points, positions
+    return activations, rate_maps, state_points, positions, g_s
 
 
 # def plot_rate_map(indices, num_plots, activations, title):
@@ -137,9 +118,8 @@ def load_activations(epochs, version="single", verbose=True):
 #     plt.show()
 
 
-
-def plot_rate_map(indices, num_plots, activations, title):
-    rng = np.random.default_rng(seed=0)
+def plot_rate_map(indices, num_plots, activations, title, seed=None):
+    rng = np.random.default_rng(seed=seed)
     if indices is None:
         idxs = rng.integers(0, activations.shape[0] - 1, num_plots)
     else:

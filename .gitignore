@@ -1,5 +1,11 @@
 # API KEY
-neurometry/api_key.txt
+*api_key.txt
+
+neurometry/results/*
+neurometry/wandb/*
+
+neurometry/datasets/rnn_grid_cells/Dual agent path integration high res/*
+neurometry/datasets/rnn_grid_cells/Single agent path integration high res/*
 
 
 *viewer*

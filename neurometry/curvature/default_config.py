@@ -11,7 +11,8 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 # WANDB API KEY
 # Find it here: https://wandb.ai/authorize
 # Story it in file: api_key.txt (without extra line break)
-with open("api_key.txt") as f:
+api_key_path = os.path.join(os.getcwd(), "curvature","api_key.txt")
+with open(api_key_path) as f:
     api_key = f.read()
 
 # Directories
@@ -139,7 +140,7 @@ synthetic_rotation = {
 
 # Datasets
 # dataset_name = ["s1_synthetic", "s2_synthetic"]
-dataset_name = ["kb_synthetic"]
+dataset_name = ["s1_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -163,10 +164,10 @@ select_gain_1 = [True]  # , False]  # , False]
 
 # Only used of dataset_name in ["s1_synthetic", "s2_synthetic", "t2_synthetic"]
 n_times = [2500]  # , 2000]  # actual number of times is sqrt_ntimes ** 2
-embedding_dim = [3, 10, 20, 30]  # for s1 stopped at 5 (not done, but 3 was done)
+embedding_dim = [5]  # for s1 stopped at 5 (not done, but 3 was done)
 geodesic_distortion_amp = [0.4]
 # TODO: Add 0.03, possibly 0,000[1
-noise_var = [0.1, 0.075, 0.05, 0.03, 0.01, 0.005, 0.001]  # , 1e-2, 1e-1] 0.075, 0.1] #[
+noise_var = [0.1]  # , 1e-2, 1e-1] 0.075, 0.1] #[
 
 # Only used if dataset_name == "grid_cells"
 grid_scale = [1.0]

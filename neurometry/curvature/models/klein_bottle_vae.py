@@ -5,7 +5,7 @@ This file gathers deep learning models related to G-manifold learning.
 
 import geomstats.backend as gs
 import torch
-from hyperspherical.distributions import VonMisesFisher
+from neurometry.curvature.hyperspherical.distributions.von_mises_fisher import VonMisesFisher
 from torch.nn import functional as F
 
 

@@ -2,7 +2,7 @@
 
 import copy
 
-import losses
+import neurometry.curvature.losses as losses
 import torch
 import wandb
 

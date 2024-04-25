@@ -14,21 +14,21 @@ import pandas as pd
 
 # from ray.tune.integration.wandb import wandb_mixin
 import torch
-import train
-import viz
+import neurometry.curvature.train as train
+import neurometry.curvature.viz as viz
 import wandb
 from ray import air, tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import datasets.utils  # noqa: E402
-import default_config  # noqa: E402
-import evaluate  # noqa: E402
+import neurometry.curvature.datasets.utils as utils  # noqa: E402
+import neurometry.curvature.default_config as default_config # noqa: E402
+import neurometry.curvature.evaluate as evaluate # noqa: E402
 import geomstats.backend as gs  # noqa: E402
-import models.klein_bottle_vae  # noqa: E402
-import models.neural_vae  # noqa: E402
-import models.toroidal_vae  # noqa: E402
+import neurometry.curvature.models.klein_bottle_vae as klein_bottle_vae  # noqa: E402
+import neurometry.curvature.models.neural_vae as neural_vae # noqa: E402
+import neurometry.curvature.models.toroidal_vae as toroidal_vae # noqa: E402
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -262,7 +262,7 @@ def main_sweep(
         wandb.run.name = run_name
 
         # Load data, labels
-        dataset, labels, train_loader, test_loader = datasets.utils.load(wandb_config)
+        dataset, labels, train_loader, test_loader = utils.load(wandb_config)
         data_n_times, data_dim = dataset.shape
         wandb_config.update(
             {
@@ -344,7 +344,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
         torch.manual_seed(0)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(0)
-        model = models.neural_vae.NeuralVAE(
+        model = neural_vae.NeuralVAE(
             data_dim=data_dim,
             latent_dim=config.latent_dim,
             sftbeta=config.sftbeta,
@@ -360,7 +360,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
         torch.manual_seed(0)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(0)
-        model = models.toroidal_vae.ToroidalVAE(
+        model = toroidal_vae.ToroidalVAE(
             data_dim=data_dim,
             latent_dim=config.latent_dim,
             sftbeta=config.sftbeta,
@@ -375,7 +375,7 @@ def create_model_and_train_test(config, train_loader, test_loader):
         torch.manual_seed(0)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(0)
-        model = models.klein_bottle_vae.KleinBottleVAE(
+        model = klein_bottle_vae.KleinBottleVAE(
             data_dim=data_dim,
             latent_dim=config.latent_dim,
             sftbeta=config.sftbeta,
@@ -587,4 +587,4 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     plt.close("all")
 
 
-main()
+#main()

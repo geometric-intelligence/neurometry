@@ -14,15 +14,8 @@ from .trajectory_generator import TrajectoryGenerator
 from .utils import generate_run_ID
 from .visualize import compute_ratemaps
 
-# parent_dir = os.getcwd() + "/"
-parent_dir = "/scratch/facosta/rnn_grid_cells/"
 
-
-model_folder = "Single agent path integration/Seed 1 weight decay 1e-06/"
-model_parameters = "steps_20_batch_200_RNN_4096_relu_rf_012_DoG_True_periodic_False_lr_00001_weight_decay_1e-06/"
-
-
-def main(options, epoch="final", res=20):
+def main(options, file_path, epoch="final", res=20):
     print("Evaluating SINGLE agent model.")
 
     place_cells = PlaceCells(options)
@@ -40,9 +33,8 @@ def main(options, epoch="final", res=20):
     model_single_agent = model.to(options.device)
 
     model_name = "final_model.pth" if epoch == "final" else f"epoch_{epoch}.pth"
-    saved_model_single_agent = torch.load(
-        parent_dir + model_folder + model_parameters + model_name
-    )
+    model_path = os.path.join(file_path, model_name)
+    saved_model_single_agent = torch.load(model_path)
     model_single_agent.load_state_dict(saved_model_single_agent)
 
     print("Computing ratemaps and activations...")
@@ -50,37 +42,33 @@ def main(options, epoch="final", res=20):
     Ng = options.Ng
     n_avg = options.n_avg
 
-    activations_single_agent, rate_map_single_agent, _, positions_single_agent = (
-        compute_ratemaps(
-            model_single_agent,
-            trajectory_generator,
-            options,
-            res=res,
-            n_avg=n_avg,
-            Ng=Ng,
-            all_activations_flag=True,
-        )
+    activations_single_agent, rate_map_single_agent, g_single_agent, positions_single_agent = compute_ratemaps(
+        model_single_agent,
+        trajectory_generator,
+        options,
+        res=res,
+        n_avg=n_avg,
+        Ng=Ng,
+        all_activations_flag=True,
     )
 
-    activations_dir = parent_dir + model_folder + model_parameters + "activations/"
+    activations_dir = os.path.join(file_path, "activations")
 
     np.save(
-        activations_dir + f"activations_single_agent_epoch_{epoch}.npy",
-        activations_single_agent,
+        os.path.join(activations_dir, f"activations_single_agent_epoch_{epoch}.npy"),
+        activations_single_agent
     )
     np.save(
-        activations_dir + f"rate_map_single_agent_epoch_{epoch}.npy",
+        os.path.join(activations_dir,f"rate_map_single_agent_epoch_{epoch}.npy"),
         rate_map_single_agent,
     )
 
-    np.save(
-        activations_dir + f"positions_single_agent_epoch_{epoch}.npy",
-        positions_single_agent,
-    )
+
+    np.save(os.path.join(activations_dir,f"positions_single_agent_epoch_{epoch}.npy"), positions_single_agent)
     # #   activations is in the shape [number of grid cells (Ng) x res x res x n_avg]
     # #   ratemap is in the shape [Ng x res^2]
 
-    return activations_single_agent, rate_map_single_agent, positions_single_agent
+    return activations_single_agent, rate_map_single_agent, g_single_agent, positions_single_agent
 
 
 def compute_grid_scores(res, rate_map_single_agent, scorer):
@@ -153,17 +141,15 @@ if __name__ == "__main__":
     options = parser.parse_args()
     options.run_ID = generate_run_ID(options)
 
-    random.seed(0)
-
     # resolution of ratemaps
     res = 20
 
-    epochs = list(range(0, 100, 5))
+    epochs = list(range(0, 20))
     epochs.append("final")
 
     for epoch in epochs:
         print(f"Loading single agent activations for epoch {epoch} ...")
-        activations_single_agent, rate_map_single_agent = main(
+        activations_single_agent, rate_map_single_agent, g_single_agent, positions_single_agent = main(
             options, epoch=epoch, res=res
         )
 
@@ -171,3 +157,5 @@ if __name__ == "__main__":
         score_60_single_agent, border_scores_single_agent, band_scores_single_agent = (
             compute_all_scores(options, res, rate_map_single_agent)
         )
+
+
