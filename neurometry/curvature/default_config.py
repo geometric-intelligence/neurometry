@@ -11,7 +11,7 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 # WANDB API KEY
 # Find it here: https://wandb.ai/authorize
 # Story it in file: api_key.txt (without extra line break)
-api_key_path = os.path.join(os.getcwd(), "curvature","api_key.txt")
+api_key_path = os.path.join(os.getcwd(),"api_key.txt")
 with open(api_key_path) as f:
     api_key = f.read()
 
