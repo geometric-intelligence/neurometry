@@ -587,4 +587,4 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     plt.close("all")
 
 
-#main()
+main()
