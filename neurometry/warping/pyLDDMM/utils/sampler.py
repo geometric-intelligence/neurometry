@@ -19,6 +19,8 @@ def sample(array, coordinates):
     if array.ndim == 3:
         # the last dimension is the channel dimension. We need to sample each channel independently.
         C = array.shape[-1]
-        samples_channels = [skimage.transform.warp(array[:, :, c], coordinates, mode="edge") for c in C]
+        samples_channels = [
+            skimage.transform.warp(array[:, :, c], coordinates, mode="edge") for c in C
+        ]
         return np.stack(samples_channels, axis=-1)
     return None

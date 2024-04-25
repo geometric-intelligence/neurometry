@@ -24,7 +24,9 @@ class LSTMCell(Module):
         # $i$, $f$, $g$ and $o$ embeddings are normalized and $c_t$ is normalized in
         # $h_t = o_t \odot \tanh(\mathop{LN}(c_t))$
         if layer_norm:
-            self.layer_norm = nn.ModuleList([nn.LayerNorm(hidden_size) for _ in range(4)])
+            self.layer_norm = nn.ModuleList(
+                [nn.LayerNorm(hidden_size) for _ in range(4)]
+            )
             self.layer_norm_c = nn.LayerNorm(hidden_size)
         else:
             self.layer_norm = nn.ModuleList([nn.Identity() for _ in range(4)])
@@ -70,10 +72,14 @@ class LSTM(Module):
         self.hidden_size = hidden_size
         # Create cells for each layer. Note that only the first layer gets the input directly.
         # Rest of the layers get the input from the layer below
-        self.cells = nn.ModuleList([LSTMCell(input_size, hidden_size)] +
-                                   [LSTMCell(hidden_size, hidden_size) for _ in range(n_layers - 1)])
+        self.cells = nn.ModuleList(
+            [LSTMCell(input_size, hidden_size)]
+            + [LSTMCell(hidden_size, hidden_size) for _ in range(n_layers - 1)]
+        )
 
-    def forward(self, x: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None):
+    def forward(
+        self, x: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+    ):
         """
         `x` has shape `[n_steps, batch_size, input_size]` and
         `state` is a tuple of $h$ and $c$, each with a shape of `[batch_size, hidden_size]`.
@@ -82,8 +88,12 @@ class LSTM(Module):
 
         # Initialize the state if `None`
         if state is None:
-            h = [x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)]
-            c = [x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)]
+            h = [
+                x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)
+            ]
+            c = [
+                x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)
+            ]
         else:
             (h, c) = state
             # Reverse stack the tensors to get the states of each layer

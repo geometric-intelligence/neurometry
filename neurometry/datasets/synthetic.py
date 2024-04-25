@@ -5,7 +5,8 @@ import geomstats.backend as gs  # noqa: E402
 import torch  # noqa: E402
 from geomstats.geometry.euclidean import Euclidean  # noqa: E402
 from geomstats.geometry.hypersphere import Hypersphere  # noqa: E402
-#from geomstats.geometry.klein_bottle import KleinBottle  # noqa: E402
+
+# from geomstats.geometry.klein_bottle import KleinBottle  # noqa: E402
 from geomstats.geometry.product_manifold import ProductManifold  # noqa: E402
 
 

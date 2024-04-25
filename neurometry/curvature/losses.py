@@ -59,7 +59,8 @@ def elbo(x, x_mu, posterior_params, z, labels, config):
         q_z_theta = von_mises_fisher.VonMisesFisher(z_theta_mu, z_theta_kappa)
         q_z_phi = von_mises_fisher.VonMisesFisher(z_phi_mu, z_phi_kappa)
         p_z = hyperspherical_uniform.HypersphericalUniform(
-            config.latent_dim - 1, device=config.device)
+            config.latent_dim - 1, device=config.device
+        )
         kld_theta = torch.distributions.kl.kl_divergence(q_z_theta, p_z).mean()
         kld_phi = torch.distributions.kl.kl_divergence(q_z_phi, p_z).mean()
         kld = kld_theta + kld_phi
