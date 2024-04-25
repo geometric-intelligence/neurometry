@@ -1,14 +1,13 @@
-from scores import GridScorer
-import numpy as np
-from matplotlib import pyplot as plt
-from source import *
-from utils import draw_heatmap_2D
-import os
 import argparse
-import pickle
+import os
+
+import model
+import numpy as np
 import torch
 import utils
-import model
+from matplotlib import pyplot as plt
+from scores import GridScorer
+from source import *
 
 parser = argparse.ArgumentParser()
 # 1-step RNN
@@ -71,7 +70,7 @@ ends = np.linspace(0.2, 1.2, num=20)
 # ends = np.concatenate([np.linspace(0.2, 1.5, num=30), np.linspace(0.3, 1.5, num=30)])
 
 
-masks_parameters = zip(starts, ends.tolist())
+masks_parameters = zip(starts, ends.tolist(), strict=False)
 
 # weights_file = FLAGS.f_in
 # weights = np.load(weights_file)
@@ -161,7 +160,7 @@ print(np.mean(score_list[~np.isnan(score_list)]))
 
 print(np.mean(scale_list))
 print(len(scale_list))
-print((scale_list * 40))
+print(scale_list * 40)
 print(np.sum(score_list > 0.37) / len(score_list))
 
 plt.hist(orientation_list, density=True, bins=20)

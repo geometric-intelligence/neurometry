@@ -1,15 +1,15 @@
-import os
 
 # from neurometry.datasets.rnn_grid_cells.utils import generate_run_ID
 import random
 
 import numpy as np
 import torch
+from tqdm import tqdm
+
 from .config import parser
 from .model import RNN
 from .place_cells import PlaceCells
 from .scores import GridScorer
-from tqdm import tqdm
 from .trajectory_generator import TrajectoryGenerator
 from .utils import generate_run_ID
 from .visualize import compute_ratemaps

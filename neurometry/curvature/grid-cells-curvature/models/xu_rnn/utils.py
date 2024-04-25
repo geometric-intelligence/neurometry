@@ -1,33 +1,30 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
+import math
 import os
-from pprint import pformat
-from typing import Mapping, Any
-
-from absl import logging
-import numpy as np
-from matplotlib import pyplot as plt
-import tensorflow as tf
-from scipy.stats import norm
 import sys
+import time
+from collections.abc import Mapping
+from pprint import pformat
+from typing import Any
+
 import cv2
 import imageio
 import matplotlib.cm as cm
-import math
-import time
+import numpy as np
+import tensorflow as tf
 import torch
+from absl import logging
+
 # if '/opt/ros/kinetic/lib/python2.7/dist-packages' in sys.path:
 #     sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-
 from clu import metric_writers
-from clu.metric_writers.async_writer import AsyncMultiWriter
-from clu.metric_writers.async_writer import AsyncWriter
-from clu.metric_writers.logging_writer import LoggingWriter
-from clu.metric_writers.summary_writer import SummaryWriter
+from clu.metric_writers.async_writer import AsyncMultiWriter, AsyncWriter
 from clu.metric_writers.interface import MetricWriter
+from clu.metric_writers.logging_writer import LoggingWriter
 from clu.metric_writers.multi_writer import MultiWriter
+from clu.metric_writers.summary_writer import SummaryWriter
+from matplotlib import pyplot as plt
+from scipy.stats import norm
 
 if "/opt/ros/kinetic/lib/python2.7/dist-packages" in sys.path:
     sys.path.remove("/opt/ros/kinetic/lib/python2.7/dist-packages")
@@ -99,7 +96,7 @@ def construct_antisym_matrix_original(value, dim):
 
 
 def block_diagonal(matrices):
-    """Constructs block-diagonal matrices from a list of batched 2D tensors.
+    r"""Constructs block-diagonal matrices from a list of batched 2D tensors.
 
     Args:
       matrices: A list of Tensors with shape [..., N_i, M_i] (i.e. a list of
@@ -303,9 +300,9 @@ def draw_path_to_target_planning(
                 color=color,
             )
 
-    plot_by_scale(0, "$\sigma = 0.07$")
-    plot_by_scale(1, "$\sigma = 0.14$")
-    plot_by_scale(2, "$\sigma = 0.28$")
+    plot_by_scale(0, r"$\sigma = 0.07$")
+    plot_by_scale(1, r"$\sigma = 0.14$")
+    plot_by_scale(2, r"$\sigma = 0.28$")
     plt.legend(loc="best", fontsize=14)
 
     if target is not None:
@@ -621,7 +618,7 @@ def dict_to_device(data, device):
 
 
 def get_device(device):
-    return "cuda:{}".format(device) if torch.cuda.is_available() else "cpu"
+    return f"cuda:{device}" if torch.cuda.is_available() else "cpu"
 
 
 def set_gpu(gpu, deterministic=True):
@@ -847,9 +844,9 @@ def draw_path_to_target_planning(
                 color=color,
             )
 
-    plot_by_scale(0, "$\sigma = 0.07$")
-    plot_by_scale(1, "$\sigma = 0.14$")
-    plot_by_scale(2, "$\sigma = 0.28$")
+    plot_by_scale(0, r"$\sigma = 0.07$")
+    plot_by_scale(1, r"$\sigma = 0.14$")
+    plot_by_scale(2, r"$\sigma = 0.28$")
     plt.legend(loc="best", fontsize=14)
 
     if target is not None:

@@ -1,9 +1,7 @@
-from typing import Optional, Tuple
 
 import torch
-from torch import nn
-
 from labml_helpers.module import Module
+from torch import nn
 
 
 class LSTMCell(Module):
@@ -78,7 +76,7 @@ class LSTM(Module):
         )
 
     def forward(
-        self, x: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+        self, x: torch.Tensor, state: tuple[torch.Tensor, torch.Tensor] | None = None
     ):
         """
         `x` has shape `[n_steps, batch_size, input_size]` and

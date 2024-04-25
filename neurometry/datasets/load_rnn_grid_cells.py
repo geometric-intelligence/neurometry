@@ -136,8 +136,6 @@ def load_activations(epochs, version="single", verbose=True):
 #     plt.tight_layout()
 #     plt.show()
 
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 def plot_rate_map(indices, num_plots, activations, title):

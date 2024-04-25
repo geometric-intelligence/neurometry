@@ -15,11 +15,9 @@
 
 """Grid score calculations."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal
@@ -40,7 +38,7 @@ def circle_mask(size, radius, in_val=1.0, out_val=0.0):
     return vfunc(z)
 
 
-class GridScorer(object):
+class GridScorer:
     """Class for scoring ratemaps given trajectories."""
 
     def __init__(self, nbins, coords_range, mask_parameters, min_max=False):
@@ -166,7 +164,7 @@ class GridScorer(object):
         masked_sac_centered = (masked_sac - masked_sac_mean) * mask
         variance = np.sum(masked_sac_centered**2) / ring_area + 1e-5
         corrs = dict()
-        for angle, rotated_sac in zip(self._corr_angles, rotated_sacs):
+        for angle, rotated_sac in zip(self._corr_angles, rotated_sacs, strict=False):
             masked_rotated_sac = (rotated_sac - masked_sac_mean) * mask
             cross_prod = np.sum(masked_sac_centered * masked_rotated_sac) / ring_area
             corrs[angle] = cross_prod / variance
@@ -181,7 +179,7 @@ class GridScorer(object):
             self.get_grid_scores_for_mask(sac, rotated_sacs, mask)
             for mask, mask_params in self._masks  # pylint: disable=unused-variable
         ]
-        scores_60, scores_90, variances = map(np.asarray, zip(*scores))  # pylint: disable=unused-variable
+        scores_60, scores_90, variances = map(np.asarray, zip(*scores, strict=False))  # pylint: disable=unused-variable
         max_60_ind = np.argmax(scores_60)  # scale
         max_90_ind = np.argmax(scores_90)
 

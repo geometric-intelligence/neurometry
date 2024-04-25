@@ -1,13 +1,10 @@
 """Representation model of grid cells."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import torch
 from torch import nn
-import math
-from LSTM import LSTM
 
 
 @dataclass
@@ -540,7 +537,7 @@ def get_grid_code_int(codebook, x, num_grid):
 
     # query the 2D codebook, no interpolation
     v_x = torch.vstack(
-        [codebook[:, i, j] for i, j in zip(x_normalized[:, 0], x_normalized[:, 1])]
+        [codebook[:, i, j] for i, j in zip(x_normalized[:, 0], x_normalized[:, 1], strict=False)]
     )
     # v_x = v_x.squeeze().transpose(0, 1)  # [N, C]
 

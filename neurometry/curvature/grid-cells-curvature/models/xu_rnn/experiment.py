@@ -1,24 +1,21 @@
 """Main training loop."""
 
 import os
+import pickle
 
-from absl import logging
-from clu import metric_writers
-from clu import periodic_actions
-from scores import GridScorer
-from source import *
-
+import input_pipeline
 import ml_collections
+import model as model
 import numpy as np
 import tensorflow as tf
 import torch
 import torch.nn as nn
-
-import input_pipeline
-import model as model
 import utils
-import pickle
 import wandb
+from absl import logging
+from clu import metric_writers, periodic_actions
+from scores import GridScorer
+from source import *
 
 
 class Experiment:
@@ -334,7 +331,7 @@ class Experiment:
         starts = [0.1] * 20
         ends = np.linspace(0.2, 1.4, num=20)
 
-        masks_parameters = zip(starts, ends.tolist())
+        masks_parameters = zip(starts, ends.tolist(), strict=False)
 
         ncol, nrow = block_size, num_block
         weights = self.model.encoder.v.data.cpu().detach().numpy()
@@ -400,8 +397,8 @@ class Experiment:
         model_dir = os.path.join(ckpt_dir, "model")
         if not tf.io.gfile.exists(model_dir):
             tf.io.gfile.makedirs(model_dir)
-        model_filename = os.path.join(model_dir, "checkpoint-step{}.pth".format(step))
-        logging.info("Saving model checkpoint: {} ...".format(model_filename))
+        model_filename = os.path.join(model_dir, f"checkpoint-step{step}.pth")
+        logging.info(f"Saving model checkpoint: {model_filename} ...")
         torch.save(state, model_filename)
         wandb.save(model_filename)
 
@@ -409,7 +406,7 @@ class Experiment:
         if not tf.io.gfile.exists(activations_dir):
             tf.io.gfile.makedirs(activations_dir)
         activations_filename = os.path.join(
-            activations_dir, "activations-step{}.pkl".format(step)
+            activations_dir, f"activations-step{step}.pkl"
         )
         activations = {
             "v": self.model.encoder.v.data.cpu().detach().numpy(),
@@ -417,4 +414,4 @@ class Experiment:
         }
         with tf.io.gfile.GFile(activations_filename, "wb") as f:
             pickle.dump(activations, f)
-        logging.info("Saving activations: {} ...".format(activations_filename))
+        logging.info(f"Saving activations: {activations_filename} ...")

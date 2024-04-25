@@ -18,15 +18,13 @@ Functions
 
 """
 
+import math
 import os
 
 import numpy as np
 import numpy.ma as ma
-import math
-
-from scipy.integrate import trapz
-from scipy.signal import correlate2d
 from scipy.ndimage.interpolation import rotate
+from scipy.signal import correlate2d
 
 # Do not import when in RDT environment
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
@@ -139,9 +137,7 @@ def compute_scale_orientation(autoCorr):
     while count < 6:
         add = True
         for i in range(count):
-            if autoCorr.mask[idx_x[iter], idx_y[iter]]:
-                add = False
-            elif (
+            if autoCorr.mask[idx_x[iter], idx_y[iter]] or (
                 np.sqrt(
                     (peak[i, 0] - idx_x[iter]) ** 2 + (peak[i, 1] - idx_y[iter]) ** 2
                 )

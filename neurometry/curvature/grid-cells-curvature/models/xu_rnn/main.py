@@ -2,14 +2,12 @@
 
 import os
 
-from absl import app
-from absl import flags
-from ml_collections import config_flags
+import experiment
 import numpy as np
 import tensorflow as tf
-
-import experiment
 import utils
+from absl import app, flags
+from ml_collections import config_flags
 
 FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file(
