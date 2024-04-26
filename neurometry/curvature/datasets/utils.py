@@ -6,10 +6,18 @@ import scipy.io
 import torch
 from scipy.signal import savgol_filter
 
-from neurometry.curvature.datasets.synthetic import load_place_cells, load_images, load_projected_images, load_points
-from neurometry.curvature.datasets.synthetic import load_s1_synthetic, load_s2_synthetic
-from neurometry.curvature.datasets.synthetic import load_t2_synthetic
-from neurometry.curvature.datasets.synthetic import load_three_place_cells
+from neurometry.curvature.datasets.experimental import load_neural_activity
+from neurometry.curvature.datasets.gridcells import load_grid_cells_synthetic
+from neurometry.curvature.datasets.synthetic import (
+    load_images,
+    load_place_cells,
+    load_points,
+    load_projected_images,
+    load_s1_synthetic,
+    load_s2_synthetic,
+    load_t2_synthetic,
+    load_three_place_cells,
+)
 
 
 def load(config):
@@ -34,7 +42,7 @@ def load(config):
         test dataset.
     """
     if config.dataset_name == "experimental":
-        dataset, labels = datasets.experimental.load_neural_activity(
+        dataset, labels = load_neural_activity(
             expt_id=config.expt_id, timestep_microsec=config.timestep_microsec
         )
         dataset = dataset[labels["velocities"] > 5]
@@ -84,9 +92,7 @@ def load(config):
         height, width = dataset.shape[1:3]
         dataset = dataset.reshape((-1, height * width))
     elif config.dataset_name == "projected_images":
-        dataset, labels = load_projected_images(
-            img_size=config.img_size
-        )
+        dataset, labels = load_projected_images(img_size=config.img_size)
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "points":
         dataset, labels = load_points()
@@ -122,7 +128,7 @@ def load(config):
             noise_var=config.noise_var,
         )
     elif config.dataset_name == "grid_cells":
-        dataset, labels = datasets.gridcells.load_grid_cells_synthetic(
+        dataset, labels = load_grid_cells_synthetic(
             grid_scale=config.grid_scale,
             arena_dims=config.arena_dims,
             n_cells=config.n_cells,

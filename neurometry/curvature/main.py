@@ -14,21 +14,22 @@ import pandas as pd
 
 # from ray.tune.integration.wandb import wandb_mixin
 import torch
-import neurometry.curvature.train as train
-import neurometry.curvature.viz as viz
 import wandb
 from ray import air, tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
+import neurometry.curvature.train as train
+import neurometry.curvature.viz as viz
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+
 import neurometry.curvature.datasets.utils as utils  # noqa: E402
-import neurometry.curvature.default_config as default_config # noqa: E402
-import neurometry.curvature.evaluate as evaluate # noqa: E402
-import geomstats.backend as gs  # noqa: E402
+import neurometry.curvature.default_config as default_config  # noqa: E402
+import neurometry.curvature.evaluate as evaluate  # noqa: E402
 import neurometry.curvature.models.klein_bottle_vae as klein_bottle_vae  # noqa: E402
-import neurometry.curvature.models.neural_vae as neural_vae # noqa: E402
-import neurometry.curvature.models.toroidal_vae as toroidal_vae # noqa: E402
+import neurometry.curvature.models.neural_vae as neural_vae  # noqa: E402
+import neurometry.curvature.models.toroidal_vae as toroidal_vae  # noqa: E402
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -290,7 +291,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        #curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        # curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 

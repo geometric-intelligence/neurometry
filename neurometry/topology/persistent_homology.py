@@ -1,24 +1,26 @@
-import numpy as np
-import persim
 
-from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from gtda.diagrams import PairwiseDistance
-from gtda.plotting import plot_diagram, plot_heatmap
-
-import neurometry.datasets.synthetic as synthetic
+from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 
 
-def compute_persistence_diagrams(representations, homology_dimensions=(0,1,2), coeff=2, metric="euclidean", weighted=False):
+def compute_persistence_diagrams(
+    representations,
+    homology_dimensions=(0, 1, 2),
+    coeff=2,
+    metric="euclidean",
+    weighted=False,
+):
     if weighted:
         WR = WeightedRipsPersistence(
             metric=metric, homology_dimensions=homology_dimensions, coeff=coeff
         )
         diagrams = WR.fit_transform(representations)
     else:
-        VR = VietorisRipsPersistence(metric=metric, homology_dimensions=homology_dimensions, coeff=coeff)
+        VR = VietorisRipsPersistence(
+            metric=metric, homology_dimensions=homology_dimensions, coeff=coeff
+        )
         diagrams = VR.fit_transform(representations)
     return diagrams
-
 
 
 def compute_pairwise_distances(diagrams, metric="bottleneck"):
@@ -27,12 +29,10 @@ def compute_pairwise_distances(diagrams, metric="bottleneck"):
     return distances
 
 
-
-def compare_representation_to_references(representation, reference_topologies, metric="bottleneck"):
+def compare_representation_to_references(
+    representation, reference_topologies, metric="bottleneck"
+):
     raise NotImplementedError
-
-
-
 
 
 # def distance(diagrams1, diagrams2, dist_type="bottleneck"):

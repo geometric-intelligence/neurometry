@@ -2,9 +2,10 @@
 
 import copy
 
-import neurometry.curvature.losses as losses
 import torch
 import wandb
+
+import neurometry.curvature.losses as losses
 
 
 def train_test(model, train_loader, test_loader, optimizer, scheduler, config):

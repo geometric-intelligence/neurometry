@@ -1,10 +1,9 @@
-
 # from neurometry.datasets.rnn_grid_cells.utils import generate_run_ID
-import random
 
 import numpy as np
 import torch
 from tqdm import tqdm
+import os
 
 from .config import parser
 from .model import RNN
@@ -42,7 +41,12 @@ def main(options, file_path, epoch="final", res=20):
     Ng = options.Ng
     n_avg = options.n_avg
 
-    activations_single_agent, rate_map_single_agent, g_single_agent, positions_single_agent = compute_ratemaps(
+    (
+        activations_single_agent,
+        rate_map_single_agent,
+        g_single_agent,
+        positions_single_agent,
+    ) = compute_ratemaps(
         model_single_agent,
         trajectory_generator,
         options,
@@ -56,19 +60,26 @@ def main(options, file_path, epoch="final", res=20):
 
     np.save(
         os.path.join(activations_dir, f"activations_single_agent_epoch_{epoch}.npy"),
-        activations_single_agent
+        activations_single_agent,
     )
     np.save(
-        os.path.join(activations_dir,f"rate_map_single_agent_epoch_{epoch}.npy"),
+        os.path.join(activations_dir, f"rate_map_single_agent_epoch_{epoch}.npy"),
         rate_map_single_agent,
     )
 
-
-    np.save(os.path.join(activations_dir,f"positions_single_agent_epoch_{epoch}.npy"), positions_single_agent)
+    np.save(
+        os.path.join(activations_dir, f"positions_single_agent_epoch_{epoch}.npy"),
+        positions_single_agent,
+    )
     # #   activations is in the shape [number of grid cells (Ng) x res x res x n_avg]
     # #   ratemap is in the shape [Ng x res^2]
 
-    return activations_single_agent, rate_map_single_agent, g_single_agent, positions_single_agent
+    return (
+        activations_single_agent,
+        rate_map_single_agent,
+        g_single_agent,
+        positions_single_agent,
+    )
 
 
 def compute_grid_scores(res, rate_map_single_agent, scorer):
@@ -104,7 +115,7 @@ def compute_band_scores(box_width, res, rate_map_single_agent, scorer):
     return band_scores_single_agent
 
 
-def compute_all_scores(options, res, rate_map_single_agent):
+def compute_all_scores(options, file_path, res, rate_map_single_agent):
     starts = [0.2] * 10
     ends = np.linspace(0.4, 1.0, num=10)
     box_width = options.box_width
@@ -120,7 +131,7 @@ def compute_all_scores(options, res, rate_map_single_agent):
         box_width, res, rate_map_single_agent, scorer
     )
 
-    scores_dir = parent_dir + model_folder + model_parameters + "scores/"
+    scores_dir = os.path.join(file_path, "scores")
     np.save(
         scores_dir + f"score_60_single_agent_epoch_{epoch}.npy", score_60_single_agent
     )
@@ -144,18 +155,22 @@ if __name__ == "__main__":
     # resolution of ratemaps
     res = 20
 
-    epochs = list(range(0, 20))
+    epochs = list(range(20))
     epochs.append("final")
+
+    file_path = "path"
 
     for epoch in epochs:
         print(f"Loading single agent activations for epoch {epoch} ...")
-        activations_single_agent, rate_map_single_agent, g_single_agent, positions_single_agent = main(
-            options, epoch=epoch, res=res
-        )
+        (
+            activations_single_agent,
+            rate_map_single_agent,
+            g_single_agent,
+            positions_single_agent,
+        ) = main(options, file_path, epoch=epoch, res=res)
 
         print(f"Computing single agent scores for epoch {epoch} ...")
         score_60_single_agent, border_scores_single_agent, band_scores_single_agent = (
-            compute_all_scores(options, res, rate_map_single_agent)
+            compute_all_scores(options, file_path, res, rate_map_single_agent)
         )
-
 

@@ -6,6 +6,8 @@ import torch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs  # noqa: E402
+from geomstats.geometry.pullback_metric import PullbackMetric  # noqa: E402
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
 
 # import gph
 from neurometry.curvature.datasets.synthetic import (  # noqa: E402
@@ -13,8 +15,6 @@ from neurometry.curvature.datasets.synthetic import (  # noqa: E402
     get_s2_synthetic_immersion,
     get_t2_synthetic_immersion,
 )
-from geomstats.geometry.pullback_metric import PullbackMetric  # noqa: E402
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
 
 
 def get_learned_immersion(model, config):
@@ -106,7 +106,8 @@ def get_z_grid(config, n_grid_points=100):
         z_grid = torch.cartesian_prod(thetas, phis)
     return z_grid
 
-#TODO: change instantiation of PullbackMetric to match latest geomstats version
+
+# TODO: change instantiation of PullbackMetric to match latest geomstats version
 def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     """Compute mean curvature vector and its norm at each point."""
     neural_metric = PullbackMetric(

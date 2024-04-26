@@ -507,10 +507,9 @@ def get_grid_code(codebook, x, num_grid):
         align_corners=False,
     )  # [1, C, 1, N]
 
-    v_x = torch.squeeze(torch.squeeze(v_x, 0), 1).transpose(0, 1)  # [N, C]
     # v_x = v_x.squeeze().transpose(0, 1)
 
-    return v_x
+    return torch.squeeze(torch.squeeze(v_x, 0), 1).transpose(0, 1)  # [N, C]
 
 
 def get_grid_code_block(codebook, x, num_grid, block_size):
@@ -537,7 +536,10 @@ def get_grid_code_int(codebook, x, num_grid):
 
     # query the 2D codebook, no interpolation
     v_x = torch.vstack(
-        [codebook[:, i, j] for i, j in zip(x_normalized[:, 0], x_normalized[:, 1], strict=False)]
+        [
+            codebook[:, i, j]
+            for i, j in zip(x_normalized[:, 0], x_normalized[:, 1], strict=False)
+        ]
     )
     # v_x = v_x.squeeze().transpose(0, 1)  # [N, C]
 
