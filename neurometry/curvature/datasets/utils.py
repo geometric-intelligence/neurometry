@@ -6,7 +6,18 @@ import scipy.io
 import torch
 from scipy.signal import savgol_filter
 
-import neurometry.curvature.datasets as datasets
+from neurometry.curvature.datasets.experimental import load_neural_activity
+from neurometry.curvature.datasets.gridcells import load_grid_cells_synthetic
+from neurometry.curvature.datasets.synthetic import (
+    load_images,
+    load_place_cells,
+    load_points,
+    load_projected_images,
+    load_s1_synthetic,
+    load_s2_synthetic,
+    load_t2_synthetic,
+    load_three_place_cells,
+)
 
 
 def load(config):
@@ -31,7 +42,7 @@ def load(config):
         test dataset.
     """
     if config.dataset_name == "experimental":
-        dataset, labels = datasets.experimental.load_neural_activity(
+        dataset, labels = load_neural_activity(
             expt_id=config.expt_id, timestep_microsec=config.timestep_microsec
         )
         dataset = dataset[labels["velocities"] > 5]
@@ -72,24 +83,22 @@ def load(config):
         labels = labels[labels["gains"] == gain]
 
     elif config.dataset_name == "synthetic":
-        dataset, labels = datasets.synthetic.load_place_cells()
+        dataset, labels = load_place_cells()
         dataset = np.log(dataset.astype(np.float32) + 1)
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "images":
-        dataset, labels = datasets.synthetic.load_images(img_size=config.img_size)
+        dataset, labels = load_images(img_size=config.img_size)
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
         height, width = dataset.shape[1:3]
         dataset = dataset.reshape((-1, height * width))
     elif config.dataset_name == "projected_images":
-        dataset, labels = datasets.synthetic.load_projected_images(
-            img_size=config.img_size
-        )
+        dataset, labels = load_projected_images(img_size=config.img_size)
         dataset = (dataset - np.min(dataset)) / (np.max(dataset) - np.min(dataset))
     elif config.dataset_name == "points":
-        dataset, labels = datasets.synthetic.load_points()
+        dataset, labels = load_points()
         dataset = dataset.astype(np.float32)
     elif config.dataset_name == "s1_synthetic":
-        dataset, labels = datasets.synthetic.load_s1_synthetic(
+        dataset, labels = load_s1_synthetic(
             synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
@@ -100,7 +109,7 @@ def load(config):
             geodesic_distortion_func=config.geodesic_distortion_func,
         )
     elif config.dataset_name == "s2_synthetic":
-        dataset, labels = datasets.synthetic.load_s2_synthetic(
+        dataset, labels = load_s2_synthetic(
             synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             radius=config.radius,
@@ -109,7 +118,7 @@ def load(config):
             noise_var=config.noise_var,
         )
     elif config.dataset_name == "t2_synthetic":
-        dataset, labels = datasets.synthetic.load_t2_synthetic(
+        dataset, labels = load_t2_synthetic(
             synthetic_rotation=config.synthetic_rotation,
             n_times=config.n_times,
             major_radius=config.major_radius,
@@ -119,7 +128,7 @@ def load(config):
             noise_var=config.noise_var,
         )
     elif config.dataset_name == "grid_cells":
-        dataset, labels = datasets.gridcells.load_grid_cells_synthetic(
+        dataset, labels = load_grid_cells_synthetic(
             grid_scale=config.grid_scale,
             arena_dims=config.arena_dims,
             n_cells=config.n_cells,
@@ -129,7 +138,7 @@ def load(config):
             resolution=config.resolution,
         )
     elif config.dataset_name == "three_place_cells_synthetic":
-        dataset, labels = datasets.synthetic.load_three_place_cells()
+        dataset, labels = load_three_place_cells()
     print(f"Dataset shape: {dataset.shape}.")
     if type(dataset) == np.ndarray:
         dataset_torch = torch.from_numpy(dataset)

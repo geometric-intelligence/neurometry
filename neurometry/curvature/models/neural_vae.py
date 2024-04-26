@@ -4,9 +4,12 @@ This file gathers deep learning models related to G-manifold learning.
 """
 
 import torch
-from neurometry.curvature.hyperspherical.distributions.von_mises_fisher import VonMisesFisher
 from torch.distributions.normal import Normal
 from torch.nn import functional as F
+
+from neurometry.curvature.hyperspherical.distributions.von_mises_fisher import (
+    VonMisesFisher,
+)
 
 
 class NeuralVAE(torch.nn.Module):

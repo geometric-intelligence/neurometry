@@ -14,21 +14,22 @@ import pandas as pd
 
 # from ray.tune.integration.wandb import wandb_mixin
 import torch
-import neurometry.curvature.train as train
-import neurometry.curvature.viz as viz
 import wandb
 from ray import air, tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
+import neurometry.curvature.train as train
+import neurometry.curvature.viz as viz
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+
 import neurometry.curvature.datasets.utils as utils  # noqa: E402
-import neurometry.curvature.default_config as default_config # noqa: E402
-import neurometry.curvature.evaluate as evaluate # noqa: E402
-import geomstats.backend as gs  # noqa: E402
+import neurometry.curvature.default_config as default_config  # noqa: E402
+import neurometry.curvature.evaluate as evaluate  # noqa: E402
 import neurometry.curvature.models.klein_bottle_vae as klein_bottle_vae  # noqa: E402
-import neurometry.curvature.models.neural_vae as neural_vae # noqa: E402
-import neurometry.curvature.models.toroidal_vae as toroidal_vae # noqa: E402
+import neurometry.curvature.models.neural_vae as neural_vae  # noqa: E402
+import neurometry.curvature.models.toroidal_vae as toroidal_vae  # noqa: E402
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -189,7 +190,8 @@ def main_sweep(
         Variance of the noise.
     """
     sweep_config = {
-        "lr": tune.loguniform(default_config.lr_min, default_config.lr_max),
+        # "lr": tune.loguniform(default_config.lr_min, default_config.lr_max),
+        "lr": tune.choice(default_config.lr_min),
         "batch_size": tune.choice(default_config.batch_size),
         "encoder_width": tune.choice(default_config.encoder_width),
         "encoder_depth": tune.choice(default_config.encoder_depth),
@@ -197,7 +199,6 @@ def main_sweep(
         "decoder_depth": tune.choice(default_config.decoder_depth),
         "drop_out_p": tune.choice(default_config.drop_out_p),
         "wandb": {
-            "project": default_config.project,
             "api_key": default_config.api_key,
         },
     }
@@ -253,7 +254,7 @@ def main_sweep(
 
     # @wandb_mixin
     def main_run(sweep_config):
-        wandb.init()
+        wandb.init(project="topo-vae", entity="bioshape-lab")
         wandb_config = wandb.config
         wandb_config.update(fixed_config)
         wandb_config.update(sweep_config)
@@ -290,7 +291,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        # curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -563,8 +564,8 @@ def curvature_compute_plot_log(config, dataset, labels, model):
     wandb.log(
         {
             "comp_time_curv_learned": comp_time_learned,
-            "average_curv_norms_learned": gs.mean(curv_norms_learned),
-            "std_curv_norms_learned": gs.std(curv_norms_learned),
+            "average_curv_norms_learned": torch.mean(curv_norms_learned),
+            "std_curv_norms_learned": torch.std(curv_norms_learned),
             "fig_curv_norms_learned": wandb.Image(fig_curv_norms_learned),
         }
     )
@@ -572,8 +573,8 @@ def curvature_compute_plot_log(config, dataset, labels, model):
         wandb.log(
             {
                 "comp_time_curv_true": comp_time_true,
-                "average_curv_norms_true": gs.mean(curv_norms_true),
-                "std_curv_norms_true": gs.std(curv_norms_true),
+                "average_curv_norms_true": torch.mean(curv_norms_true),
+                "std_curv_norms_true": torch.std(curv_norms_true),
                 "curvature_error": curvature_error,
                 "fig_curv_norms_true": wandb.Image(fig_curv_norms_true),
             }

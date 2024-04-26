@@ -28,7 +28,6 @@ class Config:
     n_avg = 50  # number of trajectories to average over for rate maps
 
 
-
 # If you need to access the configuration as a dictionary
 config = Config.__dict__
 

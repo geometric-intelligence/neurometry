@@ -15,7 +15,6 @@
 
 """Grid score calculations."""
 
-
 import math
 
 import matplotlib.pyplot as plt

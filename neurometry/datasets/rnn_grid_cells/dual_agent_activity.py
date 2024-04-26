@@ -40,23 +40,39 @@ def main(options, file_path, epoch="final", res=20):
 
     Ng = options.Ng
     n_avg = options.n_avg
-    activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = compute_ratemaps(
-        model_dual_agent,
-        trajectory_generator,
-        options,
-        res=res,
-        n_avg=n_avg,
-        Ng=Ng,
-        all_activations_flag=True,
+    activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = (
+        compute_ratemaps(
+            model_dual_agent,
+            trajectory_generator,
+            options,
+            res=res,
+            n_avg=n_avg,
+            Ng=Ng,
+            all_activations_flag=True,
+        )
     )
 
     activations_dir = os.path.join(file_path, "activations")
 
-    np.save(os.path.join(activations_dir, f"activations_dual_agent_epoch_{epoch}.npy"), activations_dual_agent)
-    np.save(os.path.join(activations_dir, f"rate_map_dual_agent_epoch_{epoch}.npy"), rate_map_dual_agent)
-    np.save(os.path.join(activations_dir, f"positions_dual_agent_epoch_{epoch}.npy"), positions_dual_agent)
+    np.save(
+        os.path.join(activations_dir, f"activations_dual_agent_epoch_{epoch}.npy"),
+        activations_dual_agent,
+    )
+    np.save(
+        os.path.join(activations_dir, f"rate_map_dual_agent_epoch_{epoch}.npy"),
+        rate_map_dual_agent,
+    )
+    np.save(
+        os.path.join(activations_dir, f"positions_dual_agent_epoch_{epoch}.npy"),
+        positions_dual_agent,
+    )
 
-    return activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent
+    return (
+        activations_dual_agent,
+        rate_map_dual_agent,
+        g_dual_agent,
+        positions_dual_agent,
+    )
 
 
 def compute_grid_scores(res, rate_map_dual_agent, scorer):
@@ -132,7 +148,12 @@ if __name__ == "__main__":
 
     for epoch in epochs:
         print(f"Loading dual agent activations for epoch {epoch} ...")
-        activations_dual_agent, rate_map_dual_agent, g_dual_agent, positions_dual_agent = main(options, epoch, res)
+        (
+            activations_dual_agent,
+            rate_map_dual_agent,
+            g_dual_agent,
+            positions_dual_agent,
+        ) = main(options, epoch, res)
 
         print(f"Computing dual agent scores for epoch {epoch} ...")
         score_60_dual_agent, border_scores_dual_agent, band_scores_dual_agent = (

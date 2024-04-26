@@ -1,10 +1,6 @@
 import os
-
 import numpy as np
 import skdim
-
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
@@ -12,8 +8,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.multioutput import MultiOutputRegressor
-
 import neurometry.datasets.synthetic as synthetic  # noqa: E402
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import geomstats.backend as gs  # noqa: E402
+
+
+
 
 
 def skdim_dimension_estimation(

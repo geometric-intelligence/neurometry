@@ -18,6 +18,7 @@ class TrainDataset:
         self.dx_list = self._generate_dx_list(config.max_dr_trans)
         # self.dx_list = self._generate_dx_list_continous(config.max_dr_trans)
         self.scale_vector = np.zeros(self.num_blocks) + config.max_dr_isometry
+        self.rng = self.rng.default_rng()
 
     def __iter__(self):
         while True:
@@ -42,9 +43,9 @@ class TrainDataset:
         batch_size = self.config.batch_size
         config = self.config
 
-        theta = np.random.random(size=int(batch_size * 1.5)) * 2 * np.pi
+        theta = self.rng.random(size=int(batch_size * 1.5)) * 2 * np.pi
         dr = (
-            np.abs(np.random.normal(size=int(batch_size * 1.5)) * config.sigma_data)
+            np.abs(self.rng.normal(size=int(batch_size * 1.5)) * config.sigma_data)
             * self.num_grid
         )
         dx = _dr_theta_to_dx(dr, theta)
@@ -57,7 +58,7 @@ class TrainDataset:
         x_max, x_min, dx = x_max[select_idx], x_min[select_idx], dx[select_idx]
         assert len(dx) == batch_size
 
-        x = np.random.random(size=(batch_size, 2)) * (x_max - x_min) + x_min
+        x = self.rng.random(size=(batch_size, 2)) * (x_max - x_min) + x_min
         x_prime = x + dx
 
         return {"x": x, "x_prime": x_prime}
@@ -69,7 +70,7 @@ class TrainDataset:
         n_steps = self.rnn_step
         dx_list = self.dx_list
 
-        dx_idx = np.random.choice(len(dx_list), size=[n_traj * 10, n_steps])
+        dx_idx = self.rng.choice(len(dx_list), size=[n_traj * 10, n_steps])
         dx = dx_list[dx_idx]  # [N, T, 2]
         dx_cumsum = np.cumsum(dx, axis=1)  # [N, T, 2]
 
@@ -86,7 +87,7 @@ class TrainDataset:
         x_start_max, x_start_min = x_start_max[select_idx], x_start_min[select_idx]
         dx_cumsum = dx_cumsum[select_idx]
         x_start = (
-            np.random.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
+         self.rng.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
         )
         x_start = x_start[:, None]  # [N, 1, 2]
         x_start = np.round(x_start - 0.5)
@@ -99,13 +100,13 @@ class TrainDataset:
         batch_size = self.config.batch_size
         config = self.config
 
-        theta = np.random.random(size=(batch_size, 2)) * 2 * np.pi
-        dr = np.sqrt(np.random.random(size=(batch_size, 1))) * config.max_dr_isometry
+        theta = self.rng.random(size=(batch_size, 2)) * 2 * np.pi
+        dr = np.sqrt(self.rng.random(size=(batch_size, 1))) * config.max_dr_isometry
         dx = _dr_theta_to_dx(dr, theta)  # [N, 2, 2]
 
         x_max = np.fmin(self.num_grid - 0.5, np.min(self.num_grid - 0.5 - dx, axis=1))
         x_min = np.fmax(-0.5, np.max(-0.5 - dx, axis=1))
-        x = np.random.random(size=(batch_size, 2)) * (x_max - x_min) + x_min
+        x = self.rng.random(size=(batch_size, 2)) * (x_max - x_min) + x_min
         x_plus_dx1 = x + dx[:, 0]
         x_plus_dx2 = x + dx[:, 1]
 
@@ -117,10 +118,10 @@ class TrainDataset:
         config = self.config
 
         theta = (
-            np.random.random(size=(batch_size, num_blocks, 2)) * 2 * np.pi
+         self.rng.random(size=(batch_size, num_blocks, 2)) * 2 * np.pi
         )  # (batch_size, num_blocks, 2)
         dr = (
-            np.sqrt(np.random.random(size=(batch_size, num_blocks, 1)))
+            np.sqrt(self.rng.random(size=(batch_size, num_blocks, 1)))
             * np.tile(self.scale_vector, (batch_size, 1))[:, :, None]
         )  # (batch_size, num_blocks, 1)
         dx = _dr_theta_to_dx(dr, theta)  # [N, num_blocks, 2, 2]
@@ -128,7 +129,7 @@ class TrainDataset:
         x_max = np.fmin(self.num_grid - 0.5, np.min(self.num_grid - 0.5 - dx, axis=2))
         x_min = np.fmax(-0.5, np.max(-0.5 - dx, axis=2))
         x = (
-            np.random.random(size=(batch_size, num_blocks, 2)) * (x_max - x_min) + x_min
+         self.rng.random(size=(batch_size, num_blocks, 2)) * (x_max - x_min) + x_min
         )  # (batch_size, num_blocks, 2)
         x_plus_dx1 = x + dx[:, :, 0]
         x_plus_dx2 = x + dx[:, :, 1]
@@ -157,9 +158,9 @@ class TrainDataset:
         dx_list = []
         batch_size = self.config.batch_size
 
-        dr = np.sqrt(np.random.random(size=(batch_size,))) * max_dr
-        np.random.shuffle(dr)
-        theta = np.random.random(size=(batch_size,)) * 2 * np.pi
+        dr = np.sqrt(self.rng.random(size=(batch_size,))) * max_dr
+        self.rng.shuffle(dr)
+        theta = self.rng.random(size=(batch_size,)) * 2 * np.pi
 
         dx = _dr_theta_to_dx(dr, theta)
 
@@ -202,7 +203,7 @@ class EvalDataset:
         x_start = np.reshape([5, 5], newshape=(1, 1, 2))  # [1, 1, 2]
         dx_idx_pool = np.where((dx_list[:, 0] >= -1) & (dx_list[:, 1] >= -1))[0]
         # dx_idx_pool = np.where((dx_list[:, 0] >= 0) & (dx_list[:, 1] >= -1))[0]
-        dx_idx = np.random.choice(dx_idx_pool, size=[n_traj * 50, n_steps])
+        dx_idx = self.rng.choice(dx_idx_pool, size=[n_traj * 50, n_steps])
         dx = dx_list[dx_idx]
         dx_cumsum = np.cumsum(dx, axis=1)  # [N, T, 2]
 
@@ -224,7 +225,7 @@ class EvalDataset:
         # uniformly wihtin the whole region.
         dx_list = self.dx_list
 
-        dx_idx = np.random.choice(len(dx_list), size=[n_traj * 10, n_steps])
+        dx_idx = self.rng.choice(len(dx_list), size=[n_traj * 10, n_steps])
         dx = dx_list[dx_idx]  # [N, T, 2]
         dx_cumsum = np.cumsum(dx, axis=1)  # [N, T, 2]
 
@@ -241,7 +242,7 @@ class EvalDataset:
         x_start_max, x_start_min = x_start_max[select_idx], x_start_min[select_idx]
         dx_cumsum = dx_cumsum[select_idx]
         x_start = (
-            np.random.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
+         self.rng.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
         )
         x_start = x_start[:, None]  # [N, 1, 2]
         x_start = np.round(x_start - 0.5)
