@@ -41,7 +41,7 @@ def get_config():
         rnn_step=10,
         num_grid=40,
         num_neurons=1800,
-        block_size=12,
+        block_size=6,#12
         sigma=0.07,
         w_kernel=1.05,
         w_trans=0.1,

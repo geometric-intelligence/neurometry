@@ -18,7 +18,7 @@ class TrainDataset:
         self.dx_list = self._generate_dx_list(config.max_dr_trans)
         # self.dx_list = self._generate_dx_list_continous(config.max_dr_trans)
         self.scale_vector = np.zeros(self.num_blocks) + config.max_dr_isometry
-        self.rng = self.rng.default_rng()
+        self.rng = np.random.default_rng()
 
     def __iter__(self):
         while True:
@@ -182,6 +182,7 @@ class EvalDataset:
         # for evaluation, we sample trajectories where the positions
         # are all integers.
         self.dx_list = self._generate_dx_list(max_dr)
+        self.rng = np.random.default_rng()
 
     def __iter__(self):
         while True:
