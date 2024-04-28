@@ -205,7 +205,7 @@ class GridCell(nn.Module):
                 (traj[:, i + 1, :][:, None, :] / config.num_grid - x_pc) ** 2, dim=-1
             )
 
-            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (N, 1600)
+            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (N, 1600) -> place field at location given by traj[:, i + 1, :] 
             dx = (traj[:, i + 1, :] - traj[:, i, :]) / config.num_grid
 
             v_x = self.trans(v_x, dx)
@@ -217,12 +217,16 @@ class GridCell(nn.Module):
             vu = v_x_trans * u  # [N, H, W, C]
             heatmap = vu.sum(dim=-1)
             heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (N, 1600)
-            y_hat = heatmap_reshape
+            y_hat = heatmap_reshape # actual "place cell" activity over the grid (linear readout of grid cells)
 
-            loss_trans_i = torch.mean(torch.sum((y - y_hat) ** 2, dim=1))
+            loss_trans_i = torch.mean(torch.sum((y - y_hat) ** 2, dim=1)) 
             loss_trans += loss_trans_i
+            # TODO: MODIFY THIS TO INCLUDE SALIENCY KERNEL
 
         return loss_trans * config.w_trans
+    
+    def _saliency_kernel(self, traj):
+        raise NotImplementedError
 
     def _loss_trans_lstm(self, traj):
         config = self.config
