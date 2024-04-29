@@ -22,7 +22,7 @@ from ray.tune.search.hyperopt import HyperOptSearch
 import neurometry.curvature.train as train
 import neurometry.curvature.viz as viz
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+
 
 import neurometry.curvature.datasets.utils as utils  # noqa: E402
 import neurometry.curvature.default_config as default_config  # noqa: E402
@@ -30,6 +30,8 @@ import neurometry.curvature.evaluate as evaluate  # noqa: E402
 import neurometry.curvature.models.klein_bottle_vae as klein_bottle_vae  # noqa: E402
 import neurometry.curvature.models.neural_vae as neural_vae  # noqa: E402
 import neurometry.curvature.models.toroidal_vae as toroidal_vae  # noqa: E402
+
+#os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")

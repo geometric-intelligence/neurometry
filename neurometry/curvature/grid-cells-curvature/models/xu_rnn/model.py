@@ -40,7 +40,7 @@ class GridCell(nn.Module):
         loss_kernel = self._loss_kernel(**data["kernel"])
 
         if config.trans_type == "nonlinear_simple":
-            loss_trans = self._loss_trans_rnn(**data["trans_rnn"])
+            loss_trans = self._loss_trans_rnn(**data["trans_rnn"], step=step)
         elif config.trans_type == "lstm":
             loss_trans = self._loss_trans_lstm(**data["trans_rnn"])
 
@@ -182,7 +182,7 @@ class GridCell(nn.Module):
 
         return loss_kernel * config.w_kernel
 
-    def _loss_trans_rnn(self, traj):
+    def _loss_trans_rnn(self, traj, step):
         config = self.config
         if config.w_trans == 0:
             return torch.zeros([]).to(x.get_device())
@@ -194,8 +194,8 @@ class GridCell(nn.Module):
         x2 = torch.arange(0, config.num_grid, 1).repeat(config.num_grid)
         x1 = torch.unsqueeze(x1, 1)
         x2 = torch.unsqueeze(x2, 1)
-        x_pc = torch.cat((x1, x2), axis=1) / config.num_grid
-        x_pc = x_pc[None, :].cuda(traj.device)  # (1, 1600, 2)
+        x_grid = torch.cat((x1, x2), axis=1) / config.num_grid
+        x_pc = x_grid[None, :].cuda(traj.device)  # (1, 1600, 2)
 
         loss_trans = torch.zeros([]).to(traj.get_device())
 
@@ -215,18 +215,26 @@ class GridCell(nn.Module):
             v_x_trans = v_x_trans[:, None, None, :]
             u = self.decoder.u.permute((1, 2, 0))[None, ...]
             vu = v_x_trans * u  # [N, H, W, C]
-            heatmap = vu.sum(dim=-1)
+            heatmap = vu.sum(dim=-1) # [N, H, W]
             heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (N, 1600)
             y_hat = heatmap_reshape # actual "place cell" activity over the grid (linear readout of grid cells)
 
-            loss_trans_i = torch.mean(torch.sum((y - y_hat) ** 2, dim=1)) 
+            saliency_kernel = self._saliency_kernel(x_grid)
+            if step < config.reward_step:
+                loss_trans_i = torch.mean(torch.sum((y - y_hat) ** 2, dim=1))
+            else:
+                loss_trans_i = torch.mean(saliency_kernel*torch.sum((y - y_hat) ** 2, dim=1)) # shape (N, )
             loss_trans += loss_trans_i
-            # TODO: MODIFY THIS TO INCLUDE SALIENCY KERNEL
 
         return loss_trans * config.w_trans
     
-    def _saliency_kernel(self, traj):
-        raise NotImplementedError
+    def _saliency_kernel(self, x_grid):
+        config = self.config
+        s_0 = config.s_0
+        x_star = config.x_star
+        sigma_star = config.sigma_star
+        s_x = s_0*torch.exp(-torch.sum((x_grid - x_star)**2, dim=1)/(2*sigma_star**2))/np.sqrt(2*np.pi*sigma_star**2)
+        return 1 + s_x
 
     def _loss_trans_lstm(self, traj):
         config = self.config

@@ -12,8 +12,8 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
     activations = []
     rate_maps = []
     state_points = []
-    positions = []
-    g_s = []
+    # positions = []
+    # g_s = []
 
     activations_dir = os.path.join(file_path, "activations")
 
@@ -24,23 +24,21 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
         rate_map_epoch_path = os.path.join(
             activations_dir, f"rate_map_{version}_agent_epoch_{epoch}.npy"
         )
-        positions_epoch_path = os.path.join(
-            activations_dir, f"positions_{version}_agent_epoch_{epoch}.npy"
-        )
-        gs_epoch_path = os.path.join(
-            activations_dir, f"g_{version}_agent_epoch_{epoch}.npy"
-        )
+        # positions_epoch_path = os.path.join(
+        #     activations_dir, f"positions_{version}_agent_epoch_{epoch}.npy"
+        # )
+        # gs_epoch_path = os.path.join(
+        #     activations_dir, f"g_{version}_agent_epoch_{epoch}.npy"
+        # )
 
         if (
             os.path.exists(activations_epoch_path)
             and os.path.exists(rate_map_epoch_path)
-            and os.path.exists(positions_epoch_path)
-            and os.path.exists(gs_epoch_path)
         ):
             activations.append(np.load(activations_epoch_path))
             rate_maps.append(np.load(rate_map_epoch_path))
-            positions.append(np.load(positions_epoch_path))
-            g_s.append(np.load(gs_epoch_path))
+            #positions.append(np.load(positions_epoch_path))
+            #g_s.append(np.load(gs_epoch_path))
             if verbose:
                 print(f"Epoch {epoch} found.")
         else:
@@ -57,8 +55,8 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
                 ) = single_agent_activity.main(options, file_path, epoch=epoch)
                 activations.append(activations_single_agent)
                 rate_maps.append(rate_map_single_agent)
-                positions.append(positions_single_agent)
-                g_s.append(g_single_agent)
+                #positions.append(positions_single_agent)
+                #g_s.append(g_single_agent)
             elif version == "dual":
                 (
                     activations_dual_agent,
@@ -68,14 +66,14 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
                 ) = dual_agent_activity.main(options, file_path, epoch=epoch)
                 activations.append(activations_dual_agent)
                 rate_maps.append(rate_map_dual_agent)
-                positions.append(positions_dual_agent)
-                g_s.append(g_dual_agent)
+                #positions.append(positions_dual_agent)
+                #g_s.append(g_dual_agent)
 
             if save:
                 np.save(activations_epoch_path, activations[-1])
                 np.save(rate_map_epoch_path, rate_maps[-1])
-                np.save(positions_epoch_path, positions[-1])
-                np.save(gs_epoch_path, g_s[-1])
+                #np.save(positions_epoch_path, positions[-1])
+                #np.save(gs_epoch_path, g_s[-1])
 
         state_points_epoch = activations[-1].reshape(activations[-1].shape[0], -1)
         state_points.append(state_points_epoch)
@@ -91,9 +89,9 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
         print(
             f"rate_maps has shape {rate_maps[0].shape}. There are {rate_maps[0].shape[1]} data points averaged over {activations[0].shape[3]} trajectories in the {rate_maps[0].shape[0]}-dimensional state space."
         )
-        print(f"positions has shape {positions[0].shape}.")
+        #print(f"positions has shape {positions[0].shape}.")
 
-    return activations, rate_maps, state_points, positions, g_s
+    return activations, rate_maps, state_points#, positions, g_s
 
 
 # def plot_rate_map(indices, num_plots, activations, title):

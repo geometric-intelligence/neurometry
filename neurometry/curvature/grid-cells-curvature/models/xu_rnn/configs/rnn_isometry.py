@@ -1,4 +1,5 @@
 import ml_collections
+import torch
 
 
 def d(**kwargs):
@@ -41,7 +42,7 @@ def get_config():
         rnn_step=10,
         num_grid=40,
         num_neurons=1800,
-        block_size=6,#12
+        block_size=12,
         sigma=0.07,
         w_kernel=1.05,
         w_trans=0.1,
@@ -49,6 +50,10 @@ def get_config():
         w_reg_u=0.2,
         reg_decay_until=15000,
         adaptive_dr=True,
+        s_0 = 0.2,
+        x_star = torch.tensor([0.5, 0.5])
+        sigma_star = 0.1,
+        reward_step = 20000,
     )
 
     # path integration
