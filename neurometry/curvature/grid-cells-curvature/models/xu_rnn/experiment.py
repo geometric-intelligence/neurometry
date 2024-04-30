@@ -16,6 +16,7 @@ from absl import logging
 from clu import metric_writers, periodic_actions
 from scores import GridScorer
 from source import *
+tf.config.set_visible_devices([], 'GPU')
 
 
 class Experiment:

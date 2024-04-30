@@ -21,6 +21,10 @@ class GridCellConfig:
     w_isometry: float
     w_reg_u: float
     adaptive_dr: bool
+    s_0: float
+    x_star: torch.Tensor
+    sigma_star: float
+    reward_step: int
 
 
 class GridCell(nn.Module):
@@ -219,11 +223,13 @@ class GridCell(nn.Module):
             heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (N, 1600)
             y_hat = heatmap_reshape # actual "place cell" activity over the grid (linear readout of grid cells)
 
-            saliency_kernel = self._saliency_kernel(x_grid)
+            saliency_kernel = self._saliency_kernel(x_grid).unsqueeze(0).to(traj.device)  # (1, 1600)
             if step < config.reward_step:
-                loss_trans_i = torch.mean(torch.sum((y - y_hat) ** 2, dim=1))
+                L_error = (y - y_hat) ** 2
             else:
-                loss_trans_i = torch.mean(saliency_kernel*torch.sum((y - y_hat) ** 2, dim=1)) # shape (N, )
+                L_error = saliency_kernel * (y - y_hat) ** 2
+            
+            loss_trans_i = torch.mean(torch.sum(L_error, dim=1))
             loss_trans += loss_trans_i
 
         return loss_trans * config.w_trans
@@ -234,7 +240,8 @@ class GridCell(nn.Module):
         x_star = config.x_star
         sigma_star = config.sigma_star
         s_x = s_0*torch.exp(-torch.sum((x_grid - x_star)**2, dim=1)/(2*sigma_star**2))/np.sqrt(2*np.pi*sigma_star**2)
-        return 1 + s_x
+        s_kernel = 1 + s_x
+        return s_kernel
 
     def _loss_trans_lstm(self, traj):
         config = self.config
