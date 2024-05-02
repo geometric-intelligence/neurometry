@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "neurometry"
 version = "0.0.1"
-authors = ["GI Authors <facosta@ucsb.edu>"]
+authors = [
+    {name = "GI Authors", email = "facosta@ucsb.edu"}
+]
 readme = "README.md"
-homepage = "https://github.com/geometric-intelligence/neurometry"
-repository = "https://github.com/geometric-intelligence/neurometry"
-license = "LICENSE.txt"
+license = {file = "LICENSE.txt"}
 description = "Geometric Intelligence"
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -21,69 +21,70 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
 ]
+requires-python = ">= 3.10"
+dependencies = [
+    "adjustText",
+    "cython",
+    "fastparquet",
+    "gdown",
+    "jupyterlab",
+    "kneed",
+    "pip",
+    "pandas",
+    "plotly",
+    "pycortex",
+    "matplotlib",
+    "nibabel",
+    "numpy",
+    "scikit-image",
+    "scikit-learn",
+    "seaborn",
+    "torch",
+    "torchmetrics",
+    "torchinfo",
+    "opencv-python",
+    "scikit-dimension",
+    "umap-learn",
+    "ripser",
+    "absl-py",
+    "ml-collections",
+    "clu",
+    "labml-helpers",
+    "giotto-ph @ git+https://github.com/alibayeh/giotto-ph.git",
+    "pyflagser @ git+https://github.com/alibayeh/pyflagser.git",
+    "giotto-tda @ git+https://github.com/alibayeh/giotto-tda.git",
+    "geomstats @ git+https://github.com/geomstats/geomstats.git",
+    "torchlens @ git+https://github.com/johnmarktaylor91/torchlens.git",
+    "netrep @ git+https://github.com/ahwillia/netrep.git",
+    "jupyter",
+    "nbsphinx",
+    "nbsphinx_link",
+    "numpydoc",
+    "sphinx",
+    "sphinx_gallery",
+    "pydata-sphinx-theme",
+    "pre-commit",
+    "ruff",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "mypy",
+    "pandas-stubs",
+    "types-requests",
+    "wandb",
+    "mtalg",
+    "ray[tune]",
+    "mat73",
+    "hyperopt",
+    "pyarrow",
+    "jupyter-black"
+]
 
 
-[tool.poetry.dependencies]
-python = "^3.9"
-adjustText = "*"
-cython = "*"
-fastparquet = "*"
-gdown = "*"
-jupyterlab = "*"
-kneed = "*"
-pip = "*"
-pandas = "*"
-plotly = "*"
-pycortex = "*"
-matplotlib = "*"
-nibabel = "*"
-numpy = "*"
-scikit-image = "*"
-scikit-learn = "*"
-seaborn = "*"
-torch = "*"
-torchmetrics = "*"
-torchinfo = "*"
-opencv-python = "*"
-scikit-dimension = "*"
-umap-learn = "*"
-ripser = "*"
-absl-py = "*"
-ml-collections = "*"
-clu = "*"
-labml-helpers = "*"
-giotto-ph = {git = "https://github.com/alibayeh/giotto-ph.git"}
-pyflagser = {git = "https://github.com/alibayeh/pyflagser.git"}
-giotto-tda = {git = "https://github.com/alibayeh/giotto-tda.git"}
-geomstats = {git = "https://github.com/geomstats/geomstats.git"}
-torchlens = {git = "https://github.com/johnmarktaylor91/torchlens.git"}
-netrep = {git = "https://github.com/ahwillia/netrep.git"}
-jupyter = "*"
-nbsphinx = "*"
-nbsphinx_link = "*"
-numpydoc = "*"
-sphinx = "*"
-sphinx_gallery = "*"
-pydata-sphinx-theme = "*"
-pre-commit = "*"
-ruff = "*"
-pytest = "*"
-pytest-cov = "*"
-coverage = "*"
-mypy = "^1.6.0"
-pandas-stubs = "*"
-types-requests = "*"
-wandb = "*"
-mtalg = "*"
-ray = { version = "*", extras = ["tune"] }
-mat73 = "*"
-hyperopt = "0.2.5"
-pyarrow = "*"
-jupyter-black = "*"
 
-
-[tool.poetry.extras]
-gpu = ["cupy-cuda11x"]
+[project.urls]
+homepage = "https://github.com/geometric-intelligence/neurometry"
+repository = "https://github.com/geometric-intelligence/neurometry"
 
 
 [tool.ruff]
