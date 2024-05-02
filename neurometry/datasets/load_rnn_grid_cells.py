@@ -145,10 +145,8 @@ def plot_rate_map(indices, num_plots, activations, title, seed=None):
                     gc = np.mean(activations[idxs[i * cols + j]], axis=2)
                 else:
                     gc = activations[idxs[i * cols + j]]
-                if axes.ndim > 1:  # Check if axes is a 2D array
-                    ax = axes[i, j]
-                else:  # If axes is flattened (e.g., only one row of subplots)
-                    ax = axes[i * cols + j]
+
+                ax = axes[i, j] if axes.ndim > 1 else axes[i * cols + j]
                 ax.imshow(gc)
                 ax.set_title(f"grid cell id: {idxs[i * cols + j]}", fontsize=10)
                 ax.axis("off")

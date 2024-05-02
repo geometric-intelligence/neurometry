@@ -22,7 +22,7 @@ def main(argv):
     del argv
     config = FLAGS.config
 
-    np.random.seed(0)
+    rng = np.random.default_rng(0)
 
     # config workdir
     if FLAGS.mode == "train":
@@ -39,7 +39,7 @@ def main(argv):
     device = utils.get_device(config.gpu)
 
     if FLAGS.mode == "train":  # training
-        exp = experiment.Experiment(config, device)
+        exp = experiment.Experiment(rng, config, device)
         exp.train_and_evaluate(workdir)
 
 

@@ -6,7 +6,7 @@ import numpy as np
 
 class TrainDataset:
     def __init__(
-        self, config: ml_collections.ConfigDict, model_config: ml_collections.ConfigDict
+        self, rng, config: ml_collections.ConfigDict, model_config: ml_collections.ConfigDict
     ):
         self.config = config
         self.num_grid = model_config.num_grid
@@ -18,7 +18,7 @@ class TrainDataset:
         self.dx_list = self._generate_dx_list(config.max_dr_trans)
         # self.dx_list = self._generate_dx_list_continous(config.max_dr_trans)
         self.scale_vector = np.zeros(self.num_blocks) + config.max_dr_isometry
-        self.rng = np.random.default_rng()
+        self.rng = rng
 
     def __iter__(self):
         while True:
@@ -115,7 +115,6 @@ class TrainDataset:
     def _gen_data_iso_numerical_adaptive(self):
         batch_size = self.config.batch_size  # // 5
         num_blocks = self.num_blocks
-        config = self.config
 
         theta = (
          self.rng.random(size=(batch_size, num_blocks, 2)) * 2 * np.pi
@@ -150,39 +149,33 @@ class TrainDataset:
                     if i > 0 and j > 0:
                         dx_list.append(np.array([-i, -j]))
         dx_list = np.stack(dx_list)
-        dx_list = dx_list.astype(np.float32)
+        return dx_list.astype(np.float32)
 
-        return dx_list
 
     def _generate_dx_list_continous(self, max_dr):
-        dx_list = []
         batch_size = self.config.batch_size
 
         dr = np.sqrt(self.rng.random(size=(batch_size,))) * max_dr
         self.rng.shuffle(dr)
         theta = self.rng.random(size=(batch_size,)) * 2 * np.pi
 
-        dx = _dr_theta_to_dx(dr, theta)
-
-        return dx
+        return _dr_theta_to_dx(dr, theta)
 
 
 def _dr_theta_to_dx(dr, theta):
     dx_x = dr * np.cos(theta)
     dx_y = dr * np.sin(theta)
-    dx = np.stack([dx_x, dx_y], axis=-1)
-
-    return dx
+    return np.stack([dx_x, dx_y], axis=-1)
 
 
 class EvalDataset:
-    def __init__(self, config: ml_collections.ConfigDict, max_dr, num_grid):
+    def __init__(self, rng, config: ml_collections.ConfigDict, max_dr, num_grid):
         self.config = config
         self.num_grid = num_grid
         # for evaluation, we sample trajectories where the positions
         # are all integers.
         self.dx_list = self._generate_dx_list(max_dr)
-        self.rng = np.random.default_rng()
+        self.rng = rng
 
     def __iter__(self):
         while True:
@@ -266,6 +259,4 @@ class EvalDataset:
                     if i > 0 and j > 0:
                         dx_list.append(np.array([-i, -j]))
         dx_list = np.stack(dx_list)
-        dx_list = dx_list.astype(np.float32)
-
-        return dx_list
+        return dx_list.astype(np.float32)

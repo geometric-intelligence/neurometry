@@ -105,7 +105,7 @@ def compute_band_scores(box_width, res, rate_map_dual_agent, scorer):
     return band_scores_dual_agent
 
 
-def compute_all_scores(options, res, rate_map_dual_agent):
+def compute_all_scores(options, file_path, res, rate_map_dual_agent):
     starts = [0.2] * 10
     ends = np.linspace(0.4, 1.0, num=10)
     box_width = options.box_width
@@ -121,14 +121,17 @@ def compute_all_scores(options, res, rate_map_dual_agent):
         box_width, res, rate_map_dual_agent, scorer
     )
 
-    scores_dir = parent_dir + model_folder + model_parameters + "scores/"
-    np.save(scores_dir + f"score_60_dual_agent_epoch_{epoch}.npy", score_60_dual_agent)
+    scores_dir = os.path.join(file_path, "scores")
+    np.save(
+        scores_dir + f"score_60_dual_agent_epoch_{epoch}.npy", score_60_dual_agent
+    )
     np.save(
         scores_dir + f"border_scores_dual_agent_epoch_{epoch}.npy",
         border_scores_dual_agent,
     )
     np.save(
-        scores_dir + f"band_scores_dual_agent_epoch_{epoch}.npy", band_scores_dual_agent
+        scores_dir + f"band_scores_dual_agent_epoch_{epoch}.npy",
+        band_scores_dual_agent,
     )
 
     return score_60_dual_agent, border_scores_dual_agent, band_scores_dual_agent

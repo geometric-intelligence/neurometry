@@ -7,6 +7,8 @@ name = "neurometry"
 version = "0.0.1"
 authors = ["GI Authors <facosta@ucsb.edu>"]
 readme = "README.md"
+homepage = "https://github.com/geometric-intelligence/neurometry"
+repository = "https://github.com/geometric-intelligence/neurometry"
 license = "LICENSE.txt"
 description = "Geometric Intelligence"
 classifiers = [
@@ -83,9 +85,6 @@ jupyter-black = "*"
 [tool.poetry.extras]
 gpu = ["cupy-cuda11x"]
 
-[project.urls]
-homepage="https://github.com/geometric-intelligence/neurometry"
-repository="https://github.com/geometric-intelligence/neurometry"
 
 [tool.ruff]
 target-version = "py311"

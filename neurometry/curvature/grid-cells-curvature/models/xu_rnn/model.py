@@ -84,7 +84,7 @@ class GridCell(nn.Module):
         v_t = {"vanilla": v_start, "reencode": v_start}
         x_t = {"vanilla": [x_start], "reencode": [x_start]}
         heatmaps = []
-        heatmaps_modules = []
+        #heatmaps_modules = []
 
         for t in range(T + 1):
             _x_t_vanilla, _heatmaps, _heatmaps_modules = self.decoder.decode(
@@ -131,7 +131,7 @@ class GridCell(nn.Module):
         v_t = {"vanilla": v_start, "reencode": v_start}
         x_t = {"vanilla": [x_start, x_start], "reencode": [x_start]}
         heatmaps = []
-        heatmaps_modules = []
+        #heatmaps_modules = []
 
         # without re-encoding
         v_x = self.trans(v_start, dx_traj)  # v_x: [N, C], dx: [N, T, 2]
@@ -189,9 +189,8 @@ class GridCell(nn.Module):
     def _loss_trans_rnn(self, traj, step):
         config = self.config
         if config.w_trans == 0:
-            return torch.zeros([]).to(x.get_device())
+            return torch.zeros([]).to(traj.get_device())
 
-        softmax = torch.nn.Softmax(dim=-1)
 
         # place cells, x_pc: (0, 1)
         x1 = torch.arange(0, config.num_grid, 1).repeat_interleave(config.num_grid)
@@ -240,15 +239,12 @@ class GridCell(nn.Module):
         x_star = config.x_star
         sigma_star = config.sigma_star
         s_x = s_0*torch.exp(-torch.sum((x_grid - x_star)**2, dim=1)/(2*sigma_star**2))/np.sqrt(2*np.pi*sigma_star**2)
-        s_kernel = 1 + s_x
-        return s_kernel
+        return 1 + s_x
 
     def _loss_trans_lstm(self, traj):
         config = self.config
         if config.w_trans == 0:
-            return torch.zeros([]).to(x.get_device())
-
-        softmax = torch.nn.Softmax(dim=-1)
+            return torch.zeros([]).to(traj.get_device())
 
         # place cells, x_pc: (0, 1)
         x1 = torch.arange(0, config.num_grid, 1).repeat_interleave(config.num_grid)
@@ -387,12 +383,10 @@ class Encoder(nn.Module):
         )  # [C, H, W]
 
     def forward(self, x):
-        v_x = get_grid_code(self.v, x, self.num_grid)
-        return v_x
+        return get_grid_code(self.v, x, self.num_grid)
 
     def get_v_x_adpative(self, x):
-        v_x = get_grid_code_block(self.v, x, self.num_grid, self.config.block_size)
-        return v_x
+        return get_grid_code_block(self.v, x, self.num_grid, self.config.block_size)
 
 
 class Decoder(nn.Module):
@@ -406,8 +400,7 @@ class Decoder(nn.Module):
         )
 
     def forward(self, x_prime):
-        u_x_prime = get_grid_code(self.u, x_prime, self.config.num_grid)
-        return u_x_prime
+        return get_grid_code(self.u, x_prime, self.config.num_grid)
 
     def decode(self, v, quantile=0.995):  # v : [N, C], self.u: [C, H, W]
         config = self.config
@@ -457,16 +450,13 @@ class TransNonlinear(nn.Module):
         self.nonlinear = nn.ReLU()
 
     def forward(self, v, dx):  # v: [N, C], dx: [N, 2]
-        num_blocks = self.config.num_neurons // self.config.block_size
 
         A = torch.block_diag(*self.A_modules)
         B = self.B_modules
 
-        v_x_plus_dx = self.nonlinear(
+        return self.nonlinear(
             torch.matmul(v, A) + torch.matmul(dx, B.transpose(0, 1)) + self.b
         )
-
-        return v_x_plus_dx
 
     def _dx_to_theta_id_dr(self, dx):
         theta = torch.atan2(dx[:, 1], dx[:, 0]) % (2 * torch.pi)
@@ -507,10 +497,7 @@ class TransNonlinear_LSTM(nn.Module):
                 dx, (h_0.contiguous(), c_0.contiguous())
             )  # output: [N, T, block_size], hn: [1, N, block_size]
 
-            if i == 0:
-                v_output = output
-            else:
-                v_output = torch.cat((v_output, output), 2)
+            v_output = output if i == 0 else torch.cat((v_output, output), 2)
 
         return v_output  # v_output: [N, T, C]
 
@@ -543,9 +530,7 @@ def get_grid_code_block(codebook, x, num_grid, block_size):
         grid=x_normalized.transpose(0, 1).unsqueeze(1),  # [num_block, 1, N, 2]
         align_corners=False,
     )  # [num_block, block_size, 1, N]
-    v_x = v_x.squeeze().permute(2, 0, 1)  # [N, num_block, block_size]
-
-    return v_x
+    return v_x.squeeze().permute(2, 0, 1)  # [N, num_block, block_size]
 
 
 def get_grid_code_int(codebook, x, num_grid):
@@ -554,12 +539,10 @@ def get_grid_code_int(codebook, x, num_grid):
     x_normalized = x.long()
 
     # query the 2D codebook, no interpolation
-    v_x = torch.vstack(
+    return torch.vstack(
         [
             codebook[:, i, j]
             for i, j in zip(x_normalized[:, 0], x_normalized[:, 1], strict=False)
         ]
     )
     # v_x = v_x.squeeze().transpose(0, 1)  # [N, C]
-
-    return v_x

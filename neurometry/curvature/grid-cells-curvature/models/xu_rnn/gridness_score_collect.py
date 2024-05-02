@@ -7,7 +7,7 @@ import torch
 import utils
 from matplotlib import pyplot as plt
 from scores import GridScorer
-from source import *
+from source import gridnessScore
 
 parser = argparse.ArgumentParser()
 # 1-step RNN
@@ -95,16 +95,16 @@ for i in range(len(weights)):
         rateMap=rate_map, arenaDiam=1, h=1.0 / (num_interval - 1), corr_cutRmin=0.3
     )
 
-    if (
-        (i > 64 and i < 74)
-        or (i > 74 and i < 77)
-        or (i > 77 and i < 89)
-        or (i > 89 and i < 92)
-        or (i > 92 and i < 96)
-    ):
-        peaks = peaks0
-    else:
-        peaks0 = peaks
+    # if (
+    #     (i > 64 and i < 74)
+    #     or (i > 74 and i < 77)
+    #     or (i > 77 and i < 89)
+    #     or (i > 89 and i < 92)
+    #     or (i > 92 and i < 96)
+    # ):
+    #     peaks = peaks0
+    # else:
+    #     peaks0 = peaks
 
     score_60, score_90, max_60_mask, max_90_mask, sac = scorer.get_scores(weights[i])
     sac_list.append(sac)
