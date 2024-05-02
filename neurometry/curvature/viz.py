@@ -555,7 +555,7 @@ def plot_comparison_curvature_norms(
         ax.plot(angles, curvature_norms_learned, label="learned")
         ax.set_xlabel("angle", fontsize=40)
         ax.legend(prop={"size": 40}, loc="upper right")
-        ax.set_title("Error = " + "%.3f" % error, fontsize=30)
+        ax.set_title(f"Error = {error:.3f}", fontsize=30)
         plt.xticks(fontsize=24)
         plt.yticks(fontsize=24)
     elif config.dataset_name == "s2_synthetic":

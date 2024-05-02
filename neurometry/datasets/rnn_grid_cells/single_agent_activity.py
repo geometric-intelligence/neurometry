@@ -1,9 +1,10 @@
 # from neurometry.datasets.rnn_grid_cells.utils import generate_run_ID
 
+import os
+
 import numpy as np
 import torch
 from tqdm import tqdm
-import os
 
 from .config import parser
 from .model import RNN

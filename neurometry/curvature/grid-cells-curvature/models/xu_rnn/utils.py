@@ -48,50 +48,21 @@ def construct_block_diagonal_weights(
             name=name,
         )
         M = construct_antisym_matrix(M, block_size)
-    if diag:
-        M = block_diagonal(M)
-    else:
-        M = tf.transpose(M, [1, 0, 2, 3])
 
-    return M
+    return block_diagonal(M) if diag else tf.transpose(M, [1, 0, 2, 3])
 
 
 def construct_antisym_matrix(value, dim):
     assert value.shape.as_list()[-1] == dim * (dim + 1) / 2
     batch_shape = value.shape.as_list()[:-1]
     dense = tf.contrib.distributions.fill_triangular(value)
-    dense = tf.linalg.set_diag(dense, tf.zeros(batch_shape + [dim]))
+    dense = tf.linalg.set_diag(dense, tf.zeros([*batch_shape,dim]))
 
-    return dense - tf.transpose(
-        dense, [*range(len(batch_shape))] + [len(batch_shape) + 1, len(batch_shape)]
-    )
+    perm = [*range(len(batch_shape)), len(batch_shape) + 1, len(batch_shape)]
 
+    transposed = tf.transpose(dense, perm)
 
-def construct_antisym_matrix_original(value, dim):
-    assert value.shape.as_list()[-1] == dim * (dim - 1) / 2
-    batch_shape = value.shape.as_list()[:-1]
-    ones = tf.ones((dim, dim), dtype=tf.int64)  # size of the output matrix
-    mask_a = tf.matrix_band_part(ones, 0, -1)  # Upper triangular matrix of 0s and 1s
-    mask_b = tf.matrix_band_part(ones, 0, 0)  # Diagonal matrix of 0s and 1s
-    mask = tf.subtract(mask_a, mask_b)  # Mask of upper triangle above diagonal
-
-    zero = tf.constant(0, dtype=tf.int64)
-    non_zero = tf.not_equal(mask, zero)  # Conversion of mask to Boolean matrix
-    non_zero = tf.tile(
-        tf.reshape(non_zero, [1] * len(batch_shape) + non_zero._shape_as_list()),
-        batch_shape + [1] * len(non_zero._shape_as_list()),
-    )
-
-    indices = tf.where(non_zero)  # Extracting the indices of upper trainagle elements
-
-    out = tf.SparseTensor(
-        indices, tf.reshape(value, [-1]), dense_shape=batch_shape + [dim, dim]
-    )
-    dense = tf.sparse_tensor_to_dense(out)
-
-    return dense - tf.transpose(
-        dense, [*range(len(batch_shape))] + [len(batch_shape) + 1, len(batch_shape)]
-    )
+    return dense - transposed
 
 
 def block_diagonal(matrices):
@@ -111,7 +82,7 @@ def block_diagonal(matrices):
     blocked_cols = tf.Dimension(0)
     batch_shape = tf.TensorShape(None)
 
-    if type(matrices) is not list:
+    if not isinstance(matrices,list):
         matrices = tf.unstack(matrices)
     for matrix in matrices:
         full_matrix_shape = matrix.get_shape().with_rank_at_least(2)
@@ -170,7 +141,7 @@ def draw_heatmap(data, save_path, xlabels=None, ylabels=None):
     map = ax.imshow(
         data, interpolation="nearest", cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax
     )
-    cb = plt.colorbar(mappable=map, cax=None, ax=None, shrink=0.5)
+    plt.colorbar(mappable=map, cax=None, ax=None, shrink=0.5)
     plt.savefig(save_path)
     plt.close()
 
@@ -342,7 +313,6 @@ def draw_path_integral(place_len, place_seq, col=(255, 0, 0),target=None):
 
 
 def draw_path_to_target_gif(file_name, place_len, place_seq, target, col=(255, 0, 0)):
-    cmap = cm.get_cmap("rainbow", 1000)
     canvas = np.ones((place_len, place_len, 3), dtype="uint8") * 255
     cv2.circle(canvas, tuple(target), 2, (0, 0, 255), -1)
     cv2.circle(canvas, tuple(place_seq[0]), 2, col, -1)
@@ -408,9 +378,8 @@ def generate_vel_list(max_vel, min_vel=0.0, interval=1.0):
                 if i > 0 and j > 0:
                     vel_list.append(np.array([-i, -j]))
     vel_list = np.stack(vel_list)
-    vel_list = vel_list.astype(np.float32)
 
-    return vel_list
+    return vel_list.astype(np.float32)
 
 
 def draw_trajs(real_trajs, pred_trajs, area_size: int):
@@ -483,45 +452,44 @@ def _draw_real_pred_pairs(real, pred, area_size: int):
     ax.set_aspect(1)
 
 
-def draw_heatmap(weights):
-    # weights should a 4-D tensor: [M, N, H, W]
-    nrow, ncol = weights.shape[0], weights.shape[1]
-    fig = plt.figure(figsize=(ncol, nrow))
+# def draw_heatmap(weights):
+#     # weights should a 4-D tensor: [M, N, H, W]
+#     nrow, ncol = weights.shape[0], weights.shape[1]
+#     fig = plt.figure(figsize=(ncol, nrow))
 
-    for i in range(nrow):
-        for j in range(ncol):
-            plt.subplot(nrow, ncol, i * ncol + j + 1)
-            weight = weights[i, j]
-            vmin, vmax = weight.min() - 0.01, weight.max()
+#     for i in range(nrow):
+#         for j in range(ncol):
+#             plt.subplot(nrow, ncol, i * ncol + j + 1)
+#             weight = weights[i, j]
+#             vmin, vmax = weight.min() - 0.01, weight.max()
 
-            cmap = cm.get_cmap("rainbow", 1000)
-            cmap.set_under("w")
+#             cmap = cm.get_cmap("rainbow", 1000)
+#             cmap.set_under("w")
 
-            plt.imshow(
-                weight,
-                interpolation="nearest",
-                cmap=cmap,
-                aspect="auto",
-                vmin=vmin,
-                vmax=vmax,
-            )
-            plt.axis("off")
+#             plt.imshow(
+#                 weight,
+#                 interpolation="nearest",
+#                 cmap=cmap,
+#                 aspect="auto",
+#                 vmin=vmin,
+#                 vmax=vmax,
+#             )
+#             plt.axis("off")
 
-    fig.canvas.draw()
-    image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    image_from_plot = image_from_plot.reshape(
-        fig.canvas.get_width_height()[::-1] + (3,)
-    )
-    # plt.show()
-    plt.close(fig)
+#     fig.canvas.draw()
+#     image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+#     image_from_plot = image_from_plot.reshape(
+#         fig.canvas.get_width_height()[::-1] + (3,)
+#     )
+#     # plt.show()
+#     plt.close(fig)
 
-    return np.expand_dims(image_from_plot, axis=0)
+#     return np.expand_dims(image_from_plot, axis=0)
 
 
 def average_appended_metrics(metrics):
     ks = metrics[0].keys()
-    result = {k: np.mean([metrics[i][k] for i in range(len(metrics))]) for k in ks}
-    return result
+    return {k: np.mean([metrics[i][k] for i in range(len(metrics))]) for k in ks}
 
 
 def dict_to_numpy(data):
@@ -583,8 +551,7 @@ def create_custom_writer(
     if process_index > 0:
         if asynchronous:
             return AsyncWriter(CustomLoggingWriter())
-        else:
-            return CustomLoggingWriter()
+        return CustomLoggingWriter()
     writers = [CustomLoggingWriter(), SummaryWriter(logdir)]
     if asynchronous:
         return AsyncMultiWriter(writers)
@@ -597,7 +564,7 @@ class CustomLoggingWriter(LoggingWriter):
     ):
         keys = sorted(scalars.keys())
         if step == 1:
-            logging.info("%s", ", ".join(["Step"] + keys))
+            logging.info("%s", ", ".join(["Step",* keys]))
         values = [scalars[key] for key in keys]
         # Convert jax DeviceArrays and numpy ndarrays to python native type
         values = [np.array(v).item() for v in values]

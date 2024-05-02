@@ -15,13 +15,15 @@ import wandb
 from absl import logging
 from clu import metric_writers, periodic_actions
 from scores import GridScorer
-from source import *
+
+tf.config.set_visible_devices([], "GPU")
 
 
 class Experiment:
-    def __init__(self, config: ml_collections.ConfigDict, device):
+    def __init__(self, rng, config: ml_collections.ConfigDict, device):
         self.config = config
         self.device = device
+        self.rng = rng
 
         wandb.init(
             project="grid-cell-rnns", entity="bioshape-lab", config=config.to_dict()
@@ -34,10 +36,10 @@ class Experiment:
 
         # initialize dataset
         logging.info("==== initialize dataset ====")
-        self.train_dataset = input_pipeline.TrainDataset(config.data, self.model_config)
+        self.train_dataset = input_pipeline.TrainDataset(self.rng, config.data, self.model_config)
         self.train_iter = iter(self.train_dataset)
         eval_dataset = input_pipeline.EvalDataset(
-            config.integration, config.data.max_dr_trans, config.model.num_grid
+            self.rng, config.integration, config.data.max_dr_trans, config.model.num_grid
         )
         self.eval_iter = iter(eval_dataset)
 
@@ -157,17 +159,20 @@ class Experiment:
                     # visualize v, u and heatmaps.
                     with torch.no_grad():
 
-                        def visualize(activations, name):
+                        def visualize(activations):
                             activations = activations.data.cpu().detach().numpy()
                             activations = activations.reshape(
                                 (-1, block_size, num_grid, num_grid)
                             )[:10, :10]
-                            images = utils.draw_heatmap(activations)
-                            writer.write_images(step, {name: images})
-                            wandb.log({name: wandb.Image(images)}, step=step)
+                            return utils.draw_heatmap(activations)
 
-                        visualize(self.model.encoder.v, "v")
-                        visualize(self.model.decoder.u, "u")
+                        images_v = visualize(self.model.encoder.v, "v")
+                        images_u = visualize(self.model.decoder.u, "u")
+
+                        writer.write_images(step, {"v": images_v})
+                        wandb.log({"v": wandb.Image(images_v)}, step=step)
+                        writer.write_images(step, {"u": images_u})
+                        wandb.log({"u": wandb.Image(images_u)}, step=step)
 
                         x_eval = torch.rand((3, 2)) * num_grid - 0.5
                         x_eval = x_eval.to(self.device)
@@ -324,7 +329,7 @@ class Experiment:
                     self._save_checkpoint(step, ckpt_dir)
 
     def grid_scale(self):
-        num_interval = self.model_config.num_grid
+        #num_interval = self.model_config.num_grid
         block_size = self.model_config.block_size
         num_block = self.model_config.num_neurons // self.model_config.block_size
 
@@ -333,14 +338,14 @@ class Experiment:
 
         masks_parameters = zip(starts, ends.tolist(), strict=False)
 
-        ncol, nrow = block_size, num_block
+        #ncol, nrow = block_size, num_block
         weights = self.model.encoder.v.data.cpu().detach().numpy()
 
         scorer = GridScorer(40, ((0, 1), (0, 1)), masks_parameters)
 
         score_list = np.zeros(shape=[len(weights)], dtype=np.float32)
         scale_list = np.zeros(shape=[len(weights)], dtype=np.float32)
-        orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
+        #orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
         sac_list = []
         # plt.figure(figsize=(int(ncol * 1.6), int(nrow * 1.6)))
 
@@ -351,7 +356,6 @@ class Experiment:
       score, autocorr_ori, autocorr, scale, orientation, peaks = \
           gridnessScore(rateMap=rate_map, arenaDiam=1, h=1.0 /
                         (num_interval-1), corr_cutRmin=0.3)
-                        
       if (i > 64 and i < 74) or (i > 74 and i < 77) or (i > 77 and i < 89) or (i > 89 and i < 92) or (i > 92 and i < 96):
         peaks = peaks0
       else:

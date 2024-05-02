@@ -1,20 +1,19 @@
 import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import skdim
-import matplotlib.pyplot as plt  # noqa: E402
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.multioutput import MultiOutputRegressor
-import neurometry.datasets.synthetic as synthetic  # noqa: E402
+
+import neurometry.datasets.synthetic as synthetic
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs  # noqa: E402
-
-
-
 
 
 def skdim_dimension_estimation(
@@ -146,7 +145,9 @@ def evaluate_pls_with_different_K(X, Y, K_values):
         # Project both training and test data using the PLS model
         X_train_pls = pls.transform(X_train)
         X_test_pls = pls.transform(X_test)
-        projected_X.append(pls.inverse_transform(X_test_pls))
+        X_pls = pls.transform(X)
+        #projected_X.append(pls.inverse_transform(X_test_pls))
+        projected_X.append(X_pls)
 
         # Fit the Multi-Output Regression model on the reduced data
         multi_output_reg = MultiOutputRegressor(LinearRegression()).fit(
@@ -191,7 +192,9 @@ def evaluate_PCA_with_different_K(X, Y, K_values):
         # Project both training and test data using the PCA model
         X_train_pca = pca.transform(X_train)
         X_test_pca = pca.transform(X_test)
-        projected_X.append(pca.inverse_transform(X_test_pca))
+        X_pca = pca.transform(X)
+        #projected_X.append(pca.inverse_transform(X_test_pca))
+        projected_X.append(X_pca)
 
         # Fit the Multi-Output Regression model on the reduced data
         multi_output_reg = MultiOutputRegressor(LinearRegression()).fit(

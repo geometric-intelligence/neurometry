@@ -25,8 +25,7 @@ def compute_persistence_diagrams(
 
 def compute_pairwise_distances(diagrams, metric="bottleneck"):
     PD = PairwiseDistance(metric=metric)
-    distances = PD.fit_transform(diagrams)
-    return distances
+    return PD.fit_transform(diagrams)
 
 
 def compare_representation_to_references(

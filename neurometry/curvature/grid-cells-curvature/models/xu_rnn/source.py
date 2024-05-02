@@ -30,39 +30,39 @@ from scipy.signal import correlate2d
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 
-def spatialRateMap(spikeTimes, positions, arena, sigma):
-    """Compute spatial rate map for spikes of a given neuron.
+# def spatialRateMap(spikeTimes, positions, arena, sigma):
+#     """Compute spatial rate map for spikes of a given neuron.
 
-    Preprocess neuron spike times into a smoothed spatial rate map, given arena
-    parameters.  Both spike times and positional data must be aligned in time!
-    The rate map will be smoothed by a gaussian kernel.
+#     Preprocess neuron spike times into a smoothed spatial rate map, given arena
+#     parameters.  Both spike times and positional data must be aligned in time!
+#     The rate map will be smoothed by a gaussian kernel.
 
-    Parameters
-    ----------
-    spikeTimes : np.ndarray
-        Spike times for a given neuron.
-    positions : gridcells.core.Position2D
-        Positional data for these spikes. The timing must be aligned with
-        ``spikeTimes``
-    arena : gridcells.core.Arena
-        The specification of the arena in which movement was carried out.
-    sigma : float
-        Standard deviation of the Gaussian smoothing kernel.
+#     Parameters
+#     ----------
+#     spikeTimes : np.ndarray
+#         Spike times for a given neuron.
+#     positions : gridcells.core.Position2D
+#         Positional data for these spikes. The timing must be aligned with
+#         ``spikeTimes``
+#     arena : gridcells.core.Arena
+#         The specification of the arena in which movement was carried out.
+#     sigma : float
+#         Standard deviation of the Gaussian smoothing kernel.
 
-    Returns
-    -------
-    rateMap : np.ma.MaskedArray
-        The 2D spatial firing rate map. The shape will be determined by the
-        arena type.
-    """
-    spikeTimes = np.asarray(spikeTimes, dtype=np.double)
-    edges = arena.getDiscretisation()
-    rateMap = _fields.spatialRateMap(
-        spikeTimes, positions.x, positions.y, positions.dt, edges.x, edges.y, sigma
-    )
-    # Mask values which are outside the arena
-    rateMap = np.ma.MaskedArray(rateMap, mask=arena.getMask(), copy=False)
-    return rateMap.T
+#     Returns
+#     -------
+#     rateMap : np.ma.MaskedArray
+#         The 2D spatial firing rate map. The shape will be determined by the
+#         arena type.
+#     """
+#     spikeTimes = np.asarray(spikeTimes, dtype=np.double)
+#     edges = arena.getDiscretisation()
+#     rateMap = _fields.spatialRateMap(
+#         spikeTimes, positions.x, positions.y, positions.dt, edges.x, edges.y, sigma
+#     )
+#     # Mask values which are outside the arena
+#     rateMap = np.ma.MaskedArray(rateMap, mask=arena.getMask(), copy=False)
+#     return rateMap.T
 
 
 def spatialAutoCorrelation(rateMap, arenaDiam, h):

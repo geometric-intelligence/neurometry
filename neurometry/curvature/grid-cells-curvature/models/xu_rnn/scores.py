@@ -88,8 +88,7 @@ class GridScorer:
             return np.minimum(corr[60], corr[120]) - np.maximum(
                 corr[30], np.maximum(corr[90], corr[150])
             )
-        else:
-            return (corr[60] + corr[120]) / 2 - (corr[30] + corr[90] + corr[150]) / 3
+        return (corr[60] + corr[120]) / 2 - (corr[30] + corr[90] + corr[150]) / 3
 
     def grid_score_90(self, corr):
         return corr[90] - (corr[45] + corr[135]) / 2
@@ -144,8 +143,7 @@ class GridScorer:
         )
         x_coef = np.divide(covar, np.multiply(std_seq1, std_seq2))
         x_coef = np.real(x_coef)
-        x_coef = np.nan_to_num(x_coef)
-        return x_coef
+        return np.nan_to_num(x_coef)
 
     def rotated_sacs(self, sac, angles):
         return [
@@ -195,7 +193,7 @@ class GridScorer:
         if ax is None:
             ax = plt.gca()
         # Plot the ratemap
-        ax.imshow(ratemap, interpolation="none", *args, **kwargs)
+        ax.imshow(ratemap, *args, interpolation="none", **kwargs)
         # ax.pcolormesh(ratemap, *args, **kwargs)
         ax.axis("off")
         if title is not None:
@@ -216,7 +214,7 @@ class GridScorer:
             ax = plt.gca()
         # Plot the sac
         useful_sac = sac * self._plotting_sac_mask
-        ax.imshow(useful_sac, interpolation="none", *args, **kwargs)
+        ax.imshow(useful_sac, *args, interpolation="none",  **kwargs)
         # ax.pcolormesh(useful_sac, *args, **kwargs)
         # Plot a ring for the adequate mask
         if mask_params is not None:
