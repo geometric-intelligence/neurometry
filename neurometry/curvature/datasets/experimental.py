@@ -3,11 +3,12 @@
 import logging
 import os
 
-import neurometry.curvature.datasets.utils as utils
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation as R
+
+import neurometry.curvature.datasets.utils as utils
 
 WORK_DIR = os.getcwd()
 RAW_DIR = os.path.join(WORK_DIR, "data/raw")

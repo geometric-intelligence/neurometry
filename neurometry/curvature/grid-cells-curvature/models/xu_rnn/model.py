@@ -209,7 +209,7 @@ class GridCell(nn.Module):
                 (traj[:, i + 1, :][:, None, :] / config.num_grid - x_pc) ** 2, dim=-1
             )
 
-            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (N, 1600) -> place field at location given by traj[:, i + 1, :] 
+            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (N, 1600) -> place field at location given by traj[:, i + 1, :]
             dx = (traj[:, i + 1, :] - traj[:, i, :]) / config.num_grid
 
             v_x = self.trans(v_x, dx)
@@ -228,12 +228,12 @@ class GridCell(nn.Module):
                 L_error = (y - y_hat) ** 2
             else:
                 L_error = saliency_kernel * (y - y_hat) ** 2
-            
+
             loss_trans_i = torch.mean(torch.sum(L_error, dim=1))
             loss_trans += loss_trans_i
 
         return loss_trans * config.w_trans
-    
+
     def _saliency_kernel(self, x_grid):
         config = self.config
         s_0 = config.s_0

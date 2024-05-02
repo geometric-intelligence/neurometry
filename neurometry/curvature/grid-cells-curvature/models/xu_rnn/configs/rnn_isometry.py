@@ -10,7 +10,7 @@ def d(**kwargs):
 def get_config():
     """Get the hyperparameters for the model"""
     config = ml_collections.ConfigDict()
-    config.gpu = 7
+    config.gpu = 4
 
     # training config
     config.train = d(
@@ -50,10 +50,10 @@ def get_config():
         w_reg_u=0.2,
         reg_decay_until=15000,
         adaptive_dr=True,
-        s_0 = 0.2,
-        x_star = torch.tensor([0.5, 0.5]),
-        sigma_star = 0.1,
-        reward_step = 18000,
+        s_0 = 0.5,
+        x_star = torch.tensor([0.2, 0.5]),
+        sigma_star = 0.3,
+        reward_step = 11000,
     )
 
     # path integration
