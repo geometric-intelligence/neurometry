@@ -118,46 +118,46 @@ def block_diagonal(matrices):
     return blocked
 
 
-def draw_heatmap(data, save_path, xlabels=None, ylabels=None):
-    # data = np.clip(data, -0.05, 0.05)
-    cmap = cm.get_cmap("rainbow", 1000)
-    figure = plt.figure(facecolor="w")
-    ax = figure.add_subplot(1, 1, 1, position=[0.1, 0.15, 0.8, 0.8])
-    if xlabels is not None:
-        ax.set_xticks(range(len(xlabels)))
-        ax.set_xticklabels(xlabels)
-    if ylabels is not None:
-        ax.set_yticks(range(len(ylabels)))
-        ax.set_yticklabels(ylabels)
+# def draw_heatmap(data, save_path, xlabels=None, ylabels=None):
+#     # data = np.clip(data, -0.05, 0.05)
+#     cmap = cm.get_cmap("rainbow", 1000)
+#     figure = plt.figure(facecolor="w")
+#     ax = figure.add_subplot(1, 1, 1, position=[0.1, 0.15, 0.8, 0.8])
+#     if xlabels is not None:
+#         ax.set_xticks(range(len(xlabels)))
+#         ax.set_xticklabels(xlabels)
+#     if ylabels is not None:
+#         ax.set_yticks(range(len(ylabels)))
+#         ax.set_yticklabels(ylabels)
 
-    vmax = data[0][0]
-    vmin = data[0][0]
-    for i in data:
-        for j in i:
-            if j > vmax:
-                vmax = j
-            if j < vmin:
-                vmin = j
-    map = ax.imshow(
-        data, interpolation="nearest", cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax
-    )
-    plt.colorbar(mappable=map, cax=None, ax=None, shrink=0.5)
-    plt.savefig(save_path)
-    plt.close()
+#     vmax = data[0][0]
+#     vmin = data[0][0]
+#     for i in data:
+#         for j in i:
+#             if j > vmax:
+#                 vmax = j
+#             if j < vmin:
+#                 vmin = j
+#     map = ax.imshow(
+#         data, interpolation="nearest", cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax
+#     )
+#     plt.colorbar(mappable=map, cax=None, ax=None, shrink=0.5)
+#     plt.savefig(save_path)
+#     plt.close()
 
 
-def shape_mask(size, shape):
-    x, y = np.meshgrid(np.linspace(0, 1, size), np.linspace(0, 1, size))
-    if shape == "square":
-        mask = np.ones_like(x, dtype=bool)
-    elif shape == "circle":
-        mask = np.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2) <= 0.5
-    elif shape == "triangle":
-        mask = (y + 2 * x >= 1) * (-y + 2 * x <= 1)
-    else:
-        raise NotImplementedError
+# def shape_mask(size, shape):
+#     x, y = np.meshgrid(np.linspace(0, 1, size), np.linspace(0, 1, size))
+#     if shape == "square":
+#         mask = np.ones_like(x, dtype=bool)
+#     elif shape == "circle":
+#         mask = np.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2) <= 0.5
+#     elif shape == "triangle":
+#         mask = (y + 2 * x >= 1) * (-y + 2 * x <= 1)
+#     else:
+#         raise NotImplementedError
 
-    return mask
+#     return mask
 
 
 def draw_heatmap_2D(data, vmin=None, vmax=None, shape="square", cb=False):
@@ -452,39 +452,39 @@ def _draw_real_pred_pairs(real, pred, area_size: int):
     ax.set_aspect(1)
 
 
-# def draw_heatmap(weights):
-#     # weights should a 4-D tensor: [M, N, H, W]
-#     nrow, ncol = weights.shape[0], weights.shape[1]
-#     fig = plt.figure(figsize=(ncol, nrow))
+def draw_heatmap(weights):
+    # weights should a 4-D tensor: [M, N, H, W]
+    nrow, ncol = weights.shape[0], weights.shape[1]
+    fig = plt.figure(figsize=(ncol, nrow))
 
-#     for i in range(nrow):
-#         for j in range(ncol):
-#             plt.subplot(nrow, ncol, i * ncol + j + 1)
-#             weight = weights[i, j]
-#             vmin, vmax = weight.min() - 0.01, weight.max()
+    for i in range(nrow):
+        for j in range(ncol):
+            plt.subplot(nrow, ncol, i * ncol + j + 1)
+            weight = weights[i, j]
+            vmin, vmax = weight.min() - 0.01, weight.max()
 
-#             cmap = cm.get_cmap("rainbow", 1000)
-#             cmap.set_under("w")
+            cmap = cm.get_cmap("rainbow", 1000)
+            cmap.set_under("w")
 
-#             plt.imshow(
-#                 weight,
-#                 interpolation="nearest",
-#                 cmap=cmap,
-#                 aspect="auto",
-#                 vmin=vmin,
-#                 vmax=vmax,
-#             )
-#             plt.axis("off")
+            plt.imshow(
+                weight,
+                interpolation="nearest",
+                cmap=cmap,
+                aspect="auto",
+                vmin=vmin,
+                vmax=vmax,
+            )
+            plt.axis("off")
 
-#     fig.canvas.draw()
-#     image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-#     image_from_plot = image_from_plot.reshape(
-#         fig.canvas.get_width_height()[::-1] + (3,)
-#     )
-#     # plt.show()
-#     plt.close(fig)
+    fig.canvas.draw()
+    image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    image_from_plot = image_from_plot.reshape(
+        fig.canvas.get_width_height()[::-1] + (3,)
+    )
+    # plt.show()
+    plt.close(fig)
 
-#     return np.expand_dims(image_from_plot, axis=0)
+    return np.expand_dims(image_from_plot, axis=0)
 
 
 def average_appended_metrics(metrics):
