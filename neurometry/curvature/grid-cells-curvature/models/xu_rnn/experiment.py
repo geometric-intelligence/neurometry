@@ -58,6 +58,18 @@ class Experiment:
                 self.model.parameters(), lr=config.train.lr, momentum=0.9
             )
 
+        if config.train.load_pretrain:
+            logging.info("==== load pretrain model ====")
+            ckpt_model_path = config.train.pretrain_dir
+            logging.info(f"Loading pretrain model from {ckpt_model_path}")
+            ckpt = torch.load(ckpt_model_path, map_location=device)
+            self.model.load_state_dict(ckpt["state_dict"])
+            logging.info("==== load pretrained optimizer ====")
+            self.optimizer.load_state_dict(ckpt["optimizer"])
+            self.starting_step = ckpt["step"]
+        else:
+            self.starting_step = 1
+
     def train_and_evaluate(self, workdir):
         logging.info("==== Experiment.train_and_evaluate() ===")
 
@@ -81,7 +93,7 @@ class Experiment:
 
         logging.info("==== Start of training ====")
         with metric_writers.ensure_flushes(writer):
-            for step in range(1, config.num_steps_train + 1):
+            for step in range(self.starting_step, config.num_steps_train + self.starting_step):
                 batch_data = utils.dict_to_device(next(self.train_iter), self.device)
 
                 if 120000 > step > 10000:
@@ -151,7 +163,7 @@ class Experiment:
                     )
                     train_metrics = []
 
-                if step % config.steps_per_large_logging == 0:
+                if step == self.starting_step or step % config.steps_per_large_logging == 0:
                     ckpt_dir = os.path.join(workdir, "ckpt")
                     if not tf.io.gfile.exists(ckpt_dir):
                         tf.io.gfile.makedirs(ckpt_dir)
@@ -166,8 +178,8 @@ class Experiment:
                             )[:10, :10]
                             return utils.draw_heatmap(activations)
 
-                        images_v = visualize(self.model.encoder.v, "v")
-                        images_u = visualize(self.model.decoder.u, "u")
+                        images_v = visualize(self.model.encoder.v)
+                        images_u = visualize(self.model.decoder.u)
 
                         writer.write_images(step, {"v": images_v})
                         wandb.log({"v": wandb.Image(images_v)}, step=step)
@@ -239,7 +251,7 @@ class Experiment:
                             step=step,
                         )
 
-                if step % config.steps_per_integration == 0 or step == 1:
+                if step % config.steps_per_integration == 0 or step == self.starting_step:
                     # perform path integration
                     with torch.no_grad():
                         eval_data = utils.dict_to_device(

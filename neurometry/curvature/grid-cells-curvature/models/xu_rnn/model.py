@@ -23,8 +23,10 @@ class GridCellConfig:
     adaptive_dr: bool
     s_0: float
     x_star: torch.Tensor
-    sigma_star: float
+    sigma_star_x: float
+    sigma_star_y: float
     reward_step: int
+    saliency_type: str
 
 
 class GridCell(nn.Module):
@@ -222,7 +224,7 @@ class GridCell(nn.Module):
             heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (N, 1600)
             y_hat = heatmap_reshape # actual "place cell" activity over the grid (linear readout of grid cells)
 
-            saliency_kernel = self._saliency_kernel(x_grid).unsqueeze(0).to(traj.device)  # (1, 1600)
+            saliency_kernel = self._saliency_kernel(x_grid, config.saliency_type).unsqueeze(0).to(traj.device)  # (1, 1600)
             if step < config.reward_step:
                 L_error = (y - y_hat) ** 2
             else:
@@ -233,12 +235,43 @@ class GridCell(nn.Module):
 
         return loss_trans * config.w_trans
 
-    def _saliency_kernel(self, x_grid):
+    def _saliency_kernel(self, x_grid, saliency_type):
+        if saliency_type == "gaussian":
+            return self._saliency_kernel_gaussian(x_grid)
+        if saliency_type == "left_half":
+            return self._saliency_kernel_left_half(x_grid)
+        raise NotImplementedError
+
+    # def _saliency_kernel_gaussian(self, x_grid, sigma_star_x, sigma_star_y):
+    #     config = self.config
+    #     s_0 = config.s_0
+    #     x_star = config.x_star
+    #     sigma_star = config.sigma_star
+    #     s_x = s_0*torch.exp(-torch.sum((x_grid - x_star)**2, dim=1)/(2*sigma_star**2))/np.sqrt(2*np.pi*sigma_star**2)
+    #     return 1 + s_x
+
+    def _saliency_kernel_gaussian(self, x_grid):
         config = self.config
         s_0 = config.s_0
         x_star = config.x_star
-        sigma_star = config.sigma_star
-        s_x = s_0*torch.exp(-torch.sum((x_grid - x_star)**2, dim=1)/(2*sigma_star**2))/np.sqrt(2*np.pi*sigma_star**2)
+        sigma_star_x = config.sigma_star_x
+        sigma_star_y = config.sigma_star_y
+
+        # Calculate the squared differences, scaled by respective sigma values
+        diff = x_grid - x_star
+        scaled_diff_sq = (diff[:, 0]**2 / sigma_star_x**2) + (diff[:, 1]**2 / sigma_star_y**2)
+
+        # Compute the Gaussian function
+        normalization_factor = 2 * np.pi * sigma_star_x * sigma_star_y
+        s_x = s_0 * torch.exp(-0.5 * scaled_diff_sq) / normalization_factor
+
+        return 1 + s_x
+
+
+    def _saliency_kernel_left_half(self, x_grid):
+        config = self.config
+        s_0 = config.s_0
+        s_x = s_0 * (x_grid[:, 0] < 0.5).float()
         return 1 + s_x
 
     def _loss_trans_lstm(self, traj):
