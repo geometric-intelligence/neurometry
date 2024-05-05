@@ -238,10 +238,9 @@ class GridCell(nn.Module):
     def _saliency_kernel(self, x_grid, saliency_type):
         if saliency_type == "gaussian":
             return self._saliency_kernel_gaussian(x_grid)
-        elif saliency_type == "left_half":
+        if saliency_type == "left_half":
             return self._saliency_kernel_left_half(x_grid)
-        else:
-            raise NotImplementedError
+        raise NotImplementedError
 
     # def _saliency_kernel_gaussian(self, x_grid, sigma_star_x, sigma_star_y):
     #     config = self.config

@@ -1,11 +1,11 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
+from dreimac import ToroidalCoords
 from gtda.diagrams import PairwiseDistance
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from matplotlib.collections import LineCollection
-from dreimac import ToroidalCoords
-import plotly.graph_objects as go
 
 
 def compute_persistence_diagrams(
@@ -60,7 +60,7 @@ def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id):
 
     color = neural_activations[:,neuron_id-1]
 
-    fig = go.Figure(data=[go.Scatter3d(x=xs, y=ys, z=zs, mode='markers', marker=dict(size=5, color=color, colorscale='Viridis', opacity=0.8))])
+    fig = go.Figure(data=[go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=color, colorscale="Viridis", opacity=0.8))])
 
     title = f"Neural activations on the torus for neuron {neuron_id}"
 
@@ -103,7 +103,7 @@ def plot_lifetimes(diagram):
     a2.set_xlabel("Birth")
     a2.set_ylabel("Lifetime")
     a2.set_title("Feature lifetimes, homology group H2")
-    plt.legend();
+    plt.legend()
     plt.tight_layout()
 
 

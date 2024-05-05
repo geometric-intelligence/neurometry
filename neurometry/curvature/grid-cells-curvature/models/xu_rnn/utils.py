@@ -146,18 +146,18 @@ def block_diagonal(matrices):
 #     plt.close()
 
 
-# def shape_mask(size, shape):
-#     x, y = np.meshgrid(np.linspace(0, 1, size), np.linspace(0, 1, size))
-#     if shape == "square":
-#         mask = np.ones_like(x, dtype=bool)
-#     elif shape == "circle":
-#         mask = np.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2) <= 0.5
-#     elif shape == "triangle":
-#         mask = (y + 2 * x >= 1) * (-y + 2 * x <= 1)
-#     else:
-#         raise NotImplementedError
+def shape_mask(size, shape):
+    x, y = np.meshgrid(np.linspace(0, 1, size), np.linspace(0, 1, size))
+    if shape == "square":
+        mask = np.ones_like(x, dtype=bool)
+    elif shape == "circle":
+        mask = np.sqrt((x - 0.5) ** 2 + (y - 0.5) ** 2) <= 0.5
+    elif shape == "triangle":
+        mask = (y + 2 * x >= 1) * (-y + 2 * x <= 1)
+    else:
+        raise NotImplementedError
 
-#     return mask
+    return mask
 
 
 def draw_heatmap_2D(data, vmin=None, vmax=None, shape="square", cb=False):
