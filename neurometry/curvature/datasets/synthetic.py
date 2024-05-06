@@ -11,6 +11,7 @@ import skimage  # noqa: E402
 import torch  # noqa: E402
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
 from torch.distributions.multivariate_normal import MultivariateNormal  # noqa: E402
+from neurometry.topology.persistent_homology import cohomological_toroidal_coordinates # noqa: E402
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):
@@ -430,6 +431,10 @@ def load_t2_synthetic(
     )
 
     noisy_data = data + noise_dist.sample((sqrt_ntimes**2,))
+
+    toroidal_coords = cohomological_toroidal_coordinates(noisy_data)
+
+    labels = pd.DataFrame({"thetas": toroidal_coords[:, 0], "phis": toroidal_coords[:, 1]})
 
     return noisy_data, labels
 
