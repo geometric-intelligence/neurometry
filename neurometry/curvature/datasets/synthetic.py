@@ -11,8 +11,11 @@ import skimage  # noqa: E402
 import torch  # noqa: E402
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
 from torch.distributions.multivariate_normal import MultivariateNormal  # noqa: E402
-from neurometry.topology.persistent_homology import cohomological_toroidal_coordinates # noqa: E402
-from neurometry.topology.persistent_homology import cohomological_circular_coordinates # noqa: E402
+
+from neurometry.topology.persistent_homology import (  # noqa: E402
+    cohomological_circular_coordinates,
+    cohomological_toroidal_coordinates,
+)
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):

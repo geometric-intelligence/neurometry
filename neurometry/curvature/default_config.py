@@ -136,7 +136,7 @@ synthetic_rotation = {
 
 # Datasets
 # dataset_name = ["s1_synthetic", "s2_synthetic"]
-dataset_name = ["s1_synthetic"]
+dataset_name = ["t2_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -200,12 +200,12 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 # Except for lr_min and lr_max which are floats
 lr_min = [0.001]  # 0.0001
 lr_max = 0.1
-batch_size = [64]  # [16,32,64]
+batch_size = [32, 64]  # [16,32,64]
 encoder_width = [400]  # [100,400]  # , 100, 200, 300]
-encoder_depth = [10]  # [4,6,8]  # , 10, 20, 50, 100]
-decoder_width = [200]  # [100,400]  # , 100, 200, 300]
+encoder_depth = [8]  # [4,6,8]  # , 10, 20, 50, 100]
+decoder_width = [400]  # [100,400]  # , 100, 200, 300]
 decoder_depth = [6]  # [4,6,8]  # , 10, 20, 50, 100]
-drop_out_p = [0]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
+drop_out_p = [0, 0.1]  # [0,0.1,0.2]  # put probability p at 0. for no drop out
 for p in drop_out_p:
     assert p >= 0.0 and p <= 1, "Probability needs to be in [0, 1]"
 
@@ -216,7 +216,7 @@ for p in drop_out_p:
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 10  # 20  # 128
+num_samples = 8  # 20  # 128
 sweep_metric = "test_loss"
 n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:

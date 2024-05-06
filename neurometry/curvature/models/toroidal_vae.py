@@ -42,8 +42,8 @@ class ToroidalVAE(torch.nn.Module):
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
 
-        decoder_width = encoder_width
-        decoder_depth = encoder_depth
+        # decoder_width = encoder_width
+        # decoder_depth = encoder_depth
 
         self.encoder_fc = torch.nn.Linear(self.data_dim, encoder_width)
         self.encoder_linears = torch.nn.ModuleList(

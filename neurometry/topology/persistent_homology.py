@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
-from dreimac import ToroidalCoords, CircularCoords
+from dreimac import CircularCoords, ToroidalCoords
 from gtda.diagrams import PairwiseDistance
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from matplotlib.collections import LineCollection
@@ -73,7 +73,7 @@ def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id, neuro
     if neuron_id2 is None:
         activations = neural_activations[:, neuron_id]
         colors = activations
-        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors, opacity=1), name=f'Neuron {neuron_id}'))
+        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors, opacity=1), name=f"Neuron {neuron_id}"))
         title = f"Neural activations on the torus for neuron {neuron_id}"
     else:
         activations1 = neural_activations[:, neuron_id]
@@ -85,20 +85,20 @@ def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id, neuro
         for i in range(len(xs)):
             if activations1[i] > threshold1:
                 alpha = 1#min(1, activations1[i] / threshold1)
-                colors1.append(f'rgba(255, 0, 0, {alpha})')
-                colors2.append('rgba(128, 128, 128, 0)') 
+                colors1.append(f"rgba(255, 0, 0, {alpha})")
+                colors2.append("rgba(128, 128, 128, 0)")
             elif activations2[i] > threshold2:
                 alpha = 1#min(1, activations2[i] / threshold2)
-                colors1.append('rgba(128, 128, 128, 0)')
-                colors2.append(f'rgba(255, 255, 0, {alpha})')
+                colors1.append("rgba(128, 128, 128, 0)")
+                colors2.append(f"rgba(255, 255, 0, {alpha})")
             else:
-                colors1.append('rgba(5, 0, 15, 0.1)')
-                colors2.append('rgba(5, 0, 15, 0.1)')
-        
+                colors1.append("rgba(5, 0, 15, 0.1)")
+                colors2.append("rgba(5, 0, 15, 0.1)")
+
         # Populate the figure with data for both neurons
-        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors1), name=f'Neuron {neuron_id}'))
-        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors2), name=f'Neuron {neuron_id2}'))
-        
+        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors1), name=f"Neuron {neuron_id}"))
+        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors2), name=f"Neuron {neuron_id2}"))
+
         title = f"Neural activations on the torus for neurons {neuron_id} (Red) and {neuron_id2} (Yellow)"
 
     fig.update_layout(title=title, autosize=False, width=800, height=500)
