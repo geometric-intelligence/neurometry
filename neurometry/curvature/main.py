@@ -290,7 +290,7 @@ def main_sweep(
         )
         logging.info(f"Done: training's plot & log for {run_name}")
 
-        # curvature_compute_plot_log(wandb_config, dataset, labels, model)
+        #curvature_compute_plot_log(wandb_config, dataset, labels, model)
         logging.info(f"Done: curvature's compute, plot & log for {run_name}")
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -421,6 +421,11 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
         default_config.trained_models_dir, f"{config.results_prefix}_model.pt"
     )
     torch.save(model, model_path)
+    model_state_dict_path = os.path.join(
+        default_config.trained_models_dir, f"{config.results_prefix}_model_state_dict.pth"
+    )
+    state = {"state_dict": model.state_dict()}
+    torch.save(state, model_state_dict_path)
     wandb.log(
         {
             "fig_loss": wandb.Image(fig_loss),

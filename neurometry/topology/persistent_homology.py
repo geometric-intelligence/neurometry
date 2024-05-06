@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
-from dreimac import ToroidalCoords
+from dreimac import CircularCoords, ToroidalCoords
 from gtda.diagrams import PairwiseDistance
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from matplotlib.collections import LineCollection
@@ -47,7 +47,17 @@ def cohomological_toroidal_coordinates(data):
     toroidal_coords = tc.get_coordinates(cocycle_idxs=cohomology_classes,standard_range=False)
     return toroidal_coords.T
 
-def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id):
+
+def cohomological_circular_coordinates(data):
+    n_landmarks = data.shape[0]
+    cc = CircularCoords(data, n_landmarks=n_landmarks)
+    cohomology_classes = [0,1]
+    circular_coords = cc.get_coordinates(cocycle_idxs=cohomology_classes,standard_range=False)
+    return circular_coords.T
+
+
+def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id, neuron_id2=None):
+
     phis = toroidal_coords[:,0]
     thetas = toroidal_coords[:,1]
 
@@ -58,16 +68,42 @@ def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id):
     ys = (R+r*np.cos(thetas)) * np.sin(phis)
     zs = r*np.sin(thetas)
 
-    color = neural_activations[:,neuron_id-1]
+    fig = go.Figure()
 
-    fig = go.Figure(data=[go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=color, colorscale="Viridis", opacity=0.8))])
+    if neuron_id2 is None:
+        activations = neural_activations[:, neuron_id]
+        colors = activations
+        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors, opacity=1), name=f"Neuron {neuron_id}"))
+        title = f"Neural activations on the torus for neuron {neuron_id}"
+    else:
+        activations1 = neural_activations[:, neuron_id]
+        activations2 = neural_activations[:, neuron_id2]
+        threshold1 = np.percentile(activations1, 95)
+        threshold2 = np.percentile(activations2, 95)
+        colors1 = []
+        colors2 = []
+        for i in range(len(xs)):
+            if activations1[i] > threshold1:
+                alpha = 1#min(1, activations1[i] / threshold1)
+                colors1.append(f"rgba(255, 0, 0, {alpha})")
+                colors2.append("rgba(128, 128, 128, 0)")
+            elif activations2[i] > threshold2:
+                alpha = 1#min(1, activations2[i] / threshold2)
+                colors1.append("rgba(128, 128, 128, 0)")
+                colors2.append(f"rgba(255, 255, 0, {alpha})")
+            else:
+                colors1.append("rgba(5, 0, 15, 0.1)")
+                colors2.append("rgba(5, 0, 15, 0.1)")
 
-    title = f"Neural activations on the torus for neuron {neuron_id}"
+        # Populate the figure with data for both neurons
+        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors1), name=f"Neuron {neuron_id}"))
+        fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="markers", marker=dict(size=5, color=colors2), name=f"Neuron {neuron_id2}"))
 
-    fig.update_layout(title=title, autosize=False, width=400, height=400)
+        title = f"Neural activations on the torus for neurons {neuron_id} (Red) and {neuron_id2} (Yellow)"
 
+    fig.update_layout(title=title, autosize=False, width=800, height=500)
     fig.show()
-
+    return fig
 
 
 def plot_lifetimes(diagram):
