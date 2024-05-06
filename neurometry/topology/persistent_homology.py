@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
-from dreimac import ToroidalCoords
+from dreimac import ToroidalCoords, CircularCoords
 from gtda.diagrams import PairwiseDistance
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from matplotlib.collections import LineCollection
@@ -47,6 +47,13 @@ def cohomological_toroidal_coordinates(data):
     toroidal_coords = tc.get_coordinates(cocycle_idxs=cohomology_classes,standard_range=False)
     return toroidal_coords.T
 
+
+def cohomological_circular_coordinates(data):
+    n_landmarks = data.shape[0]
+    cc = CircularCoords(data, n_landmarks=n_landmarks)
+    cohomology_classes = [0,1]
+    circular_coords = cc.get_coordinates(cocycle_idxs=cohomology_classes,standard_range=False)
+    return circular_coords.T
 
 
 def plot_activity_on_torus(neural_activations, toroidal_coords, neuron_id, neuron_id2=None):

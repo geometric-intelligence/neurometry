@@ -136,7 +136,7 @@ synthetic_rotation = {
 
 # Datasets
 # dataset_name = ["s1_synthetic", "s2_synthetic"]
-dataset_name = ["t2_synthetic"]
+dataset_name = ["s1_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
