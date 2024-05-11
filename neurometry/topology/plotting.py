@@ -3,7 +3,6 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-
 def _plot_bars_from_diagrams(ax, diagrams, dim, **kwargs):
     birth = diagrams[:, 0]
     death = diagrams[:, 1]
@@ -20,7 +19,7 @@ def _plot_bars_from_diagrams(ax, diagrams, dim, **kwargs):
     linewidth = kwargs.get("linewidth", 5)
 
     # Plotting each bar
-    for i, (b, d) in enumerate(zip(birth, death)):
+    for i, (b, d) in enumerate(zip(birth, death, strict=False)):
         ax.plot(
             [0, d - b],
             [i * offset, i * offset],
@@ -47,7 +46,7 @@ def plot_all_barcodes_with_null(diagrams, **kwargs):
     if num_dims == 1:
         axs = [axs]  # Make it iterable if there's only one subplot
 
-    for ax, dim, color in zip(axs, dims, colors):
+    for ax, dim, color in zip(axs, dims, colors, strict=False):
         diag_dim = original_diagram[original_diagram[:, 2] == dim]
         null_diag_dim = shuffled_diagrams[:, :, 2] == dim
         null_diag = shuffled_diagrams[null_diag_dim]

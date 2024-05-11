@@ -1,20 +1,20 @@
 import os
+import pickle
 
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
+import tensorflow as tf
+import torch
+import umap
+import yaml
+from sklearn.cluster import DBSCAN
+
+from neurometry.datasets.rnn_grid_cells.scores import GridScorer
 
 # sys.path.append(str(Path(__file__).parent.parent))
 from .rnn_grid_cells import config, dual_agent_activity, single_agent_activity, utils
-import matplotlib.cm as cm
-import tensorflow as tf
-import pickle
-import yaml
-import torch
-from neurometry.datasets.rnn_grid_cells.scores import GridScorer
 
-from sklearn.cluster import DBSCAN
-import umap
 
 def load_rate_maps(run_id, step):
     #XU_RNN
@@ -22,19 +22,17 @@ def load_rate_maps(run_id, step):
     run_dir = os.path.join(model_dir, f"logs/rnn_isometry/{run_id}")
     activations_file = os.path.join(run_dir, f"ckpt/activations/activations-step{step}.pkl")
     with open(activations_file, "rb") as f:
-        activations = pickle.load(f)
-    
-    return activations
+        return pickle.load(f)
 
 def load_config(run_id):
     model_dir = os.path.join(os.getcwd(), "curvature/grid-cells-curvature/models/xu_rnn")
     run_dir = os.path.join(model_dir, f"logs/rnn_isometry/{run_id}")
     config_file = os.path.join(run_dir, "config.txt")
 
-    with open(config_file, 'r') as file:
-        config = yaml.safe_load(file)
+    with open(config_file) as file:
+        return yaml.safe_load(file)
 
-    return config
+
 
 
 
@@ -44,9 +42,11 @@ def extract_tensor_events(event_file, verbose=True):
     losses = []
     try:
         for e in tf.compat.v1.train.summary_iterator(event_file):
-            if verbose: print(f"Found event at step {e.step} with wall time {e.wall_time}")
+            if verbose:
+                print(f"Found event at step {e.step} with wall time {e.wall_time}")
             for v in e.summary.value:
-                if verbose: print(f"Found value with tag: {v.tag}")
+                if verbose:
+                    print(f"Found value with tag: {v.tag}")
                 if v.HasField("tensor"):
                     tensor = tf.make_ndarray(v.tensor)
                     record = {
@@ -60,7 +60,8 @@ def extract_tensor_events(event_file, verbose=True):
                         loss = {"step": e.step, "loss": tensor}
                         losses.append(loss)
                 else:
-                    if verbose: print(f"No 'tensor' found for tag {v.tag}")
+                    if verbose:
+                        print(f"No 'tensor' found for tag {v.tag}")
     except Exception as e:
         print(f"An error occurred: {e}")
     return records, losses
@@ -74,23 +75,21 @@ def _compute_scores(activations, config):
 
     starts = [0.1] * 20
     ends = np.linspace(0.2, 1.4, num=20)
-    masks_parameters = zip(starts, ends.tolist())
-
-    ncol, nrow = block_size, num_block
+    masks_parameters = zip(starts, ends.tolist(), strict=False)
 
     scorer = GridScorer(40, ((0, 1), (0, 1)), masks_parameters)
 
-    score_list = np.zeros(shape=[len(activations['v'])], dtype=np.float32)
-    scale_list = np.zeros(shape=[len(activations['v'])], dtype=np.float32)
+    score_list = np.zeros(shape=[len(activations["v"])], dtype=np.float32)
+    scale_list = np.zeros(shape=[len(activations["v"])], dtype=np.float32)
     #orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
     sac_list = []
 
-    for i in range(len(activations['v'])):
-        rate_map = activations['v'][i]
+    for i in range(len(activations["v"])):
+        rate_map = activations["v"][i]
         rate_map = (rate_map - rate_map.min()) / (rate_map.max() - rate_map.min())
 
         score_60, score_90, max_60_mask, max_90_mask, sac, _ = scorer.get_scores(
-            activations['v'][i])
+            activations["v"][i])
         sac_list.append(sac)
 
         score_list[i] = score_60
@@ -109,10 +108,9 @@ def _compute_scores(activations, config):
     # score_tensor = score_tensor.reshape((num_block, block_size))
     score_tensor = torch.mean(score_tensor)
     sac_array = np.array(sac_list)
-    
-    scores = {"sac":sac_array, "scale":scale_tensor, "score": score_tensor, "max_scale": max_scale}
 
-    return scores
+    return {"sac":sac_array, "scale":scale_tensor, "score": score_tensor, "max_scale": max_scale}
+
 
 
 
@@ -288,7 +286,7 @@ def draw_heatmap(activations, title):
         fig.canvas.get_width_height()[::-1] + (3,)
     )
 
-    fig.suptitle(title, fontsize=20, fontweight='bold', verticalalignment='top')
+    fig.suptitle(title, fontsize=20, fontweight="bold", verticalalignment="top")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
@@ -320,9 +318,9 @@ def _vectorized_spatial_autocorrelation_matrix(spatial_autocorrelation):
 def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
     if sac_array is None:
         sac_array = get_scores(run_dir, activations, config)["sac"]
-    
+
     spatial_autocorrelation_matrix = _vectorized_spatial_autocorrelation_matrix(sac_array)
-    
+
     umap_reducer_2d = umap.UMAP(n_components=2, random_state=10)
     umap_embedding = umap_reducer_2d.fit_transform(spatial_autocorrelation_matrix.T)
 
@@ -336,7 +334,7 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
     if plot:
         fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
-    for k, col in zip(unique_labels, colors):
+    for k, col in zip(unique_labels, colors, strict=False):
         if k == -1:
             # Black used for noise.
             # col = [0, 0, 0, 1]
@@ -346,7 +344,7 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
 
         xy = umap_embedding[class_member_mask]
         if plot:
-            axes[0].plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col), markeredgecolor='none', markersize=5, label=f'Cluster {k}') 
+            axes[0].plot(xy[:, 0], xy[:, 1], "o", markerfacecolor=tuple(col), markeredgecolor="none", markersize=5, label=f"Cluster {k}")
 
         umap_cluster_labels = umap_dbscan.fit_predict(umap_embedding)
         clusters = {}
@@ -354,12 +352,12 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
             #cluster = _get_data_from_cluster(activations,i, umap_cluster_labels)
             cluster = activations[umap_cluster_labels == i]
             clusters[i] = cluster
-        
+
     if plot:
         axes[0].set_xlabel("UMAP 1")
         axes[0].set_ylabel("UMAP 2")
         axes[0].set_title("UMAP embedding of spatial autocorrelation")
-        axes[0].legend(title="Cluster IDs", loc='center left', bbox_to_anchor=(1, 0.5))
+        axes[0].legend(title="Cluster IDs", loc="center left", bbox_to_anchor=(1, 0.5))
 
         axes[1].hist(umap_cluster_labels, bins=len(np.unique(umap_cluster_labels)))
         axes[1].set_xlabel("Cluster ID")
@@ -369,4 +367,3 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
         plt.show()
     return clusters, umap_cluster_labels
 
-        

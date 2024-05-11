@@ -2,6 +2,7 @@ import numpy as np
 from dreimac import CircularCoords, ToroidalCoords
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 
+
 def compute_persistence_diagrams(
     representations,
     homology_dimensions=(0, 1, 2),
@@ -23,17 +24,15 @@ def compute_persistence_diagrams(
 
 
 def _shuffle_entries(data, rng):
-    shuffled_data = np.array([rng.permutation(row) for row in data])
-    return shuffled_data
+    return np.array([rng.permutation(row) for row in data])
 
 
 def compute_diagrams_shuffle(X, num_shuffles, seed=0, homology_dimensions=(0, 1)):
     rng = np.random.default_rng(seed)
     shuffled_Xs = [_shuffle_entries(X, rng) for _ in range(num_shuffles)]
-    diagrams = compute_persistence_diagrams(
-        [X] + shuffled_Xs, homology_dimensions=homology_dimensions
+    return compute_persistence_diagrams(
+        [X, *shuffled_Xs], homology_dimensions=homology_dimensions
     )
-    return diagrams
 
 def cohomological_toroidal_coordinates(data):
     n_landmarks = data.shape[0]

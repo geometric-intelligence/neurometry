@@ -7,6 +7,7 @@ import input_pipeline
 import ml_collections
 import model as model
 import numpy as np
+
 #import tensorflow as tf
 import torch
 import torch.nn as nn
@@ -431,6 +432,6 @@ class Experiment:
         }
         with open(activations_filename, "wb") as f:
             pickle.dump(activations, f)
-        
+
 
         logging.info(f"Saving activations: {activations_filename} ...")

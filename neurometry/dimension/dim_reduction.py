@@ -1,9 +1,6 @@
 import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
 import numpy as np
-
-import umap
-from sklearn.manifold import Isomap, MDS, LocallyLinearEmbedding, SpectralEmbedding, TSNE
+from sklearn.decomposition import PCA
 
 
 def plot_pca_projections(X, K, title):
@@ -29,8 +26,8 @@ def plot_pca_projections(X, K, title):
                     )
 
     plt.tight_layout()
-    
-    fig.suptitle(title, fontsize=30, fontweight='bold', verticalalignment='top')
+
+    fig.suptitle(title, fontsize=30, fontweight="bold", verticalalignment="top")
     plt.show()
 
     print(f"The {K} top PCs explain {100*np.cumsum(ev)[-1]:.2f}% of the variance")

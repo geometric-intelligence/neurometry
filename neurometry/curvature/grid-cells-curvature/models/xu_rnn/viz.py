@@ -1,13 +1,10 @@
 import os
 import pickle
 
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 from moviepy.editor import ImageSequenceClip
-
-from neurometry.datasets.load_rnn_grid_cells import plot_rate_map
-import matplotlib.cm as cm
-import yaml
 
 logs_dir = "logs/rnn_isometry"
 
@@ -55,7 +52,7 @@ def draw_heatmap(activations, title):
     image_from_plot = image_from_plot.reshape(
         fig.canvas.get_width_height()[::-1] + (3,)
     )
-    fig.suptitle(title, fontsize=20, fontweight='bold', verticalalignment='top')
+    fig.suptitle(title, fontsize=20, fontweight="bold", verticalalignment="top")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
@@ -68,6 +65,7 @@ def save_rate_maps_as_image(activations, image_path, title):
     fig = draw_heatmap(activations, title)
     plt.savefig(image_path)
     plt.close()
+    return fig
 
 
 def generate_videos(run_id, start_epoch=25000, end_epoch=65000, step=500):
@@ -80,8 +78,7 @@ def generate_videos(run_id, start_epoch=25000, end_epoch=65000, step=500):
     os.makedirs(u_images_dir, exist_ok=True)
     os.makedirs(v_images_dir, exist_ok=True)
 
-    config_file = os.path.join(logs_dir, run_id, "config.txt")
-
+    #config_file = os.path.join(logs_dir, run_id, "config.txt")
     # with open(config_file, 'r') as file:
     #     config = yaml.safe_load(file)
 
