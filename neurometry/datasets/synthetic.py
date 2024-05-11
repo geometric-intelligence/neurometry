@@ -26,7 +26,7 @@ def synthetic_neural_manifold(
     encoding_dim : int
         Dimension of the encoded points. This is the dimension of the neural state space.
     nonlinearity : str
-        Nonlinearity to apply. Must be one of 'relu', 'sigmoid', or 'tanh'.
+        Nonlinearity to apply. Must be one of 'relu', 'sigmoid', 'tanh', or 'linear'.
     **kwargs : dict
         Keyword arguments for the manifold generation.
 
@@ -202,7 +202,7 @@ def apply_nonlinearity(encoded_points, nonlinearity, **kwargs):
     encoded_points : array-like, shape=[num_points, encoding_dim]
         Encoded points.
     nonlinearity : str
-        Nonlinearity to apply. Must be one of 'relu', 'sigmoid', or 'tanh'.
+        Nonlinearity to apply. Must be one of 'relu', 'sigmoid', 'tanh', or 'linear'.
     **kwargs : dict
         Keyword arguments for the nonlinearity.
 

@@ -136,7 +136,7 @@ synthetic_rotation = {
 
 # Datasets
 # dataset_name = ["s1_synthetic", "s2_synthetic"]
-dataset_name = ["t2_synthetic"]
+dataset_name = ["s1_synthetic"]
 for one_dataset_name in dataset_name:
     if one_dataset_name not in [
         "s1_synthetic",
@@ -216,7 +216,7 @@ for p in drop_out_p:
 # samples are generated until a stopping condition is met.
 # Given that 8/10 gpus can run at the same time,
 # We choose a multiple of 8.
-num_samples = 8  # 20  # 128
+num_samples = 4  # 20  # 128
 sweep_metric = "test_loss"
 n_grid_points = 100  # number of points on the z grid for curvature
 # Doc on tune.run:
