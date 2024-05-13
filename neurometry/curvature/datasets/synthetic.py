@@ -356,7 +356,7 @@ def load_s1_synthetic(
 
     circular_coords = cohomological_circular_coordinates(noisy_data)
 
-    labels = pd.DataFrame({"thetas": circular_coords[:, 0], "phis": circular_coords[:, 1]})
+    labels = pd.DataFrame({"angles": circular_coords})
 
     return noisy_data, labels
 

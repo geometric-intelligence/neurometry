@@ -7,7 +7,8 @@ import input_pipeline
 import ml_collections
 import model as model
 import numpy as np
-import tensorflow as tf
+
+#import tensorflow as tf
 import torch
 import torch.nn as nn
 import utils
@@ -16,7 +17,7 @@ from absl import logging
 from clu import metric_writers, periodic_actions
 from scores import GridScorer
 
-tf.config.set_visible_devices([], "GPU")
+#tf.config.set_visible_devices([], "GPU")
 
 
 class Experiment:
@@ -73,8 +74,9 @@ class Experiment:
     def train_and_evaluate(self, workdir):
         logging.info("==== Experiment.train_and_evaluate() ===")
 
-        if not tf.io.gfile.exists(workdir):
-            tf.io.gfile.mkdir(workdir)
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
+
         config = self.config.train
         logging.info("num_steps_train=%d", config.num_steps_train)
 
@@ -165,8 +167,8 @@ class Experiment:
 
                 if step == self.starting_step or step % config.steps_per_large_logging == 0:
                     ckpt_dir = os.path.join(workdir, "ckpt")
-                    if not tf.io.gfile.exists(ckpt_dir):
-                        tf.io.gfile.makedirs(ckpt_dir)
+                    if not os.path.exists(ckpt_dir):
+                        os.makedirs(ckpt_dir)
                     self._save_checkpoint(step, ckpt_dir)
                     # visualize v, u and heatmaps.
                     with torch.no_grad():
@@ -336,8 +338,8 @@ class Experiment:
 
                 if step == config.num_steps_train:
                     ckpt_dir = os.path.join(workdir, "ckpt")
-                    if not tf.io.gfile.exists(ckpt_dir):
-                        tf.io.gfile.makedirs(ckpt_dir)
+                    if not os.path.exists(ckpt_dir):
+                        os.makedirs(ckpt_dir)
                     self._save_checkpoint(step, ckpt_dir)
 
     def grid_scale(self):
@@ -411,16 +413,16 @@ class Experiment:
             "config": self.config,
         }
         model_dir = os.path.join(ckpt_dir, "model")
-        if not tf.io.gfile.exists(model_dir):
-            tf.io.gfile.makedirs(model_dir)
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
         model_filename = os.path.join(model_dir, f"checkpoint-step{step}.pth")
         logging.info(f"Saving model checkpoint: {model_filename} ...")
         torch.save(state, model_filename)
         wandb.save(model_filename)
 
         activations_dir = os.path.join(ckpt_dir, "activations")
-        if not tf.io.gfile.exists(activations_dir):
-            tf.io.gfile.makedirs(activations_dir)
+        if not os.path.exists(activations_dir):
+            os.makedirs(activations_dir)
         activations_filename = os.path.join(
             activations_dir, f"activations-step{step}.pkl"
         )
@@ -428,6 +430,8 @@ class Experiment:
             "v": self.model.encoder.v.data.cpu().detach().numpy(),
             "u": self.model.decoder.u.data.cpu().detach().numpy(),
         }
-        with tf.io.gfile.GFile(activations_filename, "wb") as f:
+        with open(activations_filename, "wb") as f:
             pickle.dump(activations, f)
+
+
         logging.info(f"Saving activations: {activations_filename} ...")
