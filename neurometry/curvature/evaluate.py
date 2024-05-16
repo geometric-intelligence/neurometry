@@ -55,7 +55,7 @@ def get_learned_immersion(model, config):
         elif config.dataset_name in ("t2_synthetic", "grid_cells"):
             # angle = gs.squeeze(angle,axis=0)
             theta = angle[0]
-            phi = angle[0]
+            phi = angle[1]
             z = gs.array(
                 [
                     (config.major_radius - config.minor_radius * gs.cos(theta))
@@ -103,7 +103,7 @@ def get_true_immersion(config):
     return immersion
 
 
-def get_z_grid(config, n_grid_points=100):
+def get_z_grid(config, n_grid_points=2000):
     if config.dataset_name in (
         "s1_synthetic",
         "experimental",
@@ -157,14 +157,14 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
                 print(neural_manifold.metric.metric_matrix(z_i))
     #curv = neural_manifold.metric.mean_curvature_vector(z_grid)
 
-    curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True)
-    curv_norm = gs.zeros(len(z_grid))
+    curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True).squeeze()
+    #curv_norm = gs.zeros(len(z_grid))
     #curv_norm = gs.array([norm.item() for norm in curv_norm])
 
     return geodesic_dist, curv, curv_norm
 
 
-def compute_curvature_learned(model, config, embedding_dim, n_grid_points=100):
+def compute_curvature_learned(model, config, embedding_dim, n_grid_points=2000):
     """Use _compute_curvature to find mean curvature profile from learned immersion"""
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_learned_immersion(model, config)
@@ -180,7 +180,7 @@ def compute_curvature_learned(model, config, embedding_dim, n_grid_points=100):
     return z_grid, geodesic_dist, curv, curv_norm
 
 
-def compute_curvature_true(config, n_grid_points=100):
+def compute_curvature_true(config, n_grid_points=2000):
     """Use compute_mean_curvature to find mean curvature profile from true immersion"""
     z_grid = get_z_grid(config=config, n_grid_points=n_grid_points)
     immersion = get_true_immersion(config)

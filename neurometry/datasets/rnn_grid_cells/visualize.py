@@ -94,7 +94,8 @@ def compute_ratemaps(
     all_activations = np.zeros([Ng, res, res, n_avg])
     counts = np.zeros([res, res])
 
-    model = model.double()
+    #model = model.double()
+    model.eval()
 
     for index in tqdm(range(n_avg), desc="Processing"):
         inputs, pos_batch, _ = trajectory_generator.get_test_batch()

@@ -76,7 +76,7 @@ def hypersphere(intrinsic_dim, num_points, radius=1):
     return radius * unit_hypersphere_points
 
 
-def hypertorus(intrinsic_dim, num_points, radii=None):
+def hypertorus(intrinsic_dim, num_points, radii=None, parameterization="flat"):
     """Generate points on a flat hypertorus of given intrinsic dimension and radii.
 
     The n-hypertorus is the product manifold of n circles.
