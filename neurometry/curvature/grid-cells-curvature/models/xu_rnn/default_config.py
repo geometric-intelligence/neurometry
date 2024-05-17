@@ -68,6 +68,6 @@ n_traj_vis=5
 
 # RAY TUNE PARAMETERS
 
-sweep_metric="test_loss"
+sweep_metric= "error_reencode"
 num_samples = 10
 ray_sweep_dir = os.path.join(work_dir, "results/ray_sweep")

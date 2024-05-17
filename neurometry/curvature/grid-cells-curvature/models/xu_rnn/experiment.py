@@ -186,8 +186,8 @@ class Experiment:
 
                     #writer.write_images(step, {"v": images_v})
                     #writer.write_images(step, {"u": images_u})
-                    wandb.log({"v": wandb.Image(images_v)}, step=step)
-                    wandb.log({"u": wandb.Image(images_u)}, step=step)
+                    # wandb.log({"v": wandb.Image(images_v)}, step=step)
+                    # wandb.log({"u": wandb.Image(images_u)}, step=step)
 
                     x_eval = torch.rand((3, 2)) * num_grid - 0.5
                     x_eval = x_eval.to(self.device)
@@ -234,10 +234,10 @@ class Experiment:
                     # writer.write_images(
                     #     step, {"vu_heatmap": utils.draw_heatmap(heatmaps)}
                     # )
-                    wandb.log(
-                        {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
-                        step=step,
-                    )
+                    # wandb.log(
+                    #     {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
+                    #     step=step,
+                    # )
 
                     err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
                     # writer.write_scalars(step, {"pred_x": err.item()})
@@ -320,10 +320,10 @@ class Experiment:
                         "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
                     }
                     # writer.write_images(step, images)
-                    wandb.log(
-                        {key: wandb.Image(value) for key, value in images.items()},
-                        step=step,
-                    )
+                    # wandb.log(
+                    #     {key: wandb.Image(value) for key, value in images.items()},
+                    #     step=step,
+                    # )
 
                     # for quantitative evaluation
                     if self.config.model.trans_type == "nonlinear_simple":
@@ -335,7 +335,10 @@ class Experiment:
 
                     err = utils.dict_to_numpy(outputs["err"])
                     # writer.write_scalars(step, err)
+                    
                     wandb.log({key: value for key, value in err.items()}, step=step)
+                    
+                    return err, self.model
 
             # if step == config.num_steps_train:
             #     ckpt_dir = os.path.join(workdir, "ckpt")

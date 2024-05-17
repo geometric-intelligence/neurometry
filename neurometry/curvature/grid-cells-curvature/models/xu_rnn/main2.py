@@ -15,6 +15,7 @@ from ray.tune.schedulers import AsyncHyperBandScheduler
 import wandb
 import default_config
 import torch
+import ml_collections
 
 
 def main():
@@ -102,11 +103,12 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
         expt_config = _convert_config(wandb_config)
 
         expt = experiment.Experiment(rng, expt_config, wandb_config.device)
-        expt.train_and_evaluate()
+        err, model = expt.train_and_evaluate()
+        error_reencode = err["reencode"]
 
         logging.info(f"Done: training for {run_name}")
 
-        _training_plot_log()
+        _training_plot_log(wandb_config,model)
 
         logging.info(f"Done: training's plot & log for {run_name}")
 
@@ -114,8 +116,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
 
         wandb.finish()
 
-        ### PASS SWEEP METRIC
-        return {"test_loss": 0.0}
+        return {"error_reencode": error_reencode}
 
     ### DEFINE SWEEP METRIC HERE??
     sweep_search = HyperOptSearch(metric=default_config.sweep_metric, mode="min")
@@ -147,8 +148,72 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
 
 
 
-def _convert_config():
-    raise NotImplementedError
+
+def _d(**kwargs):
+    """Helper of creating a config dict."""
+    return ml_collections.ConfigDict(initial_dictionary=kwargs)
+
+
+def _convert_config(wandb_config):
+    """Get the hyperparameters for the model"""
+    config = ml_collections.ConfigDict()
+
+    # training config
+    config.train = _d(
+        load_pretrain=wandb_config.load_pretrain,
+        pretrain_dir=wandb_config.pretrain_dir,
+        num_steps_train=wandb_config.num_steps_train,
+        lr=wandb_config.lr,
+        lr_decay_from=wandb_config.lr_decay_from,
+        steps_per_logging=wandb_config.steps_per_logging,
+        steps_per_large_logging=wandb_config.steps_per_large_logging,
+        steps_per_integration=wandb_config.steps_per_integration,
+        norm_v=wandb_config.norm_v,
+        positive_v=wandb_config.positive_v,
+        positive_u=wandb_config.positive_u,
+        optimizer_type=wandb_config.optimizer_type,
+    )
+
+    # simulated data
+    config.data = _d(
+        max_dr_trans=wandb_config.max_dr_trans,
+        max_dr_isometry=wandb_config.max_dr_isometry,
+        batch_size=wandb_config.batch_size,
+        sigma_data=wandb_config.sigma_data,
+        add_dx_0=wandb_config.add_dx_0,
+        small_int=wandb_config.small_int,
+    )
+
+    # model parameter
+    config.model = _d(
+        trans_type=wandb_config.trans_type,
+        rnn_step=wandb_config.rnn_step,
+        num_grid=wandb_config.num_grid,
+        num_neurons=wandb_config.num_neurons,
+        block_size=wandb_config.block_size,
+        sigma=wandb_config.sigma,
+        w_kernel=wandb_config.w_kernel,
+        w_trans=wandb_config.w_trans,
+        w_isometry=wandb_config.w_isometry,
+        w_reg_u=wandb_config.w_reg_u,
+        reg_decay_until=wandb_config.reg_decay_until,
+        adaptive_dr=wandb_config.adaptive_dr,
+        s_0 = wandb_config.s_0,
+        x_saliency = wandb_config.x_saliency,
+        sigma_saliency = wandb_config.sigma_saliency,
+        reward_step = wandb_config.reward_step,
+        saliency_type = wandb_config.saliency_type,
+    )
+
+    # path integration
+    config.integration = _d(
+        n_inte_step=wandb_config.n_inte_step,
+        n_traj=wandb_config.n_traj,
+        n_inte_step_vis=wandb_config.n_inte_step_vis,
+        n_traj_vis=wandb_config.n_traj_vis,
+    )
+
+    return config
 
 def _training_plot_log(wandb_config, model):
     arch = type(model).__name__
