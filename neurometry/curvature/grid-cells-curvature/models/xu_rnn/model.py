@@ -22,9 +22,8 @@ class GridCellConfig:
     w_reg_u: float
     adaptive_dr: bool
     s_0: float
-    x_star: torch.Tensor
-    sigma_star_x: float
-    sigma_star_y: float
+    x_saliency: float
+    sigma_saliency: float
     reward_step: int
     saliency_type: str
 
@@ -242,27 +241,19 @@ class GridCell(nn.Module):
             return self._saliency_kernel_left_half(x_grid)
         raise NotImplementedError
 
-    # def _saliency_kernel_gaussian(self, x_grid, sigma_star_x, sigma_star_y):
-    #     config = self.config
-    #     s_0 = config.s_0
-    #     x_star = config.x_star
-    #     sigma_star = config.sigma_star
-    #     s_x = s_0*torch.exp(-torch.sum((x_grid - x_star)**2, dim=1)/(2*sigma_star**2))/np.sqrt(2*np.pi*sigma_star**2)
-    #     return 1 + s_x
 
     def _saliency_kernel_gaussian(self, x_grid):
         config = self.config
         s_0 = config.s_0
-        x_star = config.x_star
-        sigma_star_x = config.sigma_star_x
-        sigma_star_y = config.sigma_star_y
+        x_saliency = torch.tensor([config.x_saliency, config.x_saliency]).to(x_grid.device)
+        sigma_saliency = config.sigma_saliency
 
         # Calculate the squared differences, scaled by respective sigma values
-        diff = x_grid - x_star
-        scaled_diff_sq = (diff[:, 0]**2 / sigma_star_x**2) + (diff[:, 1]**2 / sigma_star_y**2)
+        diff = x_grid - x_saliency
+        scaled_diff_sq = (diff[:, 0]**2 / sigma_saliency**2) + (diff[:, 1]**2 / sigma_saliency**2)
 
         # Compute the Gaussian function
-        normalization_factor = 2 * np.pi * sigma_star_x * sigma_star_y
+        normalization_factor = 2 * np.pi * sigma_saliency * sigma_saliency
         s_x = s_0 * torch.exp(-0.5 * scaled_diff_sq) / normalization_factor
 
         return 1 + s_x

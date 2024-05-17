@@ -42,7 +42,7 @@ def get_config():
     config.model = d(
         trans_type="nonlinear_simple",
         rnn_step=200, #10
-        num_grid=80, #40
+        num_grid=40,
         num_neurons=1800,
         block_size=12,
         sigma=0.07,
@@ -53,9 +53,8 @@ def get_config():
         reg_decay_until=15000,
         adaptive_dr=True,
         s_0 = 1000,
-        x_star = torch.tensor([0.8, 0.8]),
-        sigma_star_x = 0.1,
-        sigma_star_y = 0.1,
+        x_saliency = 0.8,
+        sigma_saliency = 0.1,
         reward_step = 10000,
         saliency_type = "gaussian",
     )
