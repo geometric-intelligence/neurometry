@@ -35,7 +35,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
         "lr": tune.choice(default_config.lr),
         "w_trans": tune.choice(default_config.w_trans),
         "rnn_step": tune.choice(default_config.rnn_step),
-        "rnn_inte_step": tune.choice(default_config.n_inte_step),
+        "n_inte_step": tune.choice(default_config.n_inte_step),
     }
 
     fixed_config = {
@@ -47,7 +47,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
         #parameters that are fixed across experiments
         # training parameters
         "load_pretrain": default_config.load_pretrain,
-        "pretrain_dir": default_config.pretrain_dir,
+        "pretrain_path": default_config.pretrain_path,
         "num_steps_train": default_config.num_steps_train,
         "lr_decay_from": default_config.lr_decay_from,
         "steps_per_logging": default_config.steps_per_logging,
@@ -78,7 +78,6 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
         "reward_step": default_config.reward_step,
         "saliency_type": default_config.saliency_type,
         # path integration parameters
-        "n_inte_step": default_config.n_inte_step,
         "n_traj": default_config.n_traj,
         "n_inte_step_vis": default_config.n_inte_step_vis,
         "n_traj_vis": default_config.n_traj_vis,
@@ -104,7 +103,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
 
         expt = experiment.Experiment(rng, expt_config, wandb_config.device)
         err, model = expt.train_and_evaluate()
-        error_reencode = err["reencode"]
+        error_reencode = err["err_reencode"]
 
         logging.info(f"Done: training for {run_name}")
 
@@ -138,7 +137,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
             num_samples=default_config.num_samples,
         ),
         run_config=air.RunConfig(
-            name=sweep_name, local_dir=default_config.ray_sweep_dir
+            name=sweep_name, storage_path=default_config.ray_sweep_dir
         ),
     )
     tuner.fit()
@@ -161,7 +160,7 @@ def _convert_config(wandb_config):
     # training config
     config.train = _d(
         load_pretrain=wandb_config.load_pretrain,
-        pretrain_dir=wandb_config.pretrain_dir,
+        pretrain_path=wandb_config.pretrain_path,
         num_steps_train=wandb_config.num_steps_train,
         lr=wandb_config.lr,
         lr_decay_from=wandb_config.lr_decay_from,
@@ -225,7 +224,13 @@ def _training_plot_log(wandb_config, model):
         default_config.trained_models_dir, f"{wandb_config.run_name}_model.pt"
     )
     torch.save(state, model_filename)
-    wandb.save(model_filename)
+    # wandb.save(model_filename)
+
+    # config_filename = os.path.join(
+    #     default_config.configs_dir, f"{wandb_config.run_name}_config.txt"
+    # )
+    # with open(config_filename,"a") as f:
+    #     print(wandb_config, file=f)
 
     activations_filename = os.path.join(
         default_config.activations_dir, f"{wandb_config.run_name}_activations.pkl"
@@ -237,9 +242,12 @@ def _training_plot_log(wandb_config, model):
     with open(activations_filename, "wb") as f:
         pickle.dump(activations, f)
 
-    raise NotImplementedError
-
 
 if __name__ == "__main__":
+    import tensorflow as tf
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    tf.get_logger().setLevel('ERROR')
+    import multiprocessing as mp
+    mp.set_start_method('spawn', force=True)
     main()
 

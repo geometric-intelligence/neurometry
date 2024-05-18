@@ -61,7 +61,7 @@ class Experiment:
 
         if config.train.load_pretrain:
             logging.info("==== load pretrain model ====")
-            ckpt_model_path = config.train.pretrain_dir
+            ckpt_model_path = config.train.pretrain_path
             logging.info(f"Loading pretrain model from {ckpt_model_path}")
             ckpt = torch.load(ckpt_model_path, map_location=device)
             self.model.load_state_dict(ckpt["state_dict"])
@@ -115,7 +115,7 @@ class Experiment:
             self.optimizer.zero_grad()
             loss, metrics_step = self.model(batch_data, step)
             loss.backward()
-            torch.nn.utils.clip_grad_norm(
+            torch.nn.utils.clip_grad_norm_(
                 parameters=self.model.parameters(), max_norm=10
             )
             self.optimizer.step()

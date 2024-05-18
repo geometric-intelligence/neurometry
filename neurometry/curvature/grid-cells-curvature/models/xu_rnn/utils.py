@@ -11,6 +11,9 @@ import imageio
 import matplotlib.cm as cm
 import numpy as np
 import tensorflow as tf
+# Suppress TensorFlow logging
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+tf.get_logger().setLevel('ERROR')
 import torch
 from absl import logging
 
@@ -27,6 +30,8 @@ from scipy.stats import norm
 
 if "/opt/ros/kinetic/lib/python2.7/dist-packages" in sys.path:
     sys.path.remove("/opt/ros/kinetic/lib/python2.7/dist-packages")
+
+
 
 
 def construct_block_diagonal_weights(
