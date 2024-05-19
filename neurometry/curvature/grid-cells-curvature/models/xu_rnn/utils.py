@@ -29,6 +29,8 @@ if "/opt/ros/kinetic/lib/python2.7/dist-packages" in sys.path:
     sys.path.remove("/opt/ros/kinetic/lib/python2.7/dist-packages")
 
 
+
+
 def construct_block_diagonal_weights(
     num_channel, num_block, block_size, name="M", antisym=False, diag=True
 ):

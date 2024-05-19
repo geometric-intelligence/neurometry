@@ -219,6 +219,10 @@ class EvalDataset:
         # uniformly wihtin the whole region.
         dx_list = self.dx_list
 
+        #breakpoint()
+        # print(type(n_steps))
+        # print(len(n_steps))
+
         dx_idx = self.rng.choice(len(dx_list), size=[n_traj * 10, n_steps])
         dx = dx_list[dx_idx]  # [N, T, 2]
         dx_cumsum = np.cumsum(dx, axis=1)  # [N, T, 2]

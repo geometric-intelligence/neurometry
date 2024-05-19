@@ -1,7 +1,5 @@
 """Main training loop."""
 
-import os
-import pickle
 
 import input_pipeline
 import ml_collections
@@ -18,6 +16,7 @@ from clu import metric_writers, periodic_actions
 from scores import GridScorer
 
 #tf.config.set_visible_devices([], "GPU")
+logging.set_verbosity(logging.INFO)
 
 
 class Experiment:
@@ -26,9 +25,9 @@ class Experiment:
         self.device = device
         self.rng = rng
 
-        wandb.init(
-            project="grid-cell-rnns", entity="bioshape-lab", config=config.to_dict()
-        )
+        # wandb.init(
+        #     project="grid-cell-rnns", entity="bioshape-lab", config=config.to_dict()
+        # )
 
         # initialize models
         logging.info("==== initialize model ====")
@@ -61,7 +60,7 @@ class Experiment:
 
         if config.train.load_pretrain:
             logging.info("==== load pretrain model ====")
-            ckpt_model_path = config.train.pretrain_dir
+            ckpt_model_path = config.train.pretrain_path
             logging.info(f"Loading pretrain model from {ckpt_model_path}")
             ckpt = torch.load(ckpt_model_path, map_location=device)
             self.model.load_state_dict(ckpt["state_dict"])
@@ -71,16 +70,16 @@ class Experiment:
         else:
             self.starting_step = 1
 
-    def train_and_evaluate(self, workdir):
+    def train_and_evaluate(self):
         logging.info("==== Experiment.train_and_evaluate() ===")
 
-        if not os.path.exists(workdir):
-            os.makedirs(workdir)
+        # if not os.path.exists(workdir):
+        #     os.makedirs(workdir)
 
         config = self.config.train
         logging.info("num_steps_train=%d", config.num_steps_train)
 
-        writer = metric_writers.create_default_writer(workdir)
+        writer = metric_writers.create_default_writer()
 
         hooks = []
         report_progress = periodic_actions.ReportProgress(
@@ -94,27 +93,30 @@ class Experiment:
         num_block = self.model_config.num_neurons // block_size
 
         logging.info("==== Start of training ====")
+        errors = []
         with metric_writers.ensure_flushes(writer):
             for step in range(self.starting_step, config.num_steps_train + self.starting_step):
+                #logging.info(f"Training step {step}/{config.num_steps_train + self.starting_step}")
                 batch_data = utils.dict_to_device(next(self.train_iter), self.device)
 
                 if 120000 > step > 10000:
-                    lr = 0.0003
-                elif step < 2000:  # warm up
-                    lr = config.lr / 2000 * step + 3e-6
-                elif step > 120000:
-                    lr = 0.0003 - (step - 120000) * (
-                        0.0003 / (config.num_steps_train - 120000)
-                    )
-                else:
-                    lr = config.lr - (config.lr - 0.0003) / 10000 * step
+                    #lr = 0.0003
+                    lr = config.lr
+                # elif step < 2000:  # warm up
+                #     lr = config.lr / 2000 * step + 3e-6
+                # elif step > 120000:
+                #     lr = 0.0003 - (step - 120000) * (
+                #         0.0003 / (config.num_steps_train - 120000)
+                #     )
+                # else:
+                #     lr = config.lr - (config.lr - 0.0003) / 10000 * step
                 for param_group in self.optimizer.param_groups:
                     param_group["lr"] = lr
 
                 self.optimizer.zero_grad()
                 loss, metrics_step = self.model(batch_data, step)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm(
+                torch.nn.utils.clip_grad_norm_(
                     parameters=self.model.parameters(), max_norm=10
                 )
                 self.optimizer.step()
@@ -152,24 +154,24 @@ class Experiment:
 
                 # Quick indication that training is happening.
                 logging.log_first_n(
-                    logging.WARNING, "Finished training step %d.", 3, step
+                    logging.WARNING, "Finished training step %d.", 10, step
                 )
-                for h in hooks:
-                    h(step)
+                # for h in hooks:
+                #     h(step)
 
                 if step % config.steps_per_logging == 0 or step == 1:
                     train_metrics = utils.average_appended_metrics(train_metrics)
-                    writer.write_scalars(step, train_metrics)
+                    # writer.write_scalars(step, train_metrics)
                     wandb.log(
                         {key: value for key, value in train_metrics.items()}, step=step
                     )
                     train_metrics = []
 
                 if step == self.starting_step or step % config.steps_per_large_logging == 0:
-                    ckpt_dir = os.path.join(workdir, "ckpt")
-                    if not os.path.exists(ckpt_dir):
-                        os.makedirs(ckpt_dir)
-                    self._save_checkpoint(step, ckpt_dir)
+                    # ckpt_dir = os.path.join(workdir, "ckpt")
+                    # if not os.path.exists(ckpt_dir):
+                    #     os.makedirs(ckpt_dir)
+                    # self._save_checkpoint(step, ckpt_dir)
                     # visualize v, u and heatmaps.
                     with torch.no_grad():
 
@@ -180,13 +182,13 @@ class Experiment:
                             )[:10, :10]
                             return utils.draw_heatmap(activations)
 
-                        images_v = visualize(self.model.encoder.v)
-                        images_u = visualize(self.model.decoder.u)
+                        # images_v = visualize(self.model.encoder.v)
+                        # images_u = visualize(self.model.decoder.u)
 
-                        writer.write_images(step, {"v": images_v})
-                        wandb.log({"v": wandb.Image(images_v)}, step=step)
-                        writer.write_images(step, {"u": images_u})
-                        wandb.log({"u": wandb.Image(images_u)}, step=step)
+                        #writer.write_images(step, {"v": images_v})
+                        #writer.write_images(step, {"u": images_u})
+                        # wandb.log({"v": wandb.Image(images_v)}, step=step)
+                        # wandb.log({"u": wandb.Image(images_u)}, step=step)
 
                         x_eval = torch.rand((3, 2)) * num_grid - 0.5
                         x_eval = x_eval.to(self.device)
@@ -230,20 +232,20 @@ class Experiment:
                         error_fixed_zero = error_fixed_zero / 40
 
                         heatmaps = heatmaps.cpu().detach().numpy()[None, ...]
-                        writer.write_images(
-                            step, {"vu_heatmap": utils.draw_heatmap(heatmaps)}
-                        )
-                        wandb.log(
-                            {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
-                            step=step,
-                        )
+                        # writer.write_images(
+                        #     step, {"vu_heatmap": utils.draw_heatmap(heatmaps)}
+                        # )
+                        # wandb.log(
+                        #     {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
+                        #     step=step,
+                        # )
 
                         err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
-                        writer.write_scalars(step, {"pred_x": err.item()})
-                        writer.write_scalars(step, {"error_fixed": error_fixed.item()})
-                        writer.write_scalars(
-                            step, {"error_fixed_zero": error_fixed_zero.item()}
-                        )
+                        # writer.write_scalars(step, {"pred_x": err.item()})
+                        # writer.write_scalars(step, {"error_fixed": error_fixed.item()})
+                        # writer.write_scalars(
+                        #     step, {"error_fixed_zero": error_fixed_zero.item()}
+                        # )
                         wandb.log(
                             {
                                 "pred_x": err.item(),
@@ -271,17 +273,17 @@ class Experiment:
                             )
                             print((scale_tensor * num_grid).detach().numpy())
 
-                            writer.write_scalars(step, {"score": score.item()})
-                            writer.write_scalars(
-                                step, {"scale": scale_tensor[0].item() * num_grid}
-                            )
-                            writer.write_scalars(
-                                step,
-                                {
-                                    "scale_mean": torch.mean(scale_tensor).item()
-                                    * num_grid
-                                },
-                            )
+                            # writer.write_scalars(step, {"score": score.item()})
+                            # writer.write_scalars(
+                            #     step, {"scale": scale_tensor[0].item() * num_grid}
+                            # )
+                            # writer.write_scalars(
+                            #     step,
+                            #     {
+                            #         "scale_mean": torch.mean(scale_tensor).item()
+                            #         * num_grid
+                            #     },
+                            # )
                             wandb.log(
                                 {
                                     "score": score.item(),
@@ -303,26 +305,26 @@ class Experiment:
                             )
 
                         outputs = utils.dict_to_numpy(outputs)
-                        images = {
-                            # [N, T, 2]
-                            "trajs": utils.draw_trajs(
-                                outputs["traj_real"],
-                                outputs["traj_pred"]["vanilla"],
-                                num_grid,
-                            ),
-                            "trajs_reencode": utils.draw_trajs(
-                                outputs["traj_real"],
-                                outputs["traj_pred"]["reencode"],
-                                num_grid,
-                            ),
-                            # [N, T[::5], H, W]
-                            "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
-                        }
-                        writer.write_images(step, images)
-                        wandb.log(
-                            {key: wandb.Image(value) for key, value in images.items()},
-                            step=step,
-                        )
+                        # images = {
+                        #     # [N, T, 2]
+                        #     "trajs": utils.draw_trajs(
+                        #         outputs["traj_real"],
+                        #         outputs["traj_pred"]["vanilla"],
+                        #         num_grid,
+                        #     ),
+                        #     "trajs_reencode": utils.draw_trajs(
+                        #         outputs["traj_real"],
+                        #         outputs["traj_pred"]["reencode"],
+                        #         num_grid,
+                        #     ),
+                        #     # [N, T[::5], H, W]
+                        #     "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
+                        # }
+                        # writer.write_images(step, images)
+                        # wandb.log(
+                        #     {key: wandb.Image(value) for key, value in images.items()},
+                        #     step=step,
+                        # )
 
                         # for quantitative evaluation
                         if self.config.model.trans_type == "nonlinear_simple":
@@ -333,14 +335,18 @@ class Experiment:
                             )
 
                         err = utils.dict_to_numpy(outputs["err"])
-                        writer.write_scalars(step, err)
-                        wandb.log({key: value for key, value in err.items()}, step=step)
+                        # writer.write_scalars(step, err)
 
-                if step == config.num_steps_train:
-                    ckpt_dir = os.path.join(workdir, "ckpt")
-                    if not os.path.exists(ckpt_dir):
-                        os.makedirs(ckpt_dir)
-                    self._save_checkpoint(step, ckpt_dir)
+                        wandb.log({key: value for key, value in err.items()}, step=step)
+                        errors.append(err)
+
+        return errors, self.model
+
+                # if step == config.num_steps_train:
+                #     ckpt_dir = os.path.join(workdir, "ckpt")
+                #     if not os.path.exists(ckpt_dir):
+                #         os.makedirs(ckpt_dir)
+                #     self._save_checkpoint(step, ckpt_dir)
 
     def grid_scale(self):
         #num_interval = self.model_config.num_grid
@@ -397,41 +403,41 @@ class Experiment:
 
         return scale_tensor, score_tensor, max_scale
 
-    def _save_checkpoint(self, step, ckpt_dir):
-        """
-        Saving checkpoints
-        :param epoch: current epoch number
-        :param log: logging information of the epoch
-        :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
-        """
-        arch = type(self.model).__name__
-        state = {
-            "arch": arch,
-            "step": step,
-            "state_dict": self.model.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
-            "config": self.config,
-        }
-        model_dir = os.path.join(ckpt_dir, "model")
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-        model_filename = os.path.join(model_dir, f"checkpoint-step{step}.pth")
-        logging.info(f"Saving model checkpoint: {model_filename} ...")
-        torch.save(state, model_filename)
-        wandb.save(model_filename)
+    # def _save_checkpoint(self, step, ckpt_dir):
+    #     """
+    #     Saving checkpoints
+    #     :param epoch: current epoch number
+    #     :param log: logging information of the epoch
+    #     :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
+    #     """
+    #     arch = type(self.model).__name__
+    #     state = {
+    #         "arch": arch,
+    #         "step": step,
+    #         "state_dict": self.model.state_dict(),
+    #         "optimizer": self.optimizer.state_dict(),
+    #         "config": self.config,
+    #     }
+    #     model_dir = os.path.join(ckpt_dir, "model")
+    #     if not os.path.exists(model_dir):
+    #         os.makedirs(model_dir)
+    #     model_filename = os.path.join(model_dir, f"checkpoint-step{step}.pth")
+    #     logging.info(f"Saving model checkpoint: {model_filename} ...")
+    #     torch.save(state, model_filename)
+    #     wandb.save(model_filename)
 
-        activations_dir = os.path.join(ckpt_dir, "activations")
-        if not os.path.exists(activations_dir):
-            os.makedirs(activations_dir)
-        activations_filename = os.path.join(
-            activations_dir, f"activations-step{step}.pkl"
-        )
-        activations = {
-            "v": self.model.encoder.v.data.cpu().detach().numpy(),
-            "u": self.model.decoder.u.data.cpu().detach().numpy(),
-        }
-        with open(activations_filename, "wb") as f:
-            pickle.dump(activations, f)
+    #     activations_dir = os.path.join(ckpt_dir, "activations")
+    #     if not os.path.exists(activations_dir):
+    #         os.makedirs(activations_dir)
+    #     activations_filename = os.path.join(
+    #         activations_dir, f"activations-step{step}.pkl"
+    #     )
+    #     activations = {
+    #         "v": self.model.encoder.v.data.cpu().detach().numpy(),
+    #         "u": self.model.decoder.u.data.cpu().detach().numpy(),
+    #     }
+    #     with open(activations_filename, "wb") as f:
+    #         pickle.dump(activations, f)
 
 
-        logging.info(f"Saving activations: {activations_filename} ...")
+    #     logging.info(f"Saving activations: {activations_filename} ...")
