@@ -2,7 +2,6 @@ import os
 import pickle
 
 import default_config
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import wandb
@@ -147,7 +146,7 @@ def _draw_heatmap(activations, title):
         weight = activations[i]
         vmin, vmax = weight.min() - 0.01, weight.max()
 
-        cmap = cm.get_cmap("jet", 1000)
+        cmap = plt.get_cmap("jet", 1000)
         cmap.set_under("w")
 
         ax.imshow(

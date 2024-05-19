@@ -34,6 +34,11 @@ class Experiment:
         self.model_config = model.GridCellConfig(**config.model)
         self.model = model.GridCell(self.model_config).to(device)
 
+        if config.train.freeze_decoder:
+            logging.info("==== freeze decoder ====")
+            for param in self.model.decoder.parameters():
+                param.requires_grad = False
+
         # initialize dataset
         logging.info("==== initialize dataset ====")
         self.train_dataset = input_pipeline.TrainDataset(self.rng, config.data, self.model_config)
@@ -47,15 +52,15 @@ class Experiment:
         logging.info("==== initialize optimizer ====")
         if config.train.optimizer_type == "adam":
             self.optimizer = torch.optim.Adam(
-                self.model.parameters(), lr=config.train.lr
+                filter(lambda p: p.requires_grad, self.model.parameters()), lr=config.train.lr
             )
         elif config.train.optimizer_type == "adam_w":
             self.optimizer = torch.optim.AdamW(
-                self.model.parameters(), lr=config.train.lr
+                filter(lambda p: p.requires_grad, self.model.parameters()), lr=config.train.lr
             )
         elif config.train.optimizer_type == "sgd":
             self.optimizer = torch.optim.SGD(
-                self.model.parameters(), lr=config.train.lr, momentum=0.9
+                filter(lambda p: p.requires_grad, self.model.parameters()), lr=config.train.lr, momentum=0.9
             )
 
         if config.train.load_pretrain:
@@ -69,6 +74,7 @@ class Experiment:
             self.starting_step = ckpt["step"]
         else:
             self.starting_step = 1
+
 
     def train_and_evaluate(self):
         logging.info("==== Experiment.train_and_evaluate() ===")
