@@ -16,20 +16,21 @@ import wandb
 import default_config
 import torch
 import ml_collections
+import eval
 
 
 def main():
     """ Launch all experiments."""
-    rng = np.random.default_rng(0)
+    #rng = np.random.default_rng(0)
 
     # Generate experiment parameter combinations
     for (s_0, sigma_saliency, x_saliency) in itertools.product(default_config.s_0,default_config.sigma_saliency,default_config.x_saliency):
         sweep_name = f"s_0={s_0}_sigma_saliency={sigma_saliency}_x_saliency={x_saliency}"
         logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
-        main_sweep(sweep_name=sweep_name, s_0=s_0, sigma_saliency=sigma_saliency, x_saliency=x_saliency,rng=rng)
+        main_sweep(sweep_name=sweep_name, s_0=s_0, sigma_saliency=sigma_saliency, x_saliency=x_saliency)
 
 
-def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
+def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
     """Launch a single experiment."""
     sweep_config = {
         "lr": tune.choice(default_config.lr),
@@ -98,18 +99,18 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency, rng):
         with open(wandb_config_path, "w") as config_file:
             json.dump(dict(wandb_config), config_file)
 
-        ###TODO: IMPLEMENT _CONVERT_CONFIG 
         expt_config = _convert_config(wandb_config)
 
+        rng = np.random.default_rng()
+
         expt = experiment.Experiment(rng, expt_config, wandb_config.device)
-        err, model = expt.train_and_evaluate()
-        error_reencode = err["err_reencode"]
+        errors, model = expt.train_and_evaluate()
+        error_reencode = errors[-1]["err_reencode"]
 
         logging.info(f"Done: training for {run_name}")
-
-        _training_plot_log(wandb_config,model)
-
-        logging.info(f"Done: training's plot & log for {run_name}")
+        if plot:
+            _training_plot_log(wandb_config,model)
+            logging.info(f"Done: training's plot & log for {run_name}")
 
         logging.info(f"\n------> COMPLETED run: {run_name}\n")
 
@@ -241,13 +242,11 @@ def _training_plot_log(wandb_config, model):
     }
     with open(activations_filename, "wb") as f:
         pickle.dump(activations, f)
+    
+    figs_dir = default_config.figs_dir
+    eval.plot_experiment(wandb_config.run_name,figs_dir)
 
 
 if __name__ == "__main__":
-    import tensorflow as tf
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    tf.get_logger().setLevel('ERROR')
-    import multiprocessing as mp
-    mp.set_start_method('spawn', force=True)
     main()
 

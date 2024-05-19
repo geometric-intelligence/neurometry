@@ -141,7 +141,7 @@ def plot_all_barcodes_with_null(diagrams_1, dataset_name_1, diagrams_2=None, dat
                 ax.set_title(dataset_name_2, fontsize=30)
 
     plt.tight_layout()
-    plt.show()
+    return fig
 
 
 

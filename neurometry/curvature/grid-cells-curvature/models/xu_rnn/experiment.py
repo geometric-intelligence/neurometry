@@ -14,10 +14,11 @@ import torch.nn as nn
 import utils
 import wandb
 from absl import logging
-# from clu import metric_writers, periodic_actions
+from clu import metric_writers, periodic_actions
 from scores import GridScorer
 
 #tf.config.set_visible_devices([], "GPU")
+logging.set_verbosity(logging.INFO)
 
 
 class Experiment:
@@ -80,13 +81,13 @@ class Experiment:
         config = self.config.train
         logging.info("num_steps_train=%d", config.num_steps_train)
 
-        # writer = metric_writers.create_default_writer(workdir)
+        writer = metric_writers.create_default_writer()
 
-        # hooks = []
-        # report_progress = periodic_actions.ReportProgress(
-        #     num_train_steps=config.num_steps_train, writer=writer
-        # )
-        # hooks += [report_progress]
+        hooks = []
+        report_progress = periodic_actions.ReportProgress(
+            num_train_steps=config.num_steps_train, writer=writer
+        )
+        hooks += [report_progress]
 
         train_metrics = []
         block_size = self.model_config.block_size
@@ -94,257 +95,260 @@ class Experiment:
         num_block = self.model_config.num_neurons // block_size
 
         logging.info("==== Start of training ====")
-        #with metric_writers.ensure_flushes(writer):
-        for step in range(self.starting_step, config.num_steps_train + self.starting_step):
-            batch_data = utils.dict_to_device(next(self.train_iter), self.device)
+        errors = []
+        with metric_writers.ensure_flushes(writer):
+            for step in range(self.starting_step, config.num_steps_train + self.starting_step):
+                #logging.info(f"Training step {step}/{config.num_steps_train + self.starting_step}")
+                batch_data = utils.dict_to_device(next(self.train_iter), self.device)
 
-            if 120000 > step > 10000:
-                #lr = 0.0003
-                lr = config.lr
-            # elif step < 2000:  # warm up
-            #     lr = config.lr / 2000 * step + 3e-6
-            # elif step > 120000:
-            #     lr = 0.0003 - (step - 120000) * (
-            #         0.0003 / (config.num_steps_train - 120000)
-            #     )
-            # else:
-            #     lr = config.lr - (config.lr - 0.0003) / 10000 * step
-            for param_group in self.optimizer.param_groups:
-                param_group["lr"] = lr
+                if 120000 > step > 10000:
+                    #lr = 0.0003
+                    lr = config.lr
+                # elif step < 2000:  # warm up
+                #     lr = config.lr / 2000 * step + 3e-6
+                # elif step > 120000:
+                #     lr = 0.0003 - (step - 120000) * (
+                #         0.0003 / (config.num_steps_train - 120000)
+                #     )
+                # else:
+                #     lr = config.lr - (config.lr - 0.0003) / 10000 * step
+                for param_group in self.optimizer.param_groups:
+                    param_group["lr"] = lr
 
-            self.optimizer.zero_grad()
-            loss, metrics_step = self.model(batch_data, step)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(
-                parameters=self.model.parameters(), max_norm=10
-            )
-            self.optimizer.step()
-
-            if self.model_config.trans_type == "nonlinear_simple":
-                if config.positive_v:
-                    with torch.no_grad():
-                        self.model.encoder.v.data = self.model.encoder.v.data.clamp(
-                            min=0.0
-                        )
-
-                # positive b
-                self.model.trans.b.data = self.model.trans.b.data.abs()
-            elif self.model_config.trans_type == "lstm":
-                if config.positive_u:
-                    with torch.no_grad():
-                        self.model.decoder.u.data = self.model.decoder.u.data.clamp(
-                            min=0.0
-                        )
-
-            if config.norm_v:
-                with torch.no_grad():
-                    v = self.model.encoder.v.data.reshape(
-                        (-1, block_size, num_grid, num_grid)
-                    )
-                    v_normed = nn.functional.normalize(v, dim=1) / np.sqrt(
-                        num_block
-                    )
-                    self.model.encoder.v.data = v_normed.reshape(
-                        (-1, num_grid, num_grid)
-                    )
-
-            metrics_step = utils.dict_to_numpy(metrics_step)
-            train_metrics.append(metrics_step)
-
-            # Quick indication that training is happening.
-            logging.log_first_n(
-                logging.WARNING, "Finished training step %d.", 3, step
-            )
-            # for h in hooks:
-            #     h(step)
-
-            if step % config.steps_per_logging == 0 or step == 1:
-                train_metrics = utils.average_appended_metrics(train_metrics)
-                # writer.write_scalars(step, train_metrics)
-                wandb.log(
-                    {key: value for key, value in train_metrics.items()}, step=step
+                self.optimizer.zero_grad()
+                loss, metrics_step = self.model(batch_data, step)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    parameters=self.model.parameters(), max_norm=10
                 )
-                train_metrics = []
+                self.optimizer.step()
 
-            if step == self.starting_step or step % config.steps_per_large_logging == 0:
-                # ckpt_dir = os.path.join(workdir, "ckpt")
-                # if not os.path.exists(ckpt_dir):
-                #     os.makedirs(ckpt_dir)
-                # self._save_checkpoint(step, ckpt_dir)
-                # visualize v, u and heatmaps.
-                with torch.no_grad():
+                if self.model_config.trans_type == "nonlinear_simple":
+                    if config.positive_v:
+                        with torch.no_grad():
+                            self.model.encoder.v.data = self.model.encoder.v.data.clamp(
+                                min=0.0
+                            )
 
-                    def visualize(activations):
-                        activations = activations.data.cpu().detach().numpy()
-                        activations = activations.reshape(
+                    # positive b
+                    self.model.trans.b.data = self.model.trans.b.data.abs()
+                elif self.model_config.trans_type == "lstm":
+                    if config.positive_u:
+                        with torch.no_grad():
+                            self.model.decoder.u.data = self.model.decoder.u.data.clamp(
+                                min=0.0
+                            )
+
+                if config.norm_v:
+                    with torch.no_grad():
+                        v = self.model.encoder.v.data.reshape(
                             (-1, block_size, num_grid, num_grid)
-                        )[:10, :10]
-                        return utils.draw_heatmap(activations)
-
-                    images_v = visualize(self.model.encoder.v)
-                    images_u = visualize(self.model.decoder.u)
-
-                    #writer.write_images(step, {"v": images_v})
-                    #writer.write_images(step, {"u": images_u})
-                    # wandb.log({"v": wandb.Image(images_v)}, step=step)
-                    # wandb.log({"u": wandb.Image(images_u)}, step=step)
-
-                    x_eval = torch.rand((3, 2)) * num_grid - 0.5
-                    x_eval = x_eval.to(self.device)
-                    v_x_eval = self.model.encoder(x_eval)
-                    x_pred, heatmaps, _ = self.model.decoder.decode(v_x_eval)
-
-                    # add fixed point condidtion check
-                    x1 = torch.arange(0, 40, 1).repeat_interleave(40)
-                    x2 = torch.arange(0, 40, 1).repeat(40)
-                    x1 = torch.unsqueeze(x1, 1)
-                    x2 = torch.unsqueeze(x2, 1)
-                    x = torch.cat((x1, x2), axis=1)
-
-                    error_fixed = 0.0
-                    error_fixed_zero = 0.0
-                    loss = nn.MSELoss()
-
-                    for i in range(40):
-                        start = i * 40
-                        end = start + 40
-                        input = x[start:end,]
-                        v_x = self.model.encoder(input.to(self.device))
-                        if self.config.model.trans_type == "nonlinear_simple":
-                            trans_v_x = self.model.trans(
-                                v_x, torch.zeros((40, 2)).to(self.device)
-                            )
-                        elif self.config.model.trans_type == "lstm":
-                            trans_v_x = self.model.trans(
-                                v_x, torch.zeros((40, 1, 2)).to(self.device)
-                            )
-                        x_t, _, _ = self.model.decoder.decode(trans_v_x)
-                        x_t_zero, _, _ = self.model.decoder.decode(v_x)
-                        error_fixed += loss(
-                            input.float().to(self.device), x_t.float()
                         )
-                        error_fixed_zero += loss(
-                            input.float().to(self.device), x_t_zero.float()
+                        v_normed = nn.functional.normalize(v, dim=1) / np.sqrt(
+                            num_block
+                        )
+                        self.model.encoder.v.data = v_normed.reshape(
+                            (-1, num_grid, num_grid)
                         )
 
-                    error_fixed = error_fixed / 40
-                    error_fixed_zero = error_fixed_zero / 40
+                metrics_step = utils.dict_to_numpy(metrics_step)
+                train_metrics.append(metrics_step)
 
-                    heatmaps = heatmaps.cpu().detach().numpy()[None, ...]
-                    # writer.write_images(
-                    #     step, {"vu_heatmap": utils.draw_heatmap(heatmaps)}
-                    # )
-                    # wandb.log(
-                    #     {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
-                    #     step=step,
-                    # )
+                # Quick indication that training is happening.
+                logging.log_first_n(
+                    logging.WARNING, "Finished training step %d.", 10, step
+                )
+                # for h in hooks:
+                #     h(step)
 
-                    err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
-                    # writer.write_scalars(step, {"pred_x": err.item()})
-                    # writer.write_scalars(step, {"error_fixed": error_fixed.item()})
-                    # writer.write_scalars(
-                    #     step, {"error_fixed_zero": error_fixed_zero.item()}
-                    # )
+                if step % config.steps_per_logging == 0 or step == 1:
+                    train_metrics = utils.average_appended_metrics(train_metrics)
+                    # writer.write_scalars(step, train_metrics)
                     wandb.log(
-                        {
-                            "pred_x": err.item(),
-                            "error_fixed": error_fixed.item(),
-                            "error_fixed_zero": error_fixed_zero.item(),
-                        },
-                        step=step,
+                        {key: value for key, value in train_metrics.items()}, step=step
                     )
+                    train_metrics = []
 
-            if step % config.steps_per_integration == 0 or step == self.starting_step:
-                # perform path integration
-                with torch.no_grad():
-                    eval_data = utils.dict_to_device(
-                        next(self.eval_iter), self.device
-                    )
+                if step == self.starting_step or step % config.steps_per_large_logging == 0:
+                    # ckpt_dir = os.path.join(workdir, "ckpt")
+                    # if not os.path.exists(ckpt_dir):
+                    #     os.makedirs(ckpt_dir)
+                    # self._save_checkpoint(step, ckpt_dir)
+                    # visualize v, u and heatmaps.
+                    with torch.no_grad():
 
-                    if 10000 < step < 20000:
-                        scale_tensor, score, max_scale = self.grid_scale()
-                        scaling = (
-                            max_scale * num_grid / self.config.data.max_dr_isometry
-                        )
-                        scale_tensor = scale_tensor / scaling
-                        self.train_dataset.scale_vector = (
-                            (scale_tensor * num_grid).detach().numpy()
-                        )
-                        print((scale_tensor * num_grid).detach().numpy())
+                        def visualize(activations):
+                            activations = activations.data.cpu().detach().numpy()
+                            activations = activations.reshape(
+                                (-1, block_size, num_grid, num_grid)
+                            )[:10, :10]
+                            return utils.draw_heatmap(activations)
 
-                        # writer.write_scalars(step, {"score": score.item()})
-                        # writer.write_scalars(
-                        #     step, {"scale": scale_tensor[0].item() * num_grid}
+                        # images_v = visualize(self.model.encoder.v)
+                        # images_u = visualize(self.model.decoder.u)
+
+                        #writer.write_images(step, {"v": images_v})
+                        #writer.write_images(step, {"u": images_u})
+                        # wandb.log({"v": wandb.Image(images_v)}, step=step)
+                        # wandb.log({"u": wandb.Image(images_u)}, step=step)
+
+                        x_eval = torch.rand((3, 2)) * num_grid - 0.5
+                        x_eval = x_eval.to(self.device)
+                        v_x_eval = self.model.encoder(x_eval)
+                        x_pred, heatmaps, _ = self.model.decoder.decode(v_x_eval)
+
+                        # add fixed point condidtion check
+                        x1 = torch.arange(0, 40, 1).repeat_interleave(40)
+                        x2 = torch.arange(0, 40, 1).repeat(40)
+                        x1 = torch.unsqueeze(x1, 1)
+                        x2 = torch.unsqueeze(x2, 1)
+                        x = torch.cat((x1, x2), axis=1)
+
+                        error_fixed = 0.0
+                        error_fixed_zero = 0.0
+                        loss = nn.MSELoss()
+
+                        for i in range(40):
+                            start = i * 40
+                            end = start + 40
+                            input = x[start:end,]
+                            v_x = self.model.encoder(input.to(self.device))
+                            if self.config.model.trans_type == "nonlinear_simple":
+                                trans_v_x = self.model.trans(
+                                    v_x, torch.zeros((40, 2)).to(self.device)
+                                )
+                            elif self.config.model.trans_type == "lstm":
+                                trans_v_x = self.model.trans(
+                                    v_x, torch.zeros((40, 1, 2)).to(self.device)
+                                )
+                            x_t, _, _ = self.model.decoder.decode(trans_v_x)
+                            x_t_zero, _, _ = self.model.decoder.decode(v_x)
+                            error_fixed += loss(
+                                input.float().to(self.device), x_t.float()
+                            )
+                            error_fixed_zero += loss(
+                                input.float().to(self.device), x_t_zero.float()
+                            )
+
+                        error_fixed = error_fixed / 40
+                        error_fixed_zero = error_fixed_zero / 40
+
+                        heatmaps = heatmaps.cpu().detach().numpy()[None, ...]
+                        # writer.write_images(
+                        #     step, {"vu_heatmap": utils.draw_heatmap(heatmaps)}
                         # )
+                        # wandb.log(
+                        #     {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
+                        #     step=step,
+                        # )
+
+                        err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
+                        # writer.write_scalars(step, {"pred_x": err.item()})
+                        # writer.write_scalars(step, {"error_fixed": error_fixed.item()})
                         # writer.write_scalars(
-                        #     step,
-                        #     {
-                        #         "scale_mean": torch.mean(scale_tensor).item()
-                        #         * num_grid
-                        #     },
+                        #     step, {"error_fixed_zero": error_fixed_zero.item()}
                         # )
                         wandb.log(
                             {
-                                "score": score.item(),
-                                "scale": scale_tensor[0].item() * num_grid,
-                                "scale_mean": torch.mean(scale_tensor).item()
-                                * num_grid,
+                                "pred_x": err.item(),
+                                "error_fixed": error_fixed.item(),
+                                "error_fixed_zero": error_fixed_zero.item(),
                             },
                             step=step,
                         )
 
-                    # for visualization
-                    if self.config.model.trans_type == "nonlinear_simple":
-                        outputs = self.model.path_integration(
-                            **eval_data["traj_vis"]
-                        )
-                    elif self.config.model.trans_type == "lstm":
-                        outputs = self.model.path_integration_lstm(
-                            **eval_data["traj_vis"]
+                if step % config.steps_per_integration == 0 or step == self.starting_step:
+                    # perform path integration
+                    with torch.no_grad():
+                        eval_data = utils.dict_to_device(
+                            next(self.eval_iter), self.device
                         )
 
-                    outputs = utils.dict_to_numpy(outputs)
-                    images = {
-                        # [N, T, 2]
-                        "trajs": utils.draw_trajs(
-                            outputs["traj_real"],
-                            outputs["traj_pred"]["vanilla"],
-                            num_grid,
-                        ),
-                        "trajs_reencode": utils.draw_trajs(
-                            outputs["traj_real"],
-                            outputs["traj_pred"]["reencode"],
-                            num_grid,
-                        ),
-                        # [N, T[::5], H, W]
-                        "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
-                    }
-                    # writer.write_images(step, images)
-                    # wandb.log(
-                    #     {key: wandb.Image(value) for key, value in images.items()},
-                    #     step=step,
-                    # )
+                        if 10000 < step < 20000:
+                            scale_tensor, score, max_scale = self.grid_scale()
+                            scaling = (
+                                max_scale * num_grid / self.config.data.max_dr_isometry
+                            )
+                            scale_tensor = scale_tensor / scaling
+                            self.train_dataset.scale_vector = (
+                                (scale_tensor * num_grid).detach().numpy()
+                            )
+                            print((scale_tensor * num_grid).detach().numpy())
 
-                    # for quantitative evaluation
-                    if self.config.model.trans_type == "nonlinear_simple":
-                        outputs = self.model.path_integration(**eval_data["traj"])
-                    elif self.config.model.trans_type == "lstm":
-                        outputs = self.model.path_integration_lstm(
-                            **eval_data["traj"]
-                        )
+                            # writer.write_scalars(step, {"score": score.item()})
+                            # writer.write_scalars(
+                            #     step, {"scale": scale_tensor[0].item() * num_grid}
+                            # )
+                            # writer.write_scalars(
+                            #     step,
+                            #     {
+                            #         "scale_mean": torch.mean(scale_tensor).item()
+                            #         * num_grid
+                            #     },
+                            # )
+                            wandb.log(
+                                {
+                                    "score": score.item(),
+                                    "scale": scale_tensor[0].item() * num_grid,
+                                    "scale_mean": torch.mean(scale_tensor).item()
+                                    * num_grid,
+                                },
+                                step=step,
+                            )
 
-                    err = utils.dict_to_numpy(outputs["err"])
-                    # writer.write_scalars(step, err)
-                    
-                    wandb.log({key: value for key, value in err.items()}, step=step)
-                    
-                    return err, self.model
+                        # for visualization
+                        if self.config.model.trans_type == "nonlinear_simple":
+                            outputs = self.model.path_integration(
+                                **eval_data["traj_vis"]
+                            )
+                        elif self.config.model.trans_type == "lstm":
+                            outputs = self.model.path_integration_lstm(
+                                **eval_data["traj_vis"]
+                            )
 
-            # if step == config.num_steps_train:
-            #     ckpt_dir = os.path.join(workdir, "ckpt")
-            #     if not os.path.exists(ckpt_dir):
-            #         os.makedirs(ckpt_dir)
-            #     self._save_checkpoint(step, ckpt_dir)
+                        outputs = utils.dict_to_numpy(outputs)
+                        images = {
+                            # [N, T, 2]
+                            "trajs": utils.draw_trajs(
+                                outputs["traj_real"],
+                                outputs["traj_pred"]["vanilla"],
+                                num_grid,
+                            ),
+                            "trajs_reencode": utils.draw_trajs(
+                                outputs["traj_real"],
+                                outputs["traj_pred"]["reencode"],
+                                num_grid,
+                            ),
+                            # [N, T[::5], H, W]
+                            "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
+                        }
+                        # writer.write_images(step, images)
+                        # wandb.log(
+                        #     {key: wandb.Image(value) for key, value in images.items()},
+                        #     step=step,
+                        # )
+
+                        # for quantitative evaluation
+                        if self.config.model.trans_type == "nonlinear_simple":
+                            outputs = self.model.path_integration(**eval_data["traj"])
+                        elif self.config.model.trans_type == "lstm":
+                            outputs = self.model.path_integration_lstm(
+                                **eval_data["traj"]
+                            )
+
+                        err = utils.dict_to_numpy(outputs["err"])
+                        # writer.write_scalars(step, err)
+                        
+                        wandb.log({key: value for key, value in err.items()}, step=step)
+                        errors.append(err)
+                        
+        return errors, self.model
+
+                # if step == config.num_steps_train:
+                #     ckpt_dir = os.path.join(workdir, "ckpt")
+                #     if not os.path.exists(ckpt_dir):
+                #         os.makedirs(ckpt_dir)
+                #     self._save_checkpoint(step, ckpt_dir)
 
     def grid_scale(self):
         #num_interval = self.model_config.num_grid
