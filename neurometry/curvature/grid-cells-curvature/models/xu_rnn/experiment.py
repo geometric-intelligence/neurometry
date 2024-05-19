@@ -1,7 +1,5 @@
 """Main training loop."""
 
-import os
-import pickle
 
 import input_pipeline
 import ml_collections
@@ -307,21 +305,21 @@ class Experiment:
                             )
 
                         outputs = utils.dict_to_numpy(outputs)
-                        images = {
-                            # [N, T, 2]
-                            "trajs": utils.draw_trajs(
-                                outputs["traj_real"],
-                                outputs["traj_pred"]["vanilla"],
-                                num_grid,
-                            ),
-                            "trajs_reencode": utils.draw_trajs(
-                                outputs["traj_real"],
-                                outputs["traj_pred"]["reencode"],
-                                num_grid,
-                            ),
-                            # [N, T[::5], H, W]
-                            "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
-                        }
+                        # images = {
+                        #     # [N, T, 2]
+                        #     "trajs": utils.draw_trajs(
+                        #         outputs["traj_real"],
+                        #         outputs["traj_pred"]["vanilla"],
+                        #         num_grid,
+                        #     ),
+                        #     "trajs_reencode": utils.draw_trajs(
+                        #         outputs["traj_real"],
+                        #         outputs["traj_pred"]["reencode"],
+                        #         num_grid,
+                        #     ),
+                        #     # [N, T[::5], H, W]
+                        #     "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
+                        # }
                         # writer.write_images(step, images)
                         # wandb.log(
                         #     {key: wandb.Image(value) for key, value in images.items()},
@@ -338,10 +336,10 @@ class Experiment:
 
                         err = utils.dict_to_numpy(outputs["err"])
                         # writer.write_scalars(step, err)
-                        
+
                         wandb.log({key: value for key, value in err.items()}, step=step)
                         errors.append(err)
-                        
+
         return errors, self.model
 
                 # if step == config.num_steps_train:

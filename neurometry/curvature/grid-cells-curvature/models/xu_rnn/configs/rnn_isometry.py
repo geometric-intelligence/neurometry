@@ -1,5 +1,4 @@
 import ml_collections
-import torch
 
 
 def d(**kwargs):

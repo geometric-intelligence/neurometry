@@ -1,5 +1,6 @@
-import torch
 import os
+
+import torch
 
 ###-----DEVICE-----###
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -23,8 +24,8 @@ pretrain_path=os.path.join(os.getcwd(),"logs/rnn_isometry/20240418-180712/ckpt/m
 num_steps_train=7500  # 10000
 lr_decay_from=10000
 steps_per_logging=20
-steps_per_large_logging=50  # 500
-steps_per_integration=80 #2000
+steps_per_large_logging=500  # 500
+steps_per_integration=1000 #2000
 norm_v=True
 positive_v=True
 positive_u=False
@@ -79,4 +80,4 @@ if not os.path.exists(figs_dir):
 
 ###-----RAY TUNE PARAMETERS-----###
 sweep_metric= "error_reencode"
-num_samples = 1
+num_samples = 1000

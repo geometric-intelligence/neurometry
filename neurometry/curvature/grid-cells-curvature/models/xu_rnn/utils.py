@@ -11,9 +11,6 @@ import imageio
 import matplotlib.cm as cm
 import numpy as np
 import tensorflow as tf
-# Suppress TensorFlow logging
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-tf.get_logger().setLevel('ERROR')
 import torch
 from absl import logging
 

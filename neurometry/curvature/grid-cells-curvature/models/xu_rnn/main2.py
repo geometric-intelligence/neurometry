@@ -1,22 +1,19 @@
-import os
+import itertools
 import json
+import logging
+import os
 import pickle
 
-import experiment
-import numpy as np
-import utils
-from absl import app, flags
-from ml_collections import config_flags
-import itertools
-import logging
-from ray import air, tune
-from ray.tune.search.hyperopt import HyperOptSearch
-from ray.tune.schedulers import AsyncHyperBandScheduler
-import wandb
 import default_config
-import torch
-import ml_collections
 import eval
+import experiment
+import ml_collections
+import numpy as np
+import torch
+import wandb
+from ray import air, tune
+from ray.tune.schedulers import AsyncHyperBandScheduler
+from ray.tune.search.hyperopt import HyperOptSearch
 
 
 def main():
@@ -142,7 +139,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
         ),
     )
     tuner.fit()
-    
+
     logging.info(f"\n------> COMPLETED RAY SWEEP: {sweep_name}.\n")
 
 
@@ -242,7 +239,7 @@ def _training_plot_log(wandb_config, model):
     }
     with open(activations_filename, "wb") as f:
         pickle.dump(activations, f)
-    
+
     figs_dir = default_config.figs_dir
     eval.plot_experiment(wandb_config.run_name,figs_dir)
 

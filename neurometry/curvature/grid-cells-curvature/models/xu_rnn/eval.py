@@ -1,17 +1,21 @@
 import os
 import pickle
+
 import default_config
-import yaml
-from neurometry.datasets.load_rnn_grid_cells import get_scores
-from neurometry.datasets.load_rnn_grid_cells import umap_dbscan
-from neurometry.dimension.dim_reduction import plot_pca_projections, plot_2d_manifold_projections
-from neurometry.topology.persistent_homology import compute_diagrams_shuffle
-from neurometry.topology.plotting import plot_all_barcodes_with_null
-from sklearn.decomposition import PCA
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import numpy as np
 import wandb
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+import yaml
+from sklearn.decomposition import PCA
+
+from neurometry.datasets.load_rnn_grid_cells import get_scores, umap_dbscan
+from neurometry.dimension.dim_reduction import (
+    plot_2d_manifold_projections,
+    plot_pca_projections,
+)
+from neurometry.topology.persistent_homology import compute_diagrams_shuffle
+from neurometry.topology.plotting import plot_all_barcodes_with_null
 
 pretrained_run_id = "20240418-180712"
 pretrained_run_dir = os.path.join(
@@ -44,12 +48,12 @@ def plot_experiment(run_name,figs_dir):
     expt_config = _load_expt_config(run_name)
     neural_points_expt, rate_maps_expt = _get_expt_activations_per_cluster(run_name)
 
-    fig_saliency_kernel = _plot_gaussian_kernel(expt_config['s_0'], location=expt_config['x_saliency'], scale=expt_config['sigma_saliency'])
+    fig_saliency_kernel = _plot_gaussian_kernel(expt_config["s_0"], location=expt_config["x_saliency"], scale=expt_config["sigma_saliency"])
     wandb.log({"saliency_kernel": wandb.Image(fig_saliency_kernel)})
     #save fig_saliency_kernel
     fig_saliency_kernel.savefig(os.path.join(figs_dir, f"{run_name}_saliency_kernel.pdf"))
 
-    for module in neural_points_expt.keys():
+    for module in neural_points_expt:
         fig_rate_maps_pretrained = _draw_heatmap(rate_maps_pretrained[module], f"Module {module} pretrained")
         wandb.log({f"rate_maps_pretrained_module_{module}": wandb.Image(fig_rate_maps_pretrained)})
         fig_rate_maps_pretrained.savefig(os.path.join(figs_dir, f"{run_name}_rate_maps_pretrained_module_{module}.pdf"))
@@ -107,7 +111,7 @@ def _load_expt_rate_maps(run_name):
     activations_file = os.path.join(activations_dir, f"{run_name}_activations.pkl")
     with open(activations_file, "rb") as f:
         return pickle.load(f)
-    
+
 
 
 def _load_expt_config(run_name):
@@ -122,7 +126,7 @@ def _load_expt_config(run_name):
 def _draw_heatmap(activations, title):
     # activations should be a 3-D tensor: [num_rate_maps, H, W]
     num_rate_maps = min(activations.shape[0], 100)
-    H, W = activations.shape[1], activations.shape[2]
+    #H, W = activations.shape[1], activations.shape[2]
 
     # Determine the number of rows and columns for the plot grid
     ncol = int(np.ceil(np.sqrt(num_rate_maps)))
