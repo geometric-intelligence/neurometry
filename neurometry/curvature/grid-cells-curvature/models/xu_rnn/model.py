@@ -9,6 +9,7 @@ from torch import nn
 
 @dataclass
 class GridCellConfig:
+    freeze_decoder: bool
     trans_type: str
     num_grid: int
     num_neurons: int

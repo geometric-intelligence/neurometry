@@ -34,7 +34,7 @@ class Experiment:
         self.model_config = model.GridCellConfig(**config.model)
         self.model = model.GridCell(self.model_config).to(device)
 
-        if config.train.freeze_decoder:
+        if config.model.freeze_decoder:
             logging.info("==== freeze decoder ====")
             for param in self.model.decoder.parameters():
                 param.requires_grad = False
@@ -69,8 +69,8 @@ class Experiment:
             logging.info(f"Loading pretrain model from {ckpt_model_path}")
             ckpt = torch.load(ckpt_model_path, map_location=device)
             self.model.load_state_dict(ckpt["state_dict"])
-            logging.info("==== load pretrained optimizer ====")
-            self.optimizer.load_state_dict(ckpt["optimizer"])
+            # logging.info("==== load pretrained optimizer ====")
+            # self.optimizer.load_state_dict(ckpt["optimizer"])
             self.starting_step = ckpt["step"]
         else:
             self.starting_step = 1
