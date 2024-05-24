@@ -42,6 +42,7 @@ jobs:
 
       - name: Install Package [${{ matrix.flavor }}]
         run: |
+          pip install cmake boost
           pip install -e .[${{ matrix.flavor }}]
 
       - name: Typecheck [mypy]
