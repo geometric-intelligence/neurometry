@@ -39,10 +39,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: "pyproject.toml"
-
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: 'latest'
+      - name: Use cmake
+        run: cmake --version
       - name: Install Package [${{ matrix.flavor }}]
         run: |
-          pip install cmake boost
+          pip install boost
           pip install -e .[${{ matrix.flavor }}]
 
       - name: Typecheck [mypy]
