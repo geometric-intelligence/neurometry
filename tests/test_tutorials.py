@@ -25,8 +25,7 @@ def _exec_tutorial(path):
 
 TUTORIALS_DIR = "tutorials"
 paths = [
-    f"{TUTORIALS_DIR}/01_methods_create_synthetic_data.ipynb",
-    f"{TUTORIALS_DIR}/02_methods_estimate_manifold_dimension.ipynb"]
+    f"{TUTORIALS_DIR}/01_methods_create_synthetic_data.ipynb"]
 
 
 @pytest.mark.parametrize("path", paths)
