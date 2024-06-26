@@ -80,4 +80,4 @@ if not os.path.exists(figs_dir):
 
 ###-----RAY TUNE PARAMETERS-----###
 sweep_metric= "error_reencode"
-num_samples = 1000
+num_samples = 1
