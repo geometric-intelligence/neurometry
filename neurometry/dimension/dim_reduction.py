@@ -22,26 +22,31 @@ def plot_2d_manifold_projections(
         data1_2d = model.fit_transform(data1)
         data2_2d = model.fit_transform(data2)
 
-        def plot_density(ax, data, cmap):
+        combined_data = np.vstack((data1_2d, data2_2d))
+        x_min, x_max = combined_data[:, 0].min(), combined_data[:, 0].max()
+        y_min, y_max = combined_data[:, 1].min(), combined_data[:, 1].max()
+
+        def plot_density(ax, data, cmap, x_min, x_max, y_min, y_max):
             x = data[:, 0]
             y = data[:, 1]
             xy = np.vstack([x, y])
             kde = gaussian_kde(xy)
             density = kde(xy)
-            return ax.scatter(x, y, c=density, s=50, cmap=cmap)
+            sc = ax.scatter(x, y, c=density, s=50, cmap=cmap)
+            ax.set_xlim(x_min-2, x_max+2)
+            ax.set_ylim(y_min-2, y_max+2)
+            return sc
 
-
-        plot_density(axes[i, 0], data1_2d, cmap="Blues")
+        plot_density(axes[i, 0], data1_2d, cmap="Blues",x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
         axes[i, 0].set_title(f"{name} - {dataset_name_1}")
 
-        plot_density(axes[i, 1], data2_2d, cmap="Reds")
+        plot_density(axes[i, 1], data2_2d, cmap="Reds",x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
         axes[i, 1].set_title(f"{name} - {dataset_name_2}")
 
     plt.tight_layout()
     plt.show()
 
     return fig
-
 
 
 def plot_pca_projections(X1, X2, dataset_name_1, dataset_name_2, K):
@@ -88,8 +93,8 @@ def plot_pca_projections(X1, X2, dataset_name_1, dataset_name_2, K):
     for i in range(K):
         for j in range(K * 2):
             if i > j % K:
-                axes[i, j].set_xlim(x_min, x_max)
-                axes[i, j].set_ylim(y_min, y_max)
+                axes[i, j].set_xlim(x_min-1, x_max+1)
+                axes[i, j].set_ylim(y_min-1, y_max+1)
 
     fig.subplots_adjust(top=1)
     fig.suptitle(
@@ -109,37 +114,5 @@ def plot_pca_projections(X1, X2, dataset_name_1, dataset_name_2, K):
     )
 
     return fig
-
-
-# def plot_pca_projections(X, K, title):
-#     pca = PCA(n_components=K)
-#     pca.fit(X)
-#     X_pca = pca.transform(X)
-#     ev = pca.explained_variance_ratio_
-
-#     # Create plot with KxK subplots
-#     fig, axes = plt.subplots(K, K, figsize=(3 * K, 3 * K))
-
-#     for i in range(K):
-#         for j in range(K):
-#             if i <= j:
-#                 axes[i, j].axis("off")  # Turn off plot for upper triangle
-#             else:
-#                 if i != j:
-#                     axes[i, j].scatter(X_pca[:, i], X_pca[:, j], alpha=0.5)
-#                     axes[i, j].set_xlabel(f"PC {i+1}")
-#                     axes[i, j].set_ylabel(f"PC {j+1}")
-#                     axes[i, j].set_title(
-#                         f"PCs {i+1} & {j+1}; {100*(ev[i]+ev[j]):.1f}% exp. var."
-#                     )
-
-#     plt.tight_layout()
-
-#     fig.suptitle(title, fontsize=30, fontweight="bold", verticalalignment="top")
-#     plt.show()
-
-#     print(f"The {K} top PCs explain {100*np.cumsum(ev)[-1]:.2f}% of the variance")
-
-#     return fig
 
 
