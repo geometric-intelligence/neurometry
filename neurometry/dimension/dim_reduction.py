@@ -5,6 +5,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import MDS, TSNE, Isomap
 from umap import UMAP
 
+
 def plot_2d_manifold_projections(
     data1, data2, dataset_name_1="Dataset 1", dataset_name_2="Dataset 2", n_components=2
 ):
@@ -25,7 +26,7 @@ def plot_2d_manifold_projections(
         x_min, x_max = combined_data[:, 0].min(), combined_data[:, 0].max()
         y_min, y_max = combined_data[:, 1].min(), combined_data[:, 1].max()
 
-        def plot_density(ax, data, cmap):
+        def plot_density(ax, data, cmap, x_min, x_max, y_min, y_max):
             x = data[:, 0]
             y = data[:, 1]
             xy = np.vstack([x, y])
@@ -36,10 +37,10 @@ def plot_2d_manifold_projections(
             ax.set_ylim(y_min-2, y_max+2)
             return sc
 
-        plot_density(axes[i, 0], data1_2d, cmap="Blues")
+        plot_density(axes[i, 0], data1_2d, cmap="Blues",x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
         axes[i, 0].set_title(f"{name} - {dataset_name_1}")
 
-        plot_density(axes[i, 1], data2_2d, cmap="Reds")
+        plot_density(axes[i, 1], data2_2d, cmap="Reds",x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
         axes[i, 1].set_title(f"{name} - {dataset_name_2}")
 
     plt.tight_layout()
