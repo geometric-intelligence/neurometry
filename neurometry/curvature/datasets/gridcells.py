@@ -1,5 +1,3 @@
-"""Original MATLAB code for grid cells by Will Redman https://wredman4.wixsite.com/wtredman, modified and adapted to python by Francisco Acosta"""
-
 import os
 
 import numpy as np

@@ -8,6 +8,7 @@ neurometry/datasets/rnn_grid_cells/Dual agent path integration high res/*
 neurometry/datasets/rnn_grid_cells/Single agent path integration high res/*
 neurometry/curvature/grid-cells-curvature/models/xu_rnn/results/*
 neurometry/curvature/grid-cells-curvature/multi-agent/*
+notebooks/
 
 *viewer*
 *vizcortex*

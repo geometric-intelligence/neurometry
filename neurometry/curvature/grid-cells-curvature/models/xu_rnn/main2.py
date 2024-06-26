@@ -63,6 +63,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
         "add_dx_0": default_config.add_dx_0,
         "small_int": default_config.small_int,
         # model parameters
+        "freeze_decoder": default_config.freeze_decoder,
         "trans_type": default_config.trans_type,
         "num_grid": default_config.num_grid,
         "num_neurons": default_config.num_neurons,
@@ -183,6 +184,7 @@ def _convert_config(wandb_config):
 
     # model parameter
     config.model = _d(
+        freeze_decoder=wandb_config.freeze_decoder,
         trans_type=wandb_config.trans_type,
         rnn_step=wandb_config.rnn_step,
         num_grid=wandb_config.num_grid,
