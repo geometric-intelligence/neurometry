@@ -8,7 +8,7 @@ neurometry/datasets/rnn_grid_cells/Dual agent path integration high res/*
 neurometry/datasets/rnn_grid_cells/Single agent path integration high res/*
 neurometry/curvature/grid-cells-curvature/models/xu_rnn/results/*
 neurometry/curvature/grid-cells-curvature/multi-agent/*
-neurometry/neuroai/piRNNs/models/xu_rnn/results/*
+neurometry/neuroai/piRNNs/models/results/*
 neurometry/neuroai/piRNNs/multi-agent/*
 notebooks/
 
@@ -38,8 +38,8 @@ neurometry/datasets/rnn_grid_cells/Single agent path integration/*
 
 neurometry/curvature/grid-cells-curvature/models/xu_rnn/logs/*
 neurometry/curvature/grid-cells-curvature/models/xu_rnn/wandb/*
-neurometry/neuroai/piRNNs/models/xu_rnn/logs/*
-neurometry/neuroai/piRNNs/models/xu_rnn/wandb/*
+neurometry/neuroai/piRNNs/models/logs/*
+neurometry/neuroai/piRNNs/models/wandb/*
 
 
 # Result files

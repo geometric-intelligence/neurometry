@@ -28,7 +28,23 @@ def main():
 
 
 def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
-    """Launch a single experiment."""
+    """Run a hyperparameter sweep for a single set of experiment parameters.
+
+    This function uses Ray Tune for hyperparameter search and WandB for logging.
+
+    Parameters
+    ----------
+    sweep_name : str
+        Name of the sweep.
+    s_0 : float
+        Saliency magnitude.
+    sigma_saliency : float
+        Saliency standard deviation.
+    x_saliency : float
+        2D position of saliency centered at (x_saliency,x_saliency).
+    plot : bool
+        Whether to plot the training results, defaults to True.
+    """
     sweep_config = {
         "lr": tune.choice(default_config.lr),
         "w_trans": tune.choice(default_config.w_trans),
@@ -37,12 +53,12 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
     }
 
     fixed_config = {
-        #parameters that vary across experiments
+        # parameters that vary across experiments
         "sweep_name": sweep_name,
         "s_0": s_0,
         "sigma_saliency": sigma_saliency,
         "x_saliency": x_saliency,
-        #parameters that are fixed across experiments
+        # parameters that are fixed across experiments
         # training parameters
         "load_pretrain": default_config.load_pretrain,
         "pretrain_path": default_config.pretrain_path,
@@ -85,6 +101,19 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
     }
 
     def main_run(sweep_config):
+        """Train and evaluate a model for a single set of hyperparameters.
+
+        Parameters
+        ----------
+        sweep_config : dict
+            Dictionary of hyperparameters.
+        
+        Returns
+        -------
+        dict
+            Dictionary containing the re-encode error of the last training evaluation.
+
+        """
         wandb.init(project="grid-cell-rnns", entity="bioshape-lab")
         wandb_config = wandb.config
         wandb_config.update(fixed_config)
@@ -116,7 +145,6 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
 
         return {"error_reencode": error_reencode}
 
-    ### DEFINE SWEEP METRIC HERE??
     sweep_search = HyperOptSearch(metric=default_config.sweep_metric, mode="min")
 
     sweep_scheduler = AsyncHyperBandScheduler(
@@ -153,7 +181,19 @@ def _d(**kwargs):
 
 
 def _convert_config(wandb_config):
-    """Get the hyperparameters for the model"""
+    """Convert wandb config to ml_collections.ConfigDict.
+
+    Parameters
+    ----------
+    wandb_config : wandb.config
+        Configuration dictionary from wandb.
+    
+    Returns
+    -------
+    ml_collections.ConfigDict
+        Converted configuration dictionary.
+    
+    """
     config = ml_collections.ConfigDict()
 
     # training config
