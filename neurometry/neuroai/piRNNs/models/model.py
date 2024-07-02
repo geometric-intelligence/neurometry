@@ -78,6 +78,25 @@ class GridCell(nn.Module):
         return loss, metrics
 
     def path_integration(self, traj):  # traj: [N, T+1, 2]
+        """Path integration with the vanilla model.
+
+        Parameters
+        ----------
+        traj : torch.Tensor, shape [N, T+1, 2]
+            N trajectories, each with T+1 time steps.
+        
+        Returns
+        -------
+        dict
+            Dictionary containing the following keys:
+            - err: dict
+                Dictionary containing the errors of the model.
+            - traj_real: torch.Tensor, shape [N, T+1, 2]
+                Real trajectory.
+            - traj_pred: dict
+                Dictionary containing the predicted trajectories.
+            - heatmaps: torch.Tensor, shape [N, T, H, W]      
+        """
         dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [N, T, 2]
         T = dx_traj.shape[1]
 
