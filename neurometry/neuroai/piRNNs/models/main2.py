@@ -107,7 +107,6 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
         ----------
         sweep_config : dict
             Dictionary of hyperparameters.
-        
         Returns
         -------
         dict
@@ -187,12 +186,12 @@ def _convert_config(wandb_config):
     ----------
     wandb_config : wandb.config
         Configuration dictionary from wandb.
-    
+
     Returns
     -------
     ml_collections.ConfigDict
         Converted configuration dictionary.
-    
+
     """
     config = ml_collections.ConfigDict()
 

@@ -84,7 +84,7 @@ class GridCell(nn.Module):
         ----------
         traj : torch.Tensor, shape [N, T+1, 2]
             N trajectories, each with T+1 time steps.
-        
+
         Returns
         -------
         dict
@@ -95,7 +95,7 @@ class GridCell(nn.Module):
                 Real trajectory.
             - traj_pred: dict
                 Dictionary containing the predicted trajectories.
-            - heatmaps: torch.Tensor, shape [N, T, H, W]      
+            - heatmaps: torch.Tensor, shape [N, T, H, W]
         """
         dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [N, T, 2]
         T = dx_traj.shape[1]
