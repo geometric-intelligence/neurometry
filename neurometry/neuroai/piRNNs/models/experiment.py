@@ -5,8 +5,6 @@ import input_pipeline
 import ml_collections
 import model as model
 import numpy as np
-
-#import tensorflow as tf
 import torch
 import torch.nn as nn
 import utils
@@ -15,7 +13,7 @@ from absl import logging
 from clu import metric_writers, periodic_actions
 from scores import GridScorer
 
-#tf.config.set_visible_devices([], "GPU")
+
 logging.set_verbosity(logging.INFO)
 
 
@@ -24,10 +22,6 @@ class Experiment:
         self.config = config
         self.device = device
         self.rng = rng
-
-        # wandb.init(
-        #     project="grid-cell-rnns", entity="bioshape-lab", config=config.to_dict()
-        # )
 
         # initialize models
         logging.info("==== initialize model ====")
@@ -77,10 +71,19 @@ class Experiment:
 
 
     def train_and_evaluate(self):
-        logging.info("==== Experiment.train_and_evaluate() ===")
+        """Train and evaluate model.
 
-        # if not os.path.exists(workdir):
-        #     os.makedirs(workdir)
+        Returns
+        -------
+        errors : list, length num_steps_train // steps_per_integration
+            list of dictionaries. Each dictionary has the structure:
+            - 'vanilla': float, mean error of vanilla model for path integration step
+            - 'reencode': float, mean error of reencode model for path integration step
+        
+        model : GridCell
+            trained model.
+        """
+        logging.info("==== Experiment.train_and_evaluate() ===")
 
         config = self.config.train
         logging.info("num_steps_train=%d", config.num_steps_train)
@@ -127,21 +130,14 @@ class Experiment:
                 )
                 self.optimizer.step()
 
-                if self.model_config.trans_type == "nonlinear_simple":
-                    if config.positive_v:
-                        with torch.no_grad():
-                            self.model.encoder.v.data = self.model.encoder.v.data.clamp(
-                                min=0.0
-                            )
+                if config.positive_v:
+                    with torch.no_grad():
+                        self.model.encoder.v.data = self.model.encoder.v.data.clamp(
+                            min=0.0
+                        )
 
-                    # positive b
-                    self.model.trans.b.data = self.model.trans.b.data.abs()
-                elif self.model_config.trans_type == "lstm":
-                    if config.positive_u:
-                        with torch.no_grad():
-                            self.model.decoder.u.data = self.model.decoder.u.data.clamp(
-                                min=0.0
-                            )
+                # positive b
+                self.model.trans.b.data = self.model.trans.b.data.abs()
 
                 if config.norm_v:
                     with torch.no_grad():
@@ -167,7 +163,6 @@ class Experiment:
 
                 if step % config.steps_per_logging == 0 or step == 1:
                     train_metrics = utils.average_appended_metrics(train_metrics)
-                    # writer.write_scalars(step, train_metrics)
                     wandb.log(
                         {key: value for key, value in train_metrics.items()}, step=step
                     )
@@ -191,8 +186,6 @@ class Experiment:
                         # images_v = visualize(self.model.encoder.v)
                         # images_u = visualize(self.model.decoder.u)
 
-                        #writer.write_images(step, {"v": images_v})
-                        #writer.write_images(step, {"u": images_u})
                         # wandb.log({"v": wandb.Image(images_v)}, step=step)
                         # wandb.log({"u": wandb.Image(images_u)}, step=step)
 
@@ -217,14 +210,9 @@ class Experiment:
                             end = start + 40
                             input = x[start:end,]
                             v_x = self.model.encoder(input.to(self.device))
-                            if self.config.model.trans_type == "nonlinear_simple":
-                                trans_v_x = self.model.trans(
-                                    v_x, torch.zeros((40, 2)).to(self.device)
-                                )
-                            elif self.config.model.trans_type == "lstm":
-                                trans_v_x = self.model.trans(
-                                    v_x, torch.zeros((40, 1, 2)).to(self.device)
-                                )
+                            trans_v_x = self.model.trans(
+                                v_x, torch.zeros((40, 2)).to(self.device)
+                            )
                             x_t, _, _ = self.model.decoder.decode(trans_v_x)
                             x_t_zero, _, _ = self.model.decoder.decode(v_x)
                             error_fixed += loss(
@@ -238,20 +226,13 @@ class Experiment:
                         error_fixed_zero = error_fixed_zero / 40
 
                         heatmaps = heatmaps.cpu().detach().numpy()[None, ...]
-                        # writer.write_images(
-                        #     step, {"vu_heatmap": utils.draw_heatmap(heatmaps)}
-                        # )
                         # wandb.log(
                         #     {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
                         #     step=step,
                         # )
 
                         err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
-                        # writer.write_scalars(step, {"pred_x": err.item()})
-                        # writer.write_scalars(step, {"error_fixed": error_fixed.item()})
-                        # writer.write_scalars(
-                        #     step, {"error_fixed_zero": error_fixed_zero.item()}
-                        # )
+
                         wandb.log(
                             {
                                 "pred_x": err.item(),
@@ -300,51 +281,14 @@ class Experiment:
                                 step=step,
                             )
 
-                        # for visualization
-                        if self.config.model.trans_type == "nonlinear_simple":
-                            outputs = self.model.path_integration(
-                                **eval_data["traj_vis"]
-                            )
-                        elif self.config.model.trans_type == "lstm":
-                            outputs = self.model.path_integration_lstm(
-                                **eval_data["traj_vis"]
-                            )
+                        outputs = self.model.path_integration(**eval_data["traj"])
 
-                        outputs = utils.dict_to_numpy(outputs)
-                        # images = {
-                        #     # [N, T, 2]
-                        #     "trajs": utils.draw_trajs(
-                        #         outputs["traj_real"],
-                        #         outputs["traj_pred"]["vanilla"],
-                        #         num_grid,
-                        #     ),
-                        #     "trajs_reencode": utils.draw_trajs(
-                        #         outputs["traj_real"],
-                        #         outputs["traj_pred"]["reencode"],
-                        #         num_grid,
-                        #     ),
-                        #     # [N, T[::5], H, W]
-                        #     "heatmaps": utils.draw_heatmap(outputs["heatmaps"][:, ::5]),
-                        # }
-                        # writer.write_images(step, images)
-                        # wandb.log(
-                        #     {key: wandb.Image(value) for key, value in images.items()},
-                        #     step=step,
-                        # )
 
-                        # for quantitative evaluation
-                        if self.config.model.trans_type == "nonlinear_simple":
-                            outputs = self.model.path_integration(**eval_data["traj"])
-                        elif self.config.model.trans_type == "lstm":
-                            outputs = self.model.path_integration_lstm(
-                                **eval_data["traj"]
-                            )
+                        mean_err = {key: torch.mean(value) for key, value in outputs["err"].items()}
+                        mean_err = utils.dict_to_numpy(mean_err)
 
-                        err = utils.dict_to_numpy(outputs["err"])
-                        # writer.write_scalars(step, err)
-
-                        wandb.log({key: value for key, value in err.items()}, step=step)
-                        errors.append(err)
+                        wandb.log({key: value for key, value in mean_err.items()}, step=step)
+                        errors.append(mean_err)
 
         return errors, self.model
 

@@ -10,7 +10,7 @@ from torch import nn
 @dataclass
 class GridCellConfig:
     freeze_decoder: bool
-    trans_type: str
+    trans_type: str # not needed
     num_grid: int
     num_neurons: int
     block_size: int
@@ -21,7 +21,7 @@ class GridCellConfig:
     w_trans: float
     w_isometry: float
     w_reg_u: float
-    adaptive_dr: bool
+    adaptive_dr: bool # not needed
     s_0: float
     x_saliency: float
     sigma_saliency: float
@@ -34,10 +34,7 @@ class GridCell(nn.Module):
         super().__init__()
         self.encoder = Encoder(config)
         self.decoder = Decoder(config)
-        if config.trans_type == "nonlinear_simple":
-            self.trans = TransNonlinear(config)
-        elif config.trans_type == "lstm":
-            self.trans = TransNonlinear_LSTM(config)
+        self.trans = TransformNonlinear(config)
 
         self.config = config
 
@@ -45,17 +42,11 @@ class GridCell(nn.Module):
         config = self.config
         loss_kernel = self._loss_kernel(**data["kernel"])
 
-        if config.trans_type == "nonlinear_simple":
-            loss_trans = self._loss_trans_rnn(**data["trans_rnn"], step=step)
-        elif config.trans_type == "lstm":
-            loss_trans = self._loss_trans_lstm(**data["trans_rnn"])
+        loss_transform = self._loss_transform_rnn(**data["trans_rnn"], step=step)
 
-        if self.config.adaptive_dr:
-            loss_isometry = self._loss_isometry_numerical_block(
-                **data["isometry_adaptive"]
-            )
-        else:
-            loss_isometry = self._loss_isometry_numerical_block(**data["isometry"])
+        loss_isometry = self._loss_isometry_numerical_block(
+            **data["isometry_adaptive"]
+        )
 
         w_reg_u = (
             self.config.w_reg_u - self.config.w_reg_u / config.reg_decay_until * step
@@ -65,11 +56,11 @@ class GridCell(nn.Module):
 
         loss_reg_u = torch.sum(self.decoder.u**2) * w_reg_u
 
-        loss = loss_kernel + loss_isometry + loss_reg_u + loss_trans
+        loss = loss_kernel + loss_isometry + loss_reg_u + loss_transform
 
         metrics = {
             "loss_kernel": loss_kernel,
-            "loss_trans": loss_trans,
+            "loss_trans": loss_transform,
             "loss_isometry": loss_isometry,
             "loss_reg_u": loss_reg_u,
             "loss": loss,
@@ -77,13 +68,13 @@ class GridCell(nn.Module):
 
         return loss, metrics
 
-    def path_integration(self, traj):  # traj: [N, T+1, 2]
+    def path_integration(self, traj):  # traj: [num_traj, T+1, 2]
         """Path integration with the vanilla model.
 
         Parameters
         ----------
-        traj : torch.Tensor, shape [N, T+1, 2]
-            N trajectories, each with T+1 time steps.
+        traj : torch.Tensor, shape [num_traj, T+1, 2]
+            num_traj trajectories, each with T+1 time steps.
 
         Returns
         -------
@@ -91,104 +82,66 @@ class GridCell(nn.Module):
             Dictionary containing the following keys:
             - err: dict
                 Dictionary containing the errors of the model.
-            - traj_real: torch.Tensor, shape [N, T+1, 2]
+            - traj_real: torch.Tensor, shape [num_traj, T+1, 2]
                 Real trajectory.
             - traj_pred: dict
                 Dictionary containing the predicted trajectories.
-            - heatmaps: torch.Tensor, shape [N, T, H, W]
+            - activity: dict
+                Dictionary containing the activity of the model.
+
+            - heatmaps: torch.Tensor, shape [num_traj, T, resolution, resolution]
         """
-        dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [N, T, 2]
+
+            #         list of dictionaries. Each dictionary has the structure:
+            # - 'vanilla': float, mean error of vanilla model for path integration step
+            # - 'reencode': float, mean error of reencode model for path integration step
+        dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [num_traj, T, 2] 
         T = dx_traj.shape[1]
 
-        x_start = traj[:, 0]
-        v_start = self.encoder(x_start)
-        v_t = {"vanilla": v_start, "reencode": v_start}
-        x_t = {"vanilla": [x_start], "reencode": [x_start]}
+        x_0 = traj[:, 0]
+        r_0 = self.encoder(x_0)
+        r_t = {"vanilla": [r_0], "reencode": [r_0]}
+        x_t = {"vanilla": [x_0], "reencode": [x_0]}
         heatmaps = []
         #heatmaps_modules = []
 
         for t in range(T + 1):
             _x_t_vanilla, _heatmaps, _heatmaps_modules = self.decoder.decode(
-                v_t["vanilla"]
+                r_t["vanilla"][t]
             )
-            _x_t, _, _ = self.decoder.decode(v_t["reencode"])
+            _x_t_reencode, _, _ = self.decoder.decode(r_t["reencode"][t])
 
             heatmaps.append(_heatmaps)
             x_t["vanilla"].append(_x_t_vanilla)
-            x_t["reencode"].append(_x_t)
+            x_t["reencode"].append(_x_t_reencode)
 
             if t < T:
-                v_t_trans = v_t["vanilla"]
-                v_t_trans = self.trans(v_t_trans, dx_traj[:, t])
-                v_t["vanilla"] = v_t_trans
+                r_t_transformed = self.trans(r_t["vanilla"][t], dx_traj[:, t])
+                r_t["vanilla"].append(r_t_transformed)
 
                 # re-encode the last predicted x
-                _v_t = self.encoder(_x_t)
-                _v_t = self.trans(_v_t, dx_traj[:, t])
-                v_t["reencode"] = _v_t
+                _r_t_reencode = self.encoder(_x_t_reencode)
+                _r_t_reencode_transformed = self.trans(_r_t_reencode, dx_traj[:, t])
+                r_t["reencode"].append(_r_t_reencode_transformed)
 
-        traj_pred = {k: torch.stack(v[1:], axis=1) for k, v in x_t.items()}  # [N, T, 2]
-        heatmaps = torch.stack(heatmaps, axis=1)  # [N, T, H, W]
+        traj_pred = {key: torch.stack(value[1:], axis=1) for key, value in x_t.items()}  # [num_traj, T, 2]
+        activity = {key: torch.stack(value, axis=1) for key, value in r_t.items()}  # [num_traj, T, num_neurons]
+        heatmaps = torch.stack(heatmaps, axis=1)  # [num_traj, T, resolution, resolution]
 
         err = {
-            "err_" + k: torch.mean(torch.sqrt(torch.sum((v - traj) ** 2, dim=-1)))
+            "err_" + key: torch.sqrt(torch.sum((value - traj) ** 2, dim=-1))
             / self.config.num_grid
-            for k, v in traj_pred.items()
+            for key, value in traj_pred.items()
         }
 
         return {
             "err": err,
             "traj_real": traj,
             "traj_pred": traj_pred,
+            "activity": activity,
             "heatmaps": heatmaps,
         }
 
-    def path_integration_lstm(self, traj):  # traj: [N, T+1, 2]
-        dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [N, T, 2]
-        T = dx_traj.shape[1]
-
-        x_start = traj[:, 0]
-        v_start = self.encoder(x_start)
-        v_t = {"vanilla": v_start, "reencode": v_start}
-        x_t = {"vanilla": [x_start, x_start], "reencode": [x_start]}
-        heatmaps = []
-        #heatmaps_modules = []
-
-        # without re-encoding
-        v_x = self.trans(v_start, dx_traj)  # v_x: [N, C], dx: [N, T, 2]
-        v_x_trans = v_x  # [N, T, C]
-        for i in range(T):
-            x_trans, _heatmaps, _heatmaps_modules = self.decoder.decode(
-                v_x_trans[:, i, :]
-            )
-            x_t["vanilla"].append(x_trans)
-            heatmaps.append(_heatmaps)
-
-        for t in range(T + 1):
-            _x_t, _, _ = self.decoder.decode(v_t["reencode"])
-            x_t["reencode"].append(_x_t)
-
-            if t < T:
-                # re-encode the last predicted x
-                _v_t = self.encoder(_x_t)
-                _v_t = self.trans(_v_t, dx_traj[:, t][:, None, :])
-                v_t["reencode"] = _v_t
-
-        traj_pred = {k: torch.stack(v[1:], axis=1) for k, v in x_t.items()}  # [N, T, 2]
-        heatmaps = torch.stack(heatmaps, axis=1)  # [N, T, H, W]
-
-        err = {
-            "err_" + k: torch.mean(torch.sqrt(torch.sum((v - traj) ** 2, dim=-1)))
-            / self.config.num_grid
-            for k, v in traj_pred.items()
-        }
-
-        return {
-            "err": err,
-            "traj_real": traj,
-            "traj_pred": traj_pred,
-            "heatmaps": heatmaps,
-        }
 
     def _loss_kernel(self, x, x_prime):
         config = self.config
@@ -207,7 +160,7 @@ class GridCell(nn.Module):
 
         return loss_kernel * config.w_kernel
 
-    def _loss_trans_rnn(self, traj, step):
+    def _loss_transform_rnn(self, traj, step):
         config = self.config
         if config.w_trans == 0:
             return torch.zeros([]).to(traj.get_device())
@@ -221,7 +174,7 @@ class GridCell(nn.Module):
         x_grid = torch.cat((x1, x2), axis=1) / config.num_grid
         x_pc = x_grid[None, :].cuda(traj.device)  # (1, 1600, 2)
 
-        loss_trans = torch.zeros([]).to(traj.get_device())
+        loss_transform = torch.zeros([]).to(traj.get_device())
 
         v_x = self.encoder(traj[:, 0, :])
         for i in range(traj.shape[1] - 1):
@@ -229,7 +182,7 @@ class GridCell(nn.Module):
                 (traj[:, i + 1, :][:, None, :] / config.num_grid - x_pc) ** 2, dim=-1
             )
 
-            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (N, 1600) -> place field at location given by traj[:, i + 1, :]
+            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (num_traj 1600) -> place field at location given by traj[:, i + 1, :]
             dx = (traj[:, i + 1, :] - traj[:, i, :]) / config.num_grid
 
             v_x = self.trans(v_x, dx)
@@ -238,9 +191,9 @@ class GridCell(nn.Module):
             # get response map
             v_x_trans = v_x_trans[:, None, None, :]
             u = self.decoder.u.permute((1, 2, 0))[None, ...]
-            vu = v_x_trans * u  # [N, H, W, C]
-            heatmap = vu.sum(dim=-1) # [N, H, W]
-            heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (N, 1600)
+            vu = v_x_trans * u  # [num_traj, resolution, resolution, num_neurons]
+            heatmap = vu.sum(dim=-1) # [num_traj, resolution, resolution]
+            heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (num_traj, 1600)
             y_hat = heatmap_reshape # actual "place cell" activity over the grid (linear readout of grid cells)
 
             saliency_kernel = self._saliency_kernel(x_grid, config.saliency_type).unsqueeze(0).to(traj.device)  # (1, 1600)
@@ -249,10 +202,10 @@ class GridCell(nn.Module):
             else:
                 L_error = saliency_kernel * (y - y_hat) ** 2
 
-            loss_trans_i = torch.mean(torch.sum(L_error, dim=1))
-            loss_trans += loss_trans_i
+            loss_transform_i = torch.mean(torch.sum(L_error, dim=1))
+            loss_transform += loss_transform_i
 
-        return loss_trans * config.w_trans
+        return loss_transform * config.w_trans
 
     def _saliency_kernel(self, x_grid, saliency_type):
         if saliency_type == "gaussian":
@@ -285,52 +238,6 @@ class GridCell(nn.Module):
         s_x = s_0 * (x_grid[:, 0] < 0.5).float()
         return 1 + s_x
 
-    def _loss_trans_lstm(self, traj):
-        config = self.config
-        if config.w_trans == 0:
-            return torch.zeros([]).to(traj.get_device())
-
-        # place cells, x_pc: (0, 1)
-        x1 = torch.arange(0, config.num_grid, 1).repeat_interleave(config.num_grid)
-        x2 = torch.arange(0, config.num_grid, 1).repeat(config.num_grid)
-        x1 = torch.unsqueeze(x1, 1)
-        x2 = torch.unsqueeze(x2, 1)
-        x_pc = torch.cat((x1, x2), axis=1) / config.num_grid
-        x_pc = x_pc[None, :].cuda(traj.device)  # (1, 1600, 2)
-
-        dist = torch.sum(
-            (traj[:, 1:, :].reshape(-1, 2)[:, None, :] / config.num_grid - x_pc) ** 2,
-            dim=-1,
-        )  # [N*T, 1600]
-        dist = dist.reshape(
-            traj.shape[0], traj.shape[1] - 1, dist.shape[1]
-        )  # [N, T, 1600]
-        y = torch.exp(-dist / (2 * self.config.sigma**2))
-
-        v_x = self.encoder(traj[:, 0, :])
-        dx = (traj[:, 1:, :] - traj[:, :-1, :]) / config.num_grid  # [N, T, 2]
-
-        v_x = self.trans(v_x, dx)  # v_x: [N, C], dx: [N, T, 2]
-        v_x_trans = v_x  # [N, T, C]
-
-        # get response map
-        v_x_trans = v_x_trans[:, :, None, None, :]  # [N, T, 1, 1, C]
-        u = self.decoder.u.permute((1, 2, 0))[None, ...]  # [1, H, W, C]
-
-        loss_trans = torch.zeros([]).to(traj.get_device())
-        for i in range(v_x.shape[1]):
-            v_x_trans_i = v_x_trans[:, i, :]  # [N, C]
-            v_x_trans_i = v_x_trans_i[:, None, None, :]
-
-            vu = v_x_trans_i * u  # [N, H, W, C]
-            heatmap = vu.sum(dim=-1)
-            heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (N, 1600)
-            y_hat = heatmap_reshape
-
-            loss_trans_i = torch.mean(torch.sum((y[:, i, :] - y_hat) ** 2, dim=1))
-            loss_trans += loss_trans_i
-
-        return loss_trans * config.w_trans
 
     def _loss_isometry_numerical_block(self, x, x_plus_dx1, x_plus_dx2):
         config = self.config
@@ -341,18 +248,9 @@ class GridCell(nn.Module):
 
         dx_square = torch.sum(((x_plus_dx1 - x) / config.num_grid) ** 2, dim=-1)
 
-        if config.adaptive_dr:
-            v_x = self.encoder.get_v_x_adpative(x)
-            v_x_plus_dx1 = self.encoder.get_v_x_adpative(x_plus_dx1)
-            v_x_plus_dx2 = self.encoder.get_v_x_adpative(x_plus_dx2)
-        else:
-            v_x = self.encoder(x).reshape((-1, num_block, config.block_size))
-            v_x_plus_dx1 = self.encoder(x_plus_dx1).reshape(
-                (-1, num_block, config.block_size)
-            )
-            v_x_plus_dx2 = self.encoder(x_plus_dx2).reshape(
-                (-1, num_block, config.block_size)
-            )
+        v_x = self.encoder.get_v_x_adaptive(x)
+        v_x_plus_dx1 = self.encoder.get_v_x_adaptive(x_plus_dx1)
+        v_x_plus_dx2 = self.encoder.get_v_x_adaptive(x_plus_dx2)
 
         loss = torch.zeros([]).to(x.get_device())
 
@@ -364,46 +262,6 @@ class GridCell(nn.Module):
             inner_pd1 = torch.sum(v_x_i * v_x_plus_dx1_i, dim=-1)
             inner_pd2 = torch.sum(v_x_i * v_x_plus_dx2_i, dim=-1)
 
-            if config.adaptive_dr:
-                loss += torch.sum(
-                    (num_block * inner_pd1 - num_block * inner_pd2) ** 2
-                    * 0.5
-                    / (0.5 + dx_square[:, i])
-                )
-            else:
-                loss += torch.sum(
-                    (num_block * inner_pd1 - num_block * inner_pd2) ** 2
-                    * 0.5
-                    / (0.5 + dx_square)
-                )
-
-        return loss * config.w_isometry
-
-    def _loss_isometry_numerical_block_adaptive(self, x, x_plus_dx1, x_plus_dx2):
-        # x: (batch_size, num_blocks, 2)
-        config = self.config
-        if config.w_isometry == 0:
-            return torch.zeros([]).to(x.get_device())
-
-        num_block = config.num_neurons // config.block_size
-        dx_square = torch.sum(((x_plus_dx1 - x) / config.num_grid) ** 2, dim=-1)
-
-        loss = torch.zeros([]).to(x.get_device())
-        for i in range(num_block):
-            v_x = self.encoder(x[:, i]).reshape((-1, num_block, config.block_size))
-            v_x_plus_dx1 = self.encoder(x_plus_dx1[:, i]).reshape(
-                (-1, num_block, config.block_size)
-            )
-            v_x_plus_dx2 = self.encoder(x_plus_dx2[:, i]).reshape(
-                (-1, num_block, config.block_size)
-            )
-
-            v_x_i = v_x[:, i]  # (batch_size, block_size)
-            v_x_plus_dx1_i = v_x_plus_dx1[:, i]
-            v_x_plus_dx2_i = v_x_plus_dx2[:, i]
-
-            inner_pd1 = torch.sum(v_x_i * v_x_plus_dx1_i, dim=-1)  # (batch_size, )
-            inner_pd2 = torch.sum(v_x_i * v_x_plus_dx2_i, dim=-1)
 
             loss += torch.sum(
                 (num_block * inner_pd1 - num_block * inner_pd2) ** 2
@@ -414,7 +272,36 @@ class GridCell(nn.Module):
         return loss * config.w_isometry
 
 
+
+
 class Encoder(nn.Module):
+    """
+    Neural network encoder. This class encodes a 2D position in the grid cell population.
+
+    Attributes
+    ----------
+    num_grid : int
+        Number of positions along each dimension in the discretized 2D environment.
+    config : GridCellConfig
+        Configuration of the grid cell model.
+    v : nn.Parameter, shape [num_neurons, num_grid, num_grid]
+        Weights of the encoder.
+
+    Methods
+    -------
+    forward(x)
+        Forward pass of the encoder.
+    get_v_x_adaptive(x)
+
+        
+
+    
+    
+    
+    
+    
+    
+    """
     def __init__(self, config: GridCellConfig):
         super().__init__()
         self.num_grid = config.num_grid
@@ -424,14 +311,27 @@ class Encoder(nn.Module):
             torch.normal(
                 0, 0.001, size=(config.num_neurons, self.num_grid, self.num_grid)
             )
-        )  # [C, H, W]
+        )  # [num_neurons, resolution, resolution]
 
     def forward(self, x):
+        """Forward pass of the encoder.
+
+        Parameters
+        ----------
+        x : torch.Tensor, shape [num_traj, 2]
+            2D position across N trajectories.
+
+        Returns
+        -------
+        torch.Tensor, shape [num_traj, num_neurons]
+            Activity of the grid cell population across N trajectories.
+        
+        """
         return get_grid_code(self.v, x, self.num_grid)
 
-    def get_v_x_adpative(self, x):
-        return get_grid_code_block(self.v, x, self.num_grid, self.config.block_size)
+    def get_v_x_adaptive(self, x):
 
+        return get_grid_code_block(self.v, x, self.num_grid, self.config.block_size)
 
 class Decoder(nn.Module):
     def __init__(self, config: GridCellConfig):
@@ -446,14 +346,14 @@ class Decoder(nn.Module):
     def forward(self, x_prime):
         return get_grid_code(self.u, x_prime, self.config.num_grid)
 
-    def decode(self, v, quantile=0.995):  # v : [N, C], self.u: [C, H, W]
+    def decode(self, r, quantile=0.995):  # r : [num_traj, num_neurons], self.u: [num_neurons, resolution, resolution]
         config = self.config
 
-        v = v[:, None, None, :]  # [N, 1, 1, C]
-        u = self.u.permute((1, 2, 0))[None, ...]  # [1, H, W, C]
-        vu = v * u  # [N, H, W, C]
-        heatmap = vu.sum(dim=-1)
-        heatmap_modules = vu.reshape(vu.shape[:3] + (-1, config.block_size)).sum(dim=-1)
+        r = r[:, None, None, :]  # [num_traj, 1, 1, num_neurons]
+        u = self.u.permute((1, 2, 0))[None, ...]  # [1, resolution, resolution, num_neurons]
+        ru = r * u  # [num_traj, resolution, resolution, num_neurons]
+        heatmap = ru.sum(dim=-1)
+        heatmap_modules = ru.reshape(ru.shape[:3] + (-1, config.block_size)).sum(dim=-1)
 
         # compute the threshold based on quantile
         heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))
@@ -471,10 +371,10 @@ class Decoder(nn.Module):
             dim=-1,
         )
 
-        return x, heatmap, heatmap_modules.permute((0, 3, 1, 2))  # [N, K, H, W]
+        return x, heatmap, heatmap_modules.permute((0, 3, 1, 2))  # [num_traj, K, resolution, resolution]
 
 
-class TransNonlinear(nn.Module):
+class TransformNonlinear(nn.Module):
     def __init__(self, config: GridCellConfig):
         super().__init__()
         num_blocks = config.num_neurons // config.block_size
@@ -493,7 +393,7 @@ class TransNonlinear(nn.Module):
 
         self.nonlinear = nn.ReLU()
 
-    def forward(self, v, dx):  # v: [N, C], dx: [N, 2]
+    def forward(self, v, dx):  # v: [num_traj, num_neurons], dx: [num_traj, 2]
 
         A = torch.block_diag(*self.A_modules)
         B = self.B_modules
@@ -510,56 +410,26 @@ class TransNonlinear(nn.Module):
         return theta_id, dr
 
 
-class TransNonlinear_LSTM(nn.Module):
-    def __init__(self, config: GridCellConfig):
-        super().__init__()
-        self.num_blocks = config.num_neurons // config.block_size
-        self.config = config
-
-        self.lstm_list = nn.ModuleList(
-            [
-                nn.LSTM(2, config.block_size, 1, batch_first=True)
-                for i in range(self.num_blocks)
-            ]
-        )
-        # self.lstm_list = nn.ModuleList([LSTM(2, config.block_size, 1) for i in range(self.num_blocks)])
-
-    def forward(self, v, dx):  # v: [N, C], dx: [N, T, 2]
-        v_init = v.reshape(v.shape[0], self.config.block_size, -1)
-        v_output = torch.zeros([])
-
-        # dx = dx.permute(1, 0, 2)
-
-        for i in range(self.num_blocks):
-            h_0 = v_init[:, :, i][None, :].to(dx.get_device())
-            c_0 = torch.zeros(size=(1, v.shape[0], self.config.block_size)).to(
-                dx.get_device()
-            )
-            lstm = self.lstm_list[i]
-
-            output, (hn, cn) = lstm(
-                dx, (h_0.contiguous(), c_0.contiguous())
-            )  # output: [N, T, block_size], hn: [1, N, block_size]
-
-            v_output = output if i == 0 else torch.cat((v_output, output), 2)
-
-        return v_output  # v_output: [N, T, C]
-
-
 def get_grid_code(codebook, x, num_grid):
-    # x: [N, 2], range: (-1, 1)
+    """
+    Get grid code from the codebook.
+
+    Parameters
+    
+    """
+    # x: [num_traj, 2], range: (-1, 1)
     x_normalized = (x + 0.5) / num_grid * 2.0 - 1.0
 
     # query the 2D codebook, with bilinear interpolation
     v_x = nn.functional.grid_sample(
-        input=codebook.unsqueeze(0).transpose(-1, -2),  # [1, C, H, W]
-        grid=x_normalized.unsqueeze(0).unsqueeze(0),  # [1, 1, N, 2]
+        input=codebook.unsqueeze(0).transpose(-1, -2),  # [1, num_neurons, resolution, resolution]
+        grid=x_normalized.unsqueeze(0).unsqueeze(0),  # [1, 1, num_traj, 2]
         align_corners=False,
-    )  # [1, C, 1, N]
+    )  # [1, num_neurons, 1, N]
 
     # v_x = v_x.squeeze().transpose(0, 1)
 
-    return torch.squeeze(torch.squeeze(v_x, 0), 1).transpose(0, 1)  # [N, C]
+    return torch.squeeze(torch.squeeze(v_x, 0), 1).transpose(0, 1)  # [num_traj, num_neurons]
 
 
 def get_grid_code_block(codebook, x, num_grid, block_size):
@@ -570,23 +440,9 @@ def get_grid_code_block(codebook, x, num_grid, block_size):
     v_x = nn.functional.grid_sample(
         input=codebook.reshape(
             -1, block_size, codebook.shape[1], codebook.shape[2]
-        ).transpose(-1, -2),  # [num_block, block_size, H, W]
-        grid=x_normalized.transpose(0, 1).unsqueeze(1),  # [num_block, 1, N, 2]
+        ).transpose(-1, -2),  # [num_block, block_size, resolution, resolution]
+        grid=x_normalized.transpose(0, 1).unsqueeze(1),  # [num_block, 1, num_traj, 2]
         align_corners=False,
     )  # [num_block, block_size, 1, N]
-    return v_x.squeeze().permute(2, 0, 1)  # [N, num_block, block_size]
+    return v_x.squeeze().permute(2, 0, 1)  # [num_traj, num_block, block_size]
 
-
-def get_grid_code_int(codebook, x, num_grid):
-    # x: [N, 2], range: (-1, 1)
-    # codebook: [C, H, W]
-    x_normalized = x.long()
-
-    # query the 2D codebook, no interpolation
-    return torch.vstack(
-        [
-            codebook[:, i, j]
-            for i, j in zip(x_normalized[:, 0], x_normalized[:, 1], strict=False)
-        ]
-    )
-    # v_x = v_x.squeeze().transpose(0, 1)  # [N, C]

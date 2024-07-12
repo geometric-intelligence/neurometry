@@ -120,32 +120,6 @@ def block_diagonal(matrices):
     return blocked
 
 
-# def draw_heatmap(data, save_path, xlabels=None, ylabels=None):
-#     # data = np.clip(data, -0.05, 0.05)
-#     cmap = cm.get_cmap("rainbow", 1000)
-#     figure = plt.figure(facecolor="w")
-#     ax = figure.add_subplot(1, 1, 1, position=[0.1, 0.15, 0.8, 0.8])
-#     if xlabels is not None:
-#         ax.set_xticks(range(len(xlabels)))
-#         ax.set_xticklabels(xlabels)
-#     if ylabels is not None:
-#         ax.set_yticks(range(len(ylabels)))
-#         ax.set_yticklabels(ylabels)
-
-#     vmax = data[0][0]
-#     vmin = data[0][0]
-#     for i in data:
-#         for j in i:
-#             if j > vmax:
-#                 vmax = j
-#             if j < vmin:
-#                 vmin = j
-#     map = ax.imshow(
-#         data, interpolation="nearest", cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax
-#     )
-#     plt.colorbar(mappable=map, cax=None, ax=None, shrink=0.5)
-#     plt.savefig(save_path)
-#     plt.close()
 
 
 def shape_mask(size, shape):
@@ -161,24 +135,6 @@ def shape_mask(size, shape):
 
     return mask
 
-
-def draw_heatmap_2D(data, vmin=None, vmax=None, shape="square", cb=False):
-    place_size, _ = np.shape(data)
-    place_mask = shape_mask(place_size, shape)
-    if vmin is None:
-        vmin = data[place_mask].min()
-    if vmax is None:
-        vmax = data[place_mask].max()
-    # data[~place_mask] = vmin - 1
-
-    cmap = cm.get_cmap("rainbow", 1000)
-    cmap.set_under("w")
-    plt.imshow(
-        data, interpolation="nearest", cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax
-    )
-    if cb:
-        plt.colorbar()
-    plt.axis("off")
 
 
 def draw_path_to_target(
