@@ -5,13 +5,13 @@ import numpy as np
 import torch
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs  # noqa: E402
-from geomstats.geometry.base import ImmersedSet  # noqa: E402
-from geomstats.geometry.euclidean import Euclidean  # noqa: E402
-from geomstats.geometry.pullback_metric import PullbackMetric  # noqa: E402
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
+import geomstats.backend as gs
+from geomstats.geometry.base import ImmersedSet
+from geomstats.geometry.euclidean import Euclidean
+from geomstats.geometry.pullback_metric import PullbackMetric
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
-from neurometry.curvature.datasets.synthetic import (  # noqa: E402
+from neurometry.curvature.datasets.synthetic import (
     get_s1_synthetic_immersion,
     get_s2_synthetic_immersion,
     get_t2_synthetic_immersion,
@@ -200,8 +200,8 @@ def _compute_curvature_error_s1(thetas, curv_norms_learned, curv_norms_true):
     """Compute "error" of learned curvature profile given true profile for S1."""
     curv_norms_learned = np.array(curv_norms_learned)
     curv_norms_true = np.array(curv_norms_true)
-    diff = np.trapz((curv_norms_learned - curv_norms_true) ** 2, thetas)
-    normalization = np.trapz(curv_norms_learned**2, thetas) + np.trapz(
+    diff = np.trapezoid((curv_norms_learned - curv_norms_true) ** 2, thetas)
+    normalization = np.trapezoid(curv_norms_learned**2, thetas) + np.trapezoid(
         curv_norms_true**2, thetas
     )
 
