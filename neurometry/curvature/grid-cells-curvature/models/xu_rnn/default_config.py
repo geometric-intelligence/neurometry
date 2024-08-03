@@ -5,24 +5,24 @@ import torch
 ###-----DEVICE-----###
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
 ###-----VARIABLE PARAMETERS-----###
 #training
-lr=[3e-4,6e-4,9e-4,3e-3,6e-3,9e-3,3e-2]
+lr=[3e-4]
 #model
-rnn_step=[10,20,40,60]#,20] #10
-w_trans=[0.1,0.3,0.5,0.9,2]#,0.5] #0.1
-s_0 = [1,10,100,1000,10000]#,1000]
-x_saliency = [0.5,0.8]#,0.8]
-sigma_saliency = [0.05,0.1,0.15,0.2,0.5]#,0.5]
+rnn_step= [10] #[10,20,40,60]#,20] #10
+w_trans= [2] #[0.1,0.3,0.5,0.9,2]#,0.5] #0.1
+s_0 = [1,10,100] #,1000]
+x_saliency = [[0.5,0.5]] #[0.5,0.8]#,0.8]
+sigma_saliency = [0.05,0.1,0.2,0.5]#,0.5]
 freeze_decoder = True
 #integration
-n_inte_step=[50,75,100]#,100] # 50
+n_inte_step= [50] #[50,75,100]#,100] # 50
+
 
 ###-----TRAINING PARAMETERS-----###
 load_pretrain=True
 pretrain_path=os.path.join(os.getcwd(),"logs/rnn_isometry/20240418-180712/ckpt/model/checkpoint-step25000.pth")
-num_steps_train=10000#7500  # 10000
+num_steps_train=100#7500  # 10000
 lr_decay_from=10000
 steps_per_logging=20
 steps_per_large_logging=500  # 500
@@ -81,4 +81,4 @@ if not os.path.exists(figs_dir):
 
 ###-----RAY TUNE PARAMETERS-----###
 sweep_metric= "error_reencode"
-num_samples = 1000#1000
+num_samples = 1#1000

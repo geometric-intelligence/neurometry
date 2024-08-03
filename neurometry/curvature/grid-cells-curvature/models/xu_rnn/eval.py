@@ -173,11 +173,11 @@ def _draw_heatmap(activations, title):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
 
-def _plot_gaussian_kernel(intensity, location=0.8, scale=0.1):
+def _plot_gaussian_kernel(intensity, location, scale=0.1):
     x = np.linspace(0, 1, 40)
     y = np.linspace(0, 1, 40)
     X, Y = np.meshgrid(x, y)
-    Z = np.exp(-((X - location) ** 2 + (Y - location) ** 2) / (2 * scale**2))
+    Z = np.exp(-((X - location[0]) ** 2 + (Y - location[1]) ** 2) / (2 * scale**2))
     kernel = 1 + intensity * Z
 
     fig, ax = plt.subplots()

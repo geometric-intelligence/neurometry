@@ -7,8 +7,10 @@ import pickle
 import default_config
 import eval
 import experiment
+import GPUtil
 import ml_collections
 import numpy as np
+import ray
 import torch
 import wandb
 from ray import air, tune
@@ -18,17 +20,43 @@ from ray.tune.search.hyperopt import HyperOptSearch
 
 def main():
     """ Launch all experiments."""
+    num_gpus = _get_available_gpus()
+    num_cpus = 8 * num_gpus
     #rng = np.random.default_rng(0)
+    ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
 
+    experiment_configs = []
     # Generate experiment parameter combinations
     for (s_0, sigma_saliency, x_saliency) in itertools.product(default_config.s_0,default_config.sigma_saliency,default_config.x_saliency):
         sweep_name = f"s_0={s_0}_sigma_saliency={sigma_saliency}_x_saliency={x_saliency}"
         logging.info(f"\n---> START training for ray sweep: {sweep_name}.")
-        main_sweep(sweep_name=sweep_name, s_0=s_0, sigma_saliency=sigma_saliency, x_saliency=x_saliency)
+        experiment_configs.append({
+            "name": sweep_name,
+            "s_0": s_0,
+            "sigma_saliency": sigma_saliency,
+            "x_saliency": x_saliency,
+        })
+    experiments = []
+    for experiment_config in experiment_configs:
+        experiment = tune.Experiment(
+            name=experiment_config["name"],
+            run=main_sweep,
+            resources_per_trial={"cpu":8,"gpu":1},
+            config=experiment_config,
+            num_samples=1,
+        )
+        experiments.append(experiment)
+    tune.run_experiments(experiments)
 
-
-def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
+#def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
+def main_sweep(config, plot=False):
     """Launch a single experiment."""
+
+    sweep_name = config["name"]
+    s_0 = config["s_0"]
+    sigma_saliency = config["sigma_saliency"]
+    x_saliency = config["x_saliency"]
+
     sweep_config = {
         "lr": tune.choice(default_config.lr),
         "w_trans": tune.choice(default_config.w_trans),
@@ -116,7 +144,6 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
 
         return {"error_reencode": error_reencode}
 
-    ### DEFINE SWEEP METRIC HERE??
     sweep_search = HyperOptSearch(metric=default_config.sweep_metric, mode="min")
 
     sweep_scheduler = AsyncHyperBandScheduler(
@@ -128,7 +155,7 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
     )
 
     tuner = tune.Tuner(
-        trainable=tune.with_resources(main_run, {"cpu": 4, "gpu": 1}),
+        trainable=tune.with_resources(main_run, {"cpu": 8, "gpu": 1}),
         param_space=sweep_config,
         tune_config=tune.TuneConfig(
             search_alg=sweep_search,
@@ -141,10 +168,13 @@ def main_sweep(sweep_name, s_0, sigma_saliency, x_saliency,plot=True):
     )
     tuner.fit()
 
+
     logging.info(f"\n------> COMPLETED RAY SWEEP: {sweep_name}.\n")
 
 
-
+def _get_available_gpus():
+    gpus = GPUtil.getGPUs()
+    return len(gpus)
 
 
 def _d(**kwargs):

@@ -23,7 +23,7 @@ class GridCellConfig:
     w_reg_u: float
     adaptive_dr: bool
     s_0: float
-    x_saliency: float
+    x_saliency: list
     sigma_saliency: float
     reward_step: int
     saliency_type: str
@@ -246,10 +246,11 @@ class GridCell(nn.Module):
     def _saliency_kernel_gaussian(self, x_grid):
         config = self.config
         s_0 = config.s_0
-        x_saliency = torch.tensor([config.x_saliency, config.x_saliency]).to(x_grid.device)
+        x_saliency = torch.tensor([config.x_saliency[0], config.x_saliency[1]]).to(x_grid.device)
         sigma_saliency = config.sigma_saliency
 
         # Calculate the squared differences, scaled by respective sigma values
+
         diff = x_grid - x_saliency
         scaled_diff_sq = (diff[:, 0]**2 / sigma_saliency**2) + (diff[:, 1]**2 / sigma_saliency**2)
 
