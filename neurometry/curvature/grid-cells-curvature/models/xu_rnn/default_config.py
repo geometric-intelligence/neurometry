@@ -22,7 +22,7 @@ n_inte_step= [50] #[50,75,100]#,100] # 50
 ###-----TRAINING PARAMETERS-----###
 load_pretrain=True
 pretrain_path=os.path.join(os.getcwd(),"logs/rnn_isometry/20240418-180712/ckpt/model/checkpoint-step25000.pth")
-num_steps_train=100#7500  # 10000
+num_steps_train=200#7500  # 10000
 lr_decay_from=10000
 steps_per_logging=20
 steps_per_large_logging=500  # 500
