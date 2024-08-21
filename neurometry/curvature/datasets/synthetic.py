@@ -15,8 +15,8 @@ from neurometry.topology.persistent_homology import (
 )
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs  # noqa: E402
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
+import geomstats.backend as gs
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):

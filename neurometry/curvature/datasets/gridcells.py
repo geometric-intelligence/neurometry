@@ -6,7 +6,7 @@ import pandas as pd
 import neurometry.curvature.datasets.structures as structures
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs  # noqa: E402
+import geomstats.backend as gs
 
 
 # TODO
