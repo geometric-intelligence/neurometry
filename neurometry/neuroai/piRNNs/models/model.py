@@ -23,7 +23,7 @@ class GridCellConfig:
     w_reg_u: float
     adaptive_dr: bool # not needed
     s_0: float
-    x_saliency: float
+    x_saliency: list
     sigma_saliency: float
     reward_step: int
     saliency_type: str
@@ -95,7 +95,7 @@ class GridCell(nn.Module):
             #         list of dictionaries. Each dictionary has the structure:
             # - 'vanilla': float, mean error of vanilla model for path integration step
             # - 'reencode': float, mean error of reencode model for path integration step
-        dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [num_traj, T, 2] 
+        dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [num_traj, T, 2]
         T = dx_traj.shape[1]
 
         x_0 = traj[:, 0]
@@ -214,11 +214,10 @@ class GridCell(nn.Module):
             return self._saliency_kernel_left_half(x_grid)
         raise NotImplementedError
 
-
     def _saliency_kernel_gaussian(self, x_grid):
         config = self.config
         s_0 = config.s_0
-        x_saliency = torch.tensor([config.x_saliency, config.x_saliency]).to(x_grid.device)
+        x_saliency = torch.tensor([config.x_saliency[0], config.x_saliency[1]]).to(x_grid.device)
         sigma_saliency = config.sigma_saliency
 
         # Calculate the squared differences, scaled by respective sigma values
@@ -237,7 +236,6 @@ class GridCell(nn.Module):
         s_0 = config.s_0
         s_x = s_0 * (x_grid[:, 0] < 0.5).float()
         return 1 + s_x
-
 
     def _loss_isometry_numerical_block(self, x, x_plus_dx1, x_plus_dx2):
         config = self.config
@@ -292,15 +290,6 @@ class Encoder(nn.Module):
     forward(x)
         Forward pass of the encoder.
     get_v_x_adaptive(x)
-
-        
-
-    
-    
-    
-    
-    
-    
     """
     def __init__(self, config: GridCellConfig):
         super().__init__()
@@ -325,7 +314,6 @@ class Encoder(nn.Module):
         -------
         torch.Tensor, shape [num_traj, num_neurons]
             Activity of the grid cell population across N trajectories.
-        
         """
         return get_grid_code(self.v, x, self.num_grid)
 
@@ -415,7 +403,7 @@ def get_grid_code(codebook, x, num_grid):
     Get grid code from the codebook.
 
     Parameters
-    
+    ----------
     """
     # x: [num_traj, 2], range: (-1, 1)
     x_normalized = (x + 0.5) / num_grid * 2.0 - 1.0

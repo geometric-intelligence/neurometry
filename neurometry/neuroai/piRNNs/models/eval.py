@@ -19,7 +19,7 @@ from neurometry.topology.plotting import plot_all_barcodes_with_null
 pretrained_run_id = "20240418-180712"
 pretrained_run_dir = os.path.join(
     os.getcwd(),
-    f"logs/rnn_isometry/{pretrained_run_id}",
+    f"pretrained/{pretrained_run_id}",
 )
 
 pretrained_config_file = os.path.join(pretrained_run_dir, "config.txt")

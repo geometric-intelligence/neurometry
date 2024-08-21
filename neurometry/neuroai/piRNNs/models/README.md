@@ -1,9 +1,9 @@
-# Conformal Isometry of Lie Group Representation in Recurrent Network of Grid Cells
-This repo contains the official implementation for the paper [Conformal Isometry of Lie Group Representation in Recurrent Network of Grid Cells](https://arxiv.org/abs/2210.02684) (NeurReps Workshop 2022). 
+# Global Distortions from Local Rewards: Neural Coding Strategies in Path-Integrating Neural Systems
+Official implementation for the paper [Global Distortions from Local Rewards: Neural
+Coding Strategies in Path-Integrating Neural Systems] (*Under Review*). 
 
-Authors: Dehong Xu, Ruiqi Gao, Wen-Hao Zhang, Xue-Xin Wei, Ying Nian Wu
+Authors: Francisco Acosta, Fatih Dinc, William Redman, Manu Madhav, David Klindt, Nina Miolane
 
-# 
 
 Hexagon grid firing patterns emerge in our learned $v(x)$ from a 10-step RNN model: 
 
@@ -17,11 +17,6 @@ The learned model can perform accurate long distance path integration:
 
 <div align=center><img src="assets/path_integration.png" alt="drawing" width="700"/></div>
 
-## Requirements
-Requires python >= 3.5. To install dependencies:
-```angular2
-pip install -r requirements.txt
-```
 
 ## Usage
 
@@ -31,13 +26,9 @@ pip install -r requirements.txt
 python main.py --config=configs/rnn_isometry.py
 ```
 
-- To train the LSTM, run:
-
-```angular2
-python main.py --config=configs/lstm_isometry.py
-```
-
 ## Reference
+
+Code for the pre-trained piRNN adapted from:
 
 ```angular2
 @article{xu2022conformal,

@@ -13,7 +13,6 @@ from absl import logging
 from clu import metric_writers, periodic_actions
 from scores import GridScorer
 
-
 logging.set_verbosity(logging.INFO)
 
 
@@ -79,7 +78,6 @@ class Experiment:
             list of dictionaries. Each dictionary has the structure:
             - 'vanilla': float, mean error of vanilla model for path integration step
             - 'reencode': float, mean error of reencode model for path integration step
-        
         model : GridCell
             trained model.
         """
@@ -175,20 +173,6 @@ class Experiment:
                     # self._save_checkpoint(step, ckpt_dir)
                     # visualize v, u and heatmaps.
                     with torch.no_grad():
-
-                        def visualize(activations):
-                            activations = activations.data.cpu().detach().numpy()
-                            activations = activations.reshape(
-                                (-1, block_size, num_grid, num_grid)
-                            )[:10, :10]
-                            return utils.draw_heatmap(activations)
-
-                        # images_v = visualize(self.model.encoder.v)
-                        # images_u = visualize(self.model.decoder.u)
-
-                        # wandb.log({"v": wandb.Image(images_v)}, step=step)
-                        # wandb.log({"u": wandb.Image(images_u)}, step=step)
-
                         x_eval = torch.rand((3, 2)) * num_grid - 0.5
                         x_eval = x_eval.to(self.device)
                         v_x_eval = self.model.encoder(x_eval)
@@ -226,10 +210,6 @@ class Experiment:
                         error_fixed_zero = error_fixed_zero / 40
 
                         heatmaps = heatmaps.cpu().detach().numpy()[None, ...]
-                        # wandb.log(
-                        #     {"vu_heatmap": wandb.Image(utils.draw_heatmap(heatmaps))},
-                        #     step=step,
-                        # )
 
                         err = torch.mean(torch.sum((x_eval - x_pred) ** 2, dim=-1))
 
