@@ -1,8 +1,9 @@
 import os
 
+import torch
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
-import torch
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.hypersphere import Hypersphere
 from geomstats.geometry.klein_bottle import KleinBottle

@@ -112,6 +112,7 @@ select = [
 ]
 ignore = [
     "E501",    # line too long
+    "E402",    # ignore module level import not at top of file
     "PERF203", # allow try-except within loops
     "RUF012",  # force typing
 ]

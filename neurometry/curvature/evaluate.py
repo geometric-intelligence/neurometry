@@ -4,18 +4,18 @@ import time
 import numpy as np
 import torch
 
+from neurometry.curvature.datasets.synthetic import (
+    get_s1_synthetic_immersion,
+    get_s2_synthetic_immersion,
+    get_t2_synthetic_immersion,
+)
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 from geomstats.geometry.base import ImmersedSet
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.pullback_metric import PullbackMetric
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
-
-from neurometry.curvature.datasets.synthetic import (
-    get_s1_synthetic_immersion,
-    get_s2_synthetic_immersion,
-    get_t2_synthetic_immersion,
-)
 
 
 class NeuralManifoldIntrinsic(ImmersedSet):
