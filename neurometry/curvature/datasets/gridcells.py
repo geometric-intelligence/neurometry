@@ -3,10 +3,10 @@ import os
 import numpy as np
 import pandas as pd
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
-
 import neurometry.curvature.datasets.structures as structures
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import geomstats.backend as gs  # noqa: E402
 
 
 # TODO

@@ -3,19 +3,20 @@
 import logging
 import os
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
 import numpy as np
 import pandas as pd
 import skimage
 import torch
-from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 from torch.distributions.multivariate_normal import MultivariateNormal
 
 from neurometry.topology.persistent_homology import (
     cohomological_circular_coordinates,
     cohomological_toroidal_coordinates,
 )
+
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+import geomstats.backend as gs  # noqa: E402
+from geomstats.geometry.special_orthogonal import SpecialOrthogonal  # noqa: E402
 
 
 def load_projected_images(n_scalars=5, n_angles=1000, img_size=128):

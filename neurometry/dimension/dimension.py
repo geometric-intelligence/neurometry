@@ -13,7 +13,7 @@ from sklearn.multioutput import MultiOutputRegressor
 import neurometry.datasets.synthetic as synthetic
 
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-import geomstats.backend as gs
+import geomstats.backend as gs  # noqa: E402
 
 
 def skdim_dimension_estimation(
