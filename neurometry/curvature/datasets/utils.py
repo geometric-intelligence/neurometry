@@ -140,7 +140,7 @@ def load(config):
     elif config.dataset_name == "three_place_cells_synthetic":
         dataset, labels = load_three_place_cells()
     print(f"Dataset shape: {dataset.shape}.")
-    if type(dataset) == np.ndarray:
+    if isinstance(dataset, np.ndarray):
         dataset_torch = torch.from_numpy(dataset)
     else:
         dataset_torch = dataset
