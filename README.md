@@ -3,6 +3,8 @@
 [![Doc](https://img.shields.io/badge/docs-website-brightgreen?style=flat)](https://geometric-intelligence.github.io/?badge=latest)
 [![Codecov](https://codecov.io/gh/geometric-intelligence/neurometry/branch/main/graph/badge.svg)](https://app.codecov.io/gh/geometric-intelligence/neurometry)
 [![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)](https://www.python.org/)
+[![DOI](https://zenodo.org/badge/482063232.svg)](https://zenodo.org/doi/10.5281/zenodo.13356100)
+
 
 <img width="1188" alt="Screen Shot 2024-04-05 at 8 50 36 PM" src="https://github.com/geometric-intelligence/neurometry/assets/8267869/f24ddbf2-78ce-4896-9417-ed966316af2e">
 
