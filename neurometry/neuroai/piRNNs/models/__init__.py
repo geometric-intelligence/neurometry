@@ -1,1 +1,0 @@
-"""Initialize folder as submodule."""

@@ -4,14 +4,10 @@
 neurometry/results/*
 neurometry/wandb/*
 
-neurometry/datasets/rnn_grid_cells/Dual agent path integration high res/*
-neurometry/datasets/rnn_grid_cells/Single agent path integration high res/*
-neurometry/curvature/grid-cells-curvature/models/xu_rnn/results/*
-neurometry/curvature/grid-cells-curvature/multi-agent/*
+
 neurometry/neuroai/piRNNs/models/results/*
 neurometry/neuroai/piRNNs/multi-agent/*
 notebooks/
-
 *viewer*
 *vizcortex*
 # Data files
@@ -19,11 +15,11 @@ notebooks/
 *.npy
 *.pkl
 *.jpg
-neurometry/curvature/data/raw/*.mat
-neurometry/curvature/data/binned/*.txt
-neurometry/curvature/data/binned/*.npy
-neurometry/curvature/data/data.zip
-neurometry/curvature/data/old_data.zip
+neurometry/geometry/curvature/data/raw/*.mat
+neurometry/geometry/curvature/data/binned/*.txt
+neurometry/geometry/curvature/data/binned/*.npy
+neurometry/geometry/curvature/data/data.zip
+neurometry/geometry/curvature/data/old_data.zip
 neurometry/rep_metrics/benchmarks/ceilings/*
 neurometry/rep_metrics/benchmarks/image_sets/*
 neurometry/rep_metrics/benchmarks/voxel_sets/*
@@ -36,15 +32,14 @@ neurometry/datasets/rnn_grid_cells/Single agent path integration/*
 *wandb/*
 *logs/*
 
-neurometry/curvature/grid-cells-curvature/models/xu_rnn/logs/*
-neurometry/curvature/grid-cells-curvature/models/xu_rnn/wandb/*
+
 neurometry/neuroai/piRNNs/models/logs/*
 neurometry/neuroai/piRNNs/models/wandb/*
 neurometry/neuroai/piRNNs/models/pretrained/*
 
 
 # Result files
-neurometry/curvature/results/*
+neurometry/geometry/curvature/results/*
 neurometry/neuralwarp/results/*
 neurometry/rep_metrics/results/*
 *.png
