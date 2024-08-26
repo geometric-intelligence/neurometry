@@ -6,9 +6,9 @@ import scipy.io
 import torch
 from scipy.signal import savgol_filter
 
-from neurometry.curvature.datasets.experimental import load_neural_activity
-from neurometry.curvature.datasets.gridcells import load_grid_cells_synthetic
-from neurometry.curvature.datasets.synthetic import (
+from neurometry.geometry.curvature.datasets.experimental import load_neural_activity
+from neurometry.geometry.curvature.datasets.gridcells import load_grid_cells_synthetic
+from neurometry.geometry.curvature.datasets.synthetic import (
     load_images,
     load_place_cells,
     load_points,

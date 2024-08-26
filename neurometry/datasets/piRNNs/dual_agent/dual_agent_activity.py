@@ -5,10 +5,11 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from neurometry.datasets.piRNNs.scores import GridScorer
+
 from .config import parser
 from .model_dual_path_integration import RNN
 from .place_cells_dual_path_integration import PlaceCells
-from .scores import GridScorer
 from .trajectory_generator_dual_path_integration import TrajectoryGenerator
 from .utils import generate_run_ID
 from .visualize import compute_ratemaps

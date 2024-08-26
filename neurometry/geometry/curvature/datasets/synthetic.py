@@ -9,7 +9,7 @@ import skimage
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
 
-from neurometry.topology.persistent_homology import (
+from neurometry.geometry.topology.persistent_homology import (
     cohomological_circular_coordinates,
     cohomological_toroidal_coordinates,
 )

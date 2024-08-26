@@ -10,10 +10,10 @@ import umap
 import yaml
 from sklearn.cluster import DBSCAN
 
-from neurometry.datasets.rnn_grid_cells.scores import GridScorer
+from neurometry.datasets.piRNNs.scores import GridScorer
 
 # sys.path.append(str(Path(__file__).parent.parent))
-from .rnn_grid_cells import config, dual_agent_activity, single_agent_activity, utils
+from .dual_agent import config, dual_agent_activity, single_agent_activity, utils
 
 
 def load_rate_maps(run_id, step):

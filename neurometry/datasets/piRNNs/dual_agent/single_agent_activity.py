@@ -6,10 +6,11 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from neurometry.datasets.piRNNs.scores import GridScorer
+
 from .config import parser
 from .model import RNN
 from .place_cells import PlaceCells
-from .scores import GridScorer
 from .trajectory_generator import TrajectoryGenerator
 from .utils import generate_run_ID
 from .visualize import compute_ratemaps

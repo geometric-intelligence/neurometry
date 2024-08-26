@@ -7,7 +7,7 @@ import torch
 from torch.distributions.normal import Normal
 from torch.nn import functional as F
 
-from neurometry.curvature.hyperspherical.distributions.von_mises_fisher import (
+from neurometry.geometry.curvature.hyperspherical.distributions.von_mises_fisher import (
     VonMisesFisher,
 )
 
