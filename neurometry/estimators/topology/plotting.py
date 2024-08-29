@@ -6,10 +6,7 @@ import plotly.graph_objects as go
 def _plot_bars_from_diagrams(ax, diagrams, **kwargs):
     birth = diagrams[:, 0]
     death = diagrams[:, 1]
-    if np.isfinite(death).any():
-        inf_value = 3*np.max(death[death != np.inf])
-    else:
-        inf_value = 1000
+    inf_value = 3 * np.max(death[death != np.inf]) if np.isfinite(death).any() else 1000
     death[death == np.inf] = inf_value
     lifespan = death - birth
     indices = np.argsort(-lifespan)[:20]

@@ -48,7 +48,7 @@ def synthetic_neural_manifold(
         print("WARNING! Poisson spikes not generated: mean must be non-negative")
         noisy_points = None
 
-    noise_level = gs.sqrt(1 / (ref_frequency * poisson_multiplier))
+    #noise_level = gs.sqrt(1 / (ref_frequency * poisson_multiplier))
     #print(f"noise level: {100*noise_level:.2f}%")
 
     return noisy_points, manifold_points

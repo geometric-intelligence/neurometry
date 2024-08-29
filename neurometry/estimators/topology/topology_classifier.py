@@ -1,15 +1,16 @@
+import os
+
 import numpy as np
 from dreimac import CircularCoords, ToroidalCoords
-from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from gtda.diagrams import PersistenceEntropy
-import neurometry.datasets.synthetic as synthetic
-
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.decomposition import PCA
-import os
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+import neurometry.datasets.synthetic as synthetic
+
 os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 
@@ -19,7 +20,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         self,
         num_samples,
         poisson_multiplier,
-        homology_dimensions=[0, 1, 2],
+        homology_dimensions=(0, 1, 2),
         reduce_dim=False,
     ):
         self.num_samples = num_samples
@@ -33,7 +34,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         encoding_dim = input_data.shape[1]
         circle_task_points = synthetic.hypersphere(1, num_points)
         circle_point_clouds = []
-        for i in range(self.num_samples):
+        for _ in range(self.num_samples):
             circle_noisy_points, _ = synthetic.synthetic_neural_manifold(
                 points=circle_task_points,
                 encoding_dim=encoding_dim,
@@ -45,7 +46,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
 
         sphere_task_points = synthetic.hypersphere(2, num_points)
         sphere_point_clouds = []
-        for i in range(self.num_samples):
+        for _ in range(self.num_samples):
             sphere_noisy_points, _ = synthetic.synthetic_neural_manifold(
                 points=sphere_task_points,
                 encoding_dim=encoding_dim,
@@ -57,7 +58,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
 
         torus_task_points = synthetic.hypertorus(2, num_points)
         torus_point_clouds = []
-        for i in range(self.num_samples):
+        for _ in range(self.num_samples):
             torus_noisy_points, _ = synthetic.synthetic_neural_manifold(
                 points=torus_task_points,
                 encoding_dim=encoding_dim,
@@ -88,8 +89,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
 
     def _compute_topo_features(self, diagrams):
         PE = PersistenceEntropy()
-        features = PE.fit_transform(diagrams)
-        return features
+        return PE.fit_transform(diagrams)
 
     def fit(self, X, y=None):
         ref_point_clouds, ref_labels = self._generate_ref_data(X)
