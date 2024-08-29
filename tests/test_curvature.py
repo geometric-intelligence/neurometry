@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from neurometry.geometry.curvature.losses import latent_regularization_loss
+from neurometry.estimators.curvature.losses import latent_regularization_loss
 
 
 class AttrDict(dict):

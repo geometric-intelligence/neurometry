@@ -6,14 +6,13 @@ import plotly.graph_objects as go
 def _plot_bars_from_diagrams(ax, diagrams, **kwargs):
     birth = diagrams[:, 0]
     death = diagrams[:, 1]
+    inf_value = 3 * np.max(death[death != np.inf]) if np.isfinite(death).any() else 1000
+    death[death == np.inf] = inf_value
     lifespan = death - birth
     indices = np.argsort(-lifespan)[:20]
 
     birth = birth[indices]
     death = death[indices]
-    finite_bars = death[death != np.inf]
-    inf_end = 2 * max(finite_bars) if len(finite_bars) > 0 else 2
-    death[death == np.inf] = inf_end
 
     offset = kwargs.get("bar_offset", 1.0)
     linewidth = kwargs.get("linewidth", 5)

@@ -2,7 +2,7 @@
 
 import torch
 
-from neurometry.geometry.curvature.hyperspherical.distributions import (
+from neurometry.estimators.curvature.hyperspherical.distributions import (
     hyperspherical_uniform,
     von_mises_fisher,
 )
