@@ -4,7 +4,7 @@ import time
 import numpy as np
 import torch
 
-from neurometry.geometry.curvature.datasets.synthetic import (
+from neurometry.estimators.curvature.datasets.synthetic import (
     get_s1_synthetic_immersion,
     get_s2_synthetic_immersion,
     get_t2_synthetic_immersion,

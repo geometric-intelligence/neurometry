@@ -7,12 +7,12 @@ import geomstats.backend as gs
 import torch
 from torch.nn import functional as F
 
-from neurometry.geometry.curvature.hyperspherical.distributions.von_mises_fisher import (
+from neurometry.estimators.curvature.hyperspherical.distributions.von_mises_fisher import (
     VonMisesFisher,
 )
 
 
-class ToroidalVAE(torch.nn.Module):
+class KleinBottleVAE(torch.nn.Module):
     """VAE with Linear (fully connected) layers.
 
     Parameters
@@ -42,8 +42,8 @@ class ToroidalVAE(torch.nn.Module):
         self.latent_dim = latent_dim
         self.posterior_type = posterior_type
 
-        # decoder_width = encoder_width
-        # decoder_depth = encoder_depth
+        decoder_width = encoder_width
+        decoder_depth = encoder_depth
 
         self.encoder_fc = torch.nn.Linear(self.data_dim, encoder_width)
         self.encoder_linears = torch.nn.ModuleList(
@@ -56,8 +56,8 @@ class ToroidalVAE(torch.nn.Module):
         self.fc_z_theta_mu = torch.nn.Linear(encoder_width, self.latent_dim)
         self.fc_z_theta_kappa = torch.nn.Linear(encoder_width, 1)
 
-        self.fc_z_phi_mu = torch.nn.Linear(encoder_width, self.latent_dim)
-        self.fc_z_phi_kappa = torch.nn.Linear(encoder_width, 1)
+        self.fc_z_u_mu = torch.nn.Linear(encoder_width, self.latent_dim)
+        self.fc_z_u_kappa = torch.nn.Linear(encoder_width, 1)
 
         self.decoder_fc = torch.nn.Linear(3, decoder_width)
         self.decoder_linears = torch.nn.ModuleList(
@@ -98,26 +98,27 @@ class ToroidalVAE(torch.nn.Module):
         z_theta_mu = self.fc_z_theta_mu(h)
         z_theta_kappa = F.softplus(self.fc_z_theta_kappa(h)) + 1
 
-        z_phi_mu = self.fc_z_phi_mu(h)
-        z_phi_kappa = F.softplus(self.fc_z_phi_kappa(h)) + 1
+        z_u_mu = self.fc_z_u_mu(h)
+        z_u_kappa = F.softplus(self.fc_z_u_kappa(h)) + 1
 
-        return z_theta_mu, z_theta_kappa, z_phi_mu, z_phi_kappa
+        return z_theta_mu, z_theta_kappa, z_u_mu, z_u_kappa
 
-    def _build_torus(self, z_theta, z_phi):
+    def _build_klein_bottle(self, z_theta, z_u):
         # theta = torch.atan2(z_theta[:, 1] / z_theta[:, 0])
-        # phi = torch.atan2(z_phi[:, 1] / z_phi[:, 0])
-        cos_theta = z_theta[:, 0]
-        sin_theta = z_theta[:, 1]
+        # phi = torch.atan2(z_u[:, 1] / z_u[:, 0])
 
-        cos_phi = z_phi[:, 0]
-        sin_phi = z_phi[:, 1]
+        r = 5
 
-        major_radius = 2
-        minor_radius = 1
+        theta = z_theta
+        v = z_u
 
-        x = (major_radius - minor_radius * cos_theta) * cos_phi
-        y = (major_radius - minor_radius * cos_theta) * sin_phi
-        z = minor_radius * sin_theta
+        x = (
+            r + gs.cos(theta / 2) * gs.sin(v) - gs.sin(theta / 2) * gs.sin(2 * v)
+        ) * gs.cos(theta)
+        y = (
+            r + gs.cos(theta / 2) * gs.sin(v) - gs.sin(theta / 2) * gs.sin(2 * v)
+        ) * gs.sin(theta)
+        z = gs.sin(theta / 2) * gs.sin(v) + gs.cos(theta / 2) * gs.sin(2 * v)
 
         return gs.stack([x, y, z], axis=-1)
 
@@ -140,17 +141,17 @@ class ToroidalVAE(torch.nn.Module):
             Re-parameterized latent variable.
         """
 
-        z_theta_mu, z_theta_kappa, z_phi_mu, z_phi_kappa = posterior_params
+        z_theta_mu, z_theta_kappa, z_u_mu, z_u_kappa = posterior_params
 
         q_z_theta = VonMisesFisher(z_theta_mu, z_theta_kappa)
 
-        q_z_phi = VonMisesFisher(z_phi_mu, z_phi_kappa)
+        q_z_u = VonMisesFisher(z_u_mu, z_u_kappa)
 
         z_theta = q_z_theta.rsample()
 
-        z_phi = q_z_phi.rsample()
+        z_u = q_z_u.rsample()
 
-        return self._build_torus(z_theta, z_phi)
+        return self._build_torus(z_theta, z_u)
 
     def decode(self, z):
         """Decode latent variable z into data.

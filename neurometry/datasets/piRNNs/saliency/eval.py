@@ -9,12 +9,12 @@ import yaml
 from sklearn.decomposition import PCA
 
 from neurometry.datasets.piRNNs.load_rnn_grid_cells import get_scores, umap_dbscan
-from neurometry.geometry.dimension.dim_reduction import (
+from neurometry.estimators.dimension.dim_reduction import (
     plot_2d_manifold_projections,
     plot_pca_projections,
 )
-from neurometry.geometry.topology.persistent_homology import compute_diagrams_shuffle
-from neurometry.geometry.topology.plotting import plot_all_barcodes_with_null
+from neurometry.estimators.topology.persistent_homology import compute_diagrams_shuffle
+from neurometry.estimators.topology.plotting import plot_all_barcodes_with_null
 
 pretrained_run_id = "20240418-180712"
 pretrained_run_dir = os.path.join(
