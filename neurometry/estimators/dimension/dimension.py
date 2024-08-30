@@ -146,7 +146,7 @@ def evaluate_pls_with_different_K(X, Y, K_values):
         X_train_pls = pls.transform(X_train)
         X_test_pls = pls.transform(X_test)
         X_pls = pls.transform(X)
-        #projected_X.append(pls.inverse_transform(X_test_pls))
+        # projected_X.append(pls.inverse_transform(X_test_pls))
         projected_X.append(X_pls)
 
         # Fit the Multi-Output Regression model on the reduced data
@@ -193,7 +193,7 @@ def evaluate_PCA_with_different_K(X, Y, K_values):
         X_train_pca = pca.transform(X_train)
         X_test_pca = pca.transform(X_test)
         X_pca = pca.transform(X)
-        #projected_X.append(pca.inverse_transform(X_test_pca))
+        # projected_X.append(pca.inverse_transform(X_test_pca))
         projected_X.append(X_pca)
 
         # Fit the Multi-Output Regression model on the reduced data

@@ -443,7 +443,9 @@ def load_t2_synthetic(
 
     toroidal_coords = cohomological_toroidal_coordinates(noisy_data)
 
-    labels = pd.DataFrame({"thetas": toroidal_coords[:, 0], "phis": toroidal_coords[:, 1]})
+    labels = pd.DataFrame(
+        {"thetas": toroidal_coords[:, 0], "phis": toroidal_coords[:, 1]}
+    )
 
     return noisy_data, labels
 

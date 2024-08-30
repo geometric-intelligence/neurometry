@@ -12,9 +12,8 @@ def compare_representations_to_references(
 ):
     distances = []
     for diagram in diagrams:
-        distance_matrix = compute_pairwise_distances([diagram, reference_diagram], metric=metric)
-        distances.append(
-            np.sum(distance_matrix)/2
+        distance_matrix = compute_pairwise_distances(
+            [diagram, reference_diagram], metric=metric
         )
+        distances.append(np.sum(distance_matrix) / 2)
     return distances
-

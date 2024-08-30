@@ -66,7 +66,7 @@ def get_learned_immersion(model, config):
                 ]
             )
         z = z.to(config.device)
-        #breakpoint()
+        # breakpoint()
         return model.decode(z.T)
 
     return immersion
@@ -122,13 +122,14 @@ def get_z_grid(config, n_grid_points=2000):
     return z_grid
 
 
-
 def _compute_curvature(z_grid, immersion, dim, embedding_dim):
     """Compute mean curvature vector and its norm at each point."""
     # neural_metric = PullbackMetric(
     #     dim=dim, embedding_dim=embedding_dim, immersion=immersion
     # )
-    neural_manifold = NeuralManifoldIntrinsic(dim, embedding_dim, immersion, equip=False)
+    neural_manifold = NeuralManifoldIntrinsic(
+        dim, embedding_dim, immersion, equip=False
+    )
     neural_manifold.equip_with_metric(PullbackMetric)
     torch.unsqueeze(z_grid[0], dim=0)
     if dim == 1:
@@ -140,7 +141,7 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
             # - be able to use batch normalization (needs batch's len > 1)
             z = torch.unsqueeze(z, dim=0)
             curv[i_z, :] = neural_manifold.metric.mean_curvature_vector(z)
-            #curv[i_z, :] = neural_metric.mean_curvature_vector(z)
+            # curv[i_z, :] = neural_metric.mean_curvature_vector(z)
             # Note: these lines are commented out (see PR description)
             # as it makes the computations extremely long.
             # Recommendation: compute these offline in a notebook
@@ -155,11 +156,11 @@ def _compute_curvature(z_grid, immersion, dim, embedding_dim):
             except Exception as e:
                 print(f"An error occurred for i={i}: {e}")
                 print(neural_manifold.metric.metric_matrix(z_i))
-    #curv = neural_manifold.metric.mean_curvature_vector(z_grid)
+    # curv = neural_manifold.metric.mean_curvature_vector(z_grid)
 
     curv_norm = torch.linalg.norm(curv, dim=1, keepdim=True).squeeze()
-    #curv_norm = gs.zeros(len(z_grid))
-    #curv_norm = gs.array([norm.item() for norm in curv_norm])
+    # curv_norm = gs.zeros(len(z_grid))
+    # curv_norm = gs.array([norm.item() for norm in curv_norm])
 
     return geodesic_dist, curv, curv_norm
 
@@ -280,4 +281,3 @@ def compute_curvature_error(
     time.time()
     # print("Computation time: " + "%.3f" % (end_time - start_time) + " seconds.")
     return error
-

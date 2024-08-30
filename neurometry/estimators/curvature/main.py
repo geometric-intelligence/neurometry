@@ -28,7 +28,7 @@ import neurometry.curvature.models.toroidal_vae as toroidal_vae
 import neurometry.curvature.train as train
 import neurometry.curvature.viz as viz
 
-#os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+# os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 
 # Required to make matplotlib figures in threads:
 matplotlib.use("Agg")
@@ -422,7 +422,8 @@ def training_plot_log(config, dataset, labels, train_losses, test_losses, model)
     )
     torch.save(model, model_path)
     model_state_dict_path = os.path.join(
-        default_config.trained_models_dir, f"{config.results_prefix}_model_state_dict.pth"
+        default_config.trained_models_dir,
+        f"{config.results_prefix}_model_state_dict.pth",
     )
     state = {"state_dict": model.state_dict()}
     torch.save(state, model_state_dict_path)

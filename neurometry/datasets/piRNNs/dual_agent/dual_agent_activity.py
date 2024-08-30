@@ -123,9 +123,7 @@ def compute_all_scores(options, file_path, res, rate_map_dual_agent):
     )
 
     scores_dir = os.path.join(file_path, "scores")
-    np.save(
-        scores_dir + f"score_60_dual_agent_epoch_{epoch}.npy", score_60_dual_agent
-    )
+    np.save(scores_dir + f"score_60_dual_agent_epoch_{epoch}.npy", score_60_dual_agent)
     np.save(
         scores_dir + f"border_scores_dual_agent_epoch_{epoch}.npy",
         border_scores_dual_agent,

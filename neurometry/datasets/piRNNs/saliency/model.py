@@ -10,7 +10,7 @@ from torch import nn
 @dataclass
 class GridCellConfig:
     freeze_decoder: bool
-    trans_type: str # not needed
+    trans_type: str  # not needed
     num_grid: int
     num_neurons: int
     block_size: int
@@ -21,7 +21,7 @@ class GridCellConfig:
     w_trans: float
     w_isometry: float
     w_reg_u: float
-    adaptive_dr: bool # not needed
+    adaptive_dr: bool  # not needed
     s_0: float
     x_saliency: list
     sigma_saliency: float
@@ -44,9 +44,7 @@ class GridCell(nn.Module):
 
         loss_transform = self._loss_transform_rnn(**data["trans_rnn"], step=step)
 
-        loss_isometry = self._loss_isometry_numerical_block(
-            **data["isometry_adaptive"]
-        )
+        loss_isometry = self._loss_isometry_numerical_block(**data["isometry_adaptive"])
 
         w_reg_u = (
             self.config.w_reg_u - self.config.w_reg_u / config.reg_decay_until * step
@@ -92,9 +90,9 @@ class GridCell(nn.Module):
             - heatmaps: torch.Tensor, shape [num_traj, T, resolution, resolution]
         """
 
-            #         list of dictionaries. Each dictionary has the structure:
-            # - 'vanilla': float, mean error of vanilla model for path integration step
-            # - 'reencode': float, mean error of reencode model for path integration step
+        #         list of dictionaries. Each dictionary has the structure:
+        # - 'vanilla': float, mean error of vanilla model for path integration step
+        # - 'reencode': float, mean error of reencode model for path integration step
         dx_traj = torch.diff(traj, dim=1) / self.config.num_grid  # [num_traj, T, 2]
         T = dx_traj.shape[1]
 
@@ -103,7 +101,7 @@ class GridCell(nn.Module):
         r_t = {"vanilla": [r_0], "reencode": [r_0]}
         x_t = {"vanilla": [x_0], "reencode": [x_0]}
         heatmaps = []
-        #heatmaps_modules = []
+        # heatmaps_modules = []
 
         for t in range(T + 1):
             _x_t_vanilla, _heatmaps, _heatmaps_modules = self.decoder.decode(
@@ -124,12 +122,19 @@ class GridCell(nn.Module):
                 _r_t_reencode_transformed = self.trans(_r_t_reencode, dx_traj[:, t])
                 r_t["reencode"].append(_r_t_reencode_transformed)
 
-        traj_pred = {key: torch.stack(value[1:], axis=1) for key, value in x_t.items()}  # [num_traj, T, 2]
-        activity = {key: torch.stack(value, axis=1) for key, value in r_t.items()}  # [num_traj, T, num_neurons]
-        heatmaps = torch.stack(heatmaps, axis=1)  # [num_traj, T, resolution, resolution]
+        traj_pred = {
+            key: torch.stack(value[1:], axis=1) for key, value in x_t.items()
+        }  # [num_traj, T, 2]
+        activity = {
+            key: torch.stack(value, axis=1) for key, value in r_t.items()
+        }  # [num_traj, T, num_neurons]
+        heatmaps = torch.stack(
+            heatmaps, axis=1
+        )  # [num_traj, T, resolution, resolution]
 
         err = {
-            "err_" + key: torch.sqrt(torch.sum((value - traj) ** 2, dim=-1))
+            "err_"
+            + key: torch.sqrt(torch.sum((value - traj) ** 2, dim=-1))
             / self.config.num_grid
             for key, value in traj_pred.items()
         }
@@ -141,7 +146,6 @@ class GridCell(nn.Module):
             "activity": activity,
             "heatmaps": heatmaps,
         }
-
 
     def _loss_kernel(self, x, x_prime):
         config = self.config
@@ -165,7 +169,6 @@ class GridCell(nn.Module):
         if config.w_trans == 0:
             return torch.zeros([]).to(traj.get_device())
 
-
         # place cells, x_pc: (0, 1)
         x1 = torch.arange(0, config.num_grid, 1).repeat_interleave(config.num_grid)
         x2 = torch.arange(0, config.num_grid, 1).repeat(config.num_grid)
@@ -182,7 +185,9 @@ class GridCell(nn.Module):
                 (traj[:, i + 1, :][:, None, :] / config.num_grid - x_pc) ** 2, dim=-1
             )
 
-            y = torch.exp(-dist / (2 * self.config.sigma**2))  # (num_traj 1600) -> place field at location given by traj[:, i + 1, :]
+            y = torch.exp(
+                -dist / (2 * self.config.sigma**2)
+            )  # (num_traj 1600) -> place field at location given by traj[:, i + 1, :]
             dx = (traj[:, i + 1, :] - traj[:, i, :]) / config.num_grid
 
             v_x = self.trans(v_x, dx)
@@ -192,11 +197,17 @@ class GridCell(nn.Module):
             v_x_trans = v_x_trans[:, None, None, :]
             u = self.decoder.u.permute((1, 2, 0))[None, ...]
             vu = v_x_trans * u  # [num_traj, resolution, resolution, num_neurons]
-            heatmap = vu.sum(dim=-1) # [num_traj, resolution, resolution]
-            heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))  # (num_traj, 1600)
-            y_hat = heatmap_reshape # actual "place cell" activity over the grid (linear readout of grid cells)
+            heatmap = vu.sum(dim=-1)  # [num_traj, resolution, resolution]
+            heatmap_reshape = heatmap.reshape(
+                (heatmap.shape[0], -1)
+            )  # (num_traj, 1600)
+            y_hat = heatmap_reshape  # actual "place cell" activity over the grid (linear readout of grid cells)
 
-            saliency_kernel = self._saliency_kernel(x_grid, config.saliency_type).unsqueeze(0).to(traj.device)  # (1, 1600)
+            saliency_kernel = (
+                self._saliency_kernel(x_grid, config.saliency_type)
+                .unsqueeze(0)
+                .to(traj.device)
+            )  # (1, 1600)
             if step < config.reward_step:
                 L_error = (y - y_hat) ** 2
             else:
@@ -217,19 +228,22 @@ class GridCell(nn.Module):
     def _saliency_kernel_gaussian(self, x_grid):
         config = self.config
         s_0 = config.s_0
-        x_saliency = torch.tensor([config.x_saliency[0], config.x_saliency[1]]).to(x_grid.device)
+        x_saliency = torch.tensor([config.x_saliency[0], config.x_saliency[1]]).to(
+            x_grid.device
+        )
         sigma_saliency = config.sigma_saliency
 
         # Calculate the squared differences, scaled by respective sigma values
         diff = x_grid - x_saliency
-        scaled_diff_sq = (diff[:, 0]**2 / sigma_saliency**2) + (diff[:, 1]**2 / sigma_saliency**2)
+        scaled_diff_sq = (diff[:, 0] ** 2 / sigma_saliency**2) + (
+            diff[:, 1] ** 2 / sigma_saliency**2
+        )
 
         # Compute the Gaussian function
         normalization_factor = 2 * np.pi * sigma_saliency * sigma_saliency
         s_x = s_0 * torch.exp(-0.5 * scaled_diff_sq) / normalization_factor
 
         return 1 + s_x
-
 
     def _saliency_kernel_left_half(self, x_grid):
         config = self.config
@@ -260,7 +274,6 @@ class GridCell(nn.Module):
             inner_pd1 = torch.sum(v_x_i * v_x_plus_dx1_i, dim=-1)
             inner_pd2 = torch.sum(v_x_i * v_x_plus_dx2_i, dim=-1)
 
-
             loss += torch.sum(
                 (num_block * inner_pd1 - num_block * inner_pd2) ** 2
                 * 0.5
@@ -268,8 +281,6 @@ class GridCell(nn.Module):
             )
 
         return loss * config.w_isometry
-
-
 
 
 class Encoder(nn.Module):
@@ -291,6 +302,7 @@ class Encoder(nn.Module):
         Forward pass of the encoder.
     get_v_x_adaptive(x)
     """
+
     def __init__(self, config: GridCellConfig):
         super().__init__()
         self.num_grid = config.num_grid
@@ -321,6 +333,7 @@ class Encoder(nn.Module):
 
         return get_grid_code_block(self.v, x, self.num_grid, self.config.block_size)
 
+
 class Decoder(nn.Module):
     def __init__(self, config: GridCellConfig):
         super().__init__()
@@ -334,11 +347,15 @@ class Decoder(nn.Module):
     def forward(self, x_prime):
         return get_grid_code(self.u, x_prime, self.config.num_grid)
 
-    def decode(self, r, quantile=0.995):  # r : [num_traj, num_neurons], self.u: [num_neurons, resolution, resolution]
+    def decode(
+        self, r, quantile=0.995
+    ):  # r : [num_traj, num_neurons], self.u: [num_neurons, resolution, resolution]
         config = self.config
 
         r = r[:, None, None, :]  # [num_traj, 1, 1, num_neurons]
-        u = self.u.permute((1, 2, 0))[None, ...]  # [1, resolution, resolution, num_neurons]
+        u = self.u.permute((1, 2, 0))[
+            None, ...
+        ]  # [1, resolution, resolution, num_neurons]
         ru = r * u  # [num_traj, resolution, resolution, num_neurons]
         heatmap = ru.sum(dim=-1)
         heatmap_modules = ru.reshape(ru.shape[:3] + (-1, config.block_size)).sum(dim=-1)
@@ -359,7 +376,11 @@ class Decoder(nn.Module):
             dim=-1,
         )
 
-        return x, heatmap, heatmap_modules.permute((0, 3, 1, 2))  # [num_traj, K, resolution, resolution]
+        return (
+            x,
+            heatmap,
+            heatmap_modules.permute((0, 3, 1, 2)),
+        )  # [num_traj, K, resolution, resolution]
 
 
 class TransformNonlinear(nn.Module):
@@ -410,14 +431,18 @@ def get_grid_code(codebook, x, num_grid):
 
     # query the 2D codebook, with bilinear interpolation
     v_x = nn.functional.grid_sample(
-        input=codebook.unsqueeze(0).transpose(-1, -2),  # [1, num_neurons, resolution, resolution]
+        input=codebook.unsqueeze(0).transpose(
+            -1, -2
+        ),  # [1, num_neurons, resolution, resolution]
         grid=x_normalized.unsqueeze(0).unsqueeze(0),  # [1, 1, num_traj, 2]
         align_corners=False,
     )  # [1, num_neurons, 1, N]
 
     # v_x = v_x.squeeze().transpose(0, 1)
 
-    return torch.squeeze(torch.squeeze(v_x, 0), 1).transpose(0, 1)  # [num_traj, num_neurons]
+    return torch.squeeze(torch.squeeze(v_x, 0), 1).transpose(
+        0, 1
+    )  # [num_traj, num_neurons]
 
 
 def get_grid_code_block(codebook, x, num_grid, block_size):
@@ -428,9 +453,10 @@ def get_grid_code_block(codebook, x, num_grid, block_size):
     v_x = nn.functional.grid_sample(
         input=codebook.reshape(
             -1, block_size, codebook.shape[1], codebook.shape[2]
-        ).transpose(-1, -2),  # [num_block, block_size, resolution, resolution]
+        ).transpose(
+            -1, -2
+        ),  # [num_block, block_size, resolution, resolution]
         grid=x_normalized.transpose(0, 1).unsqueeze(1),  # [num_block, 1, num_traj, 2]
         align_corners=False,
     )  # [num_block, block_size, 1, N]
     return v_x.squeeze().permute(2, 0, 1)  # [num_traj, num_block, block_size]
-

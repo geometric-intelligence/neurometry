@@ -175,4 +175,3 @@ if __name__ == "__main__":
         score_60_single_agent, border_scores_single_agent, band_scores_single_agent = (
             compute_all_scores(options, file_path, res, rate_map_single_agent)
         )
-

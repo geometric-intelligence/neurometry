@@ -17,15 +17,22 @@ from .dual_agent import config, dual_agent_activity, single_agent_activity, util
 
 
 def load_rate_maps(run_id, step):
-    #XU_RNN
-    model_dir = os.path.join(os.getcwd(), "curvature/grid-cells-curvature/models/xu_rnn")
+    # XU_RNN
+    model_dir = os.path.join(
+        os.getcwd(), "curvature/grid-cells-curvature/models/xu_rnn"
+    )
     run_dir = os.path.join(model_dir, f"logs/rnn_isometry/{run_id}")
-    activations_file = os.path.join(run_dir, f"ckpt/activations/activations-step{step}.pkl")
+    activations_file = os.path.join(
+        run_dir, f"ckpt/activations/activations-step{step}.pkl"
+    )
     with open(activations_file, "rb") as f:
         return pickle.load(f)
 
+
 def load_config(run_id):
-    model_dir = os.path.join(os.getcwd(), "curvature/grid-cells-curvature/models/xu_rnn")
+    model_dir = os.path.join(
+        os.getcwd(), "curvature/grid-cells-curvature/models/xu_rnn"
+    )
     run_dir = os.path.join(model_dir, f"logs/rnn_isometry/{run_id}")
     config_file = os.path.join(run_dir, "config.txt")
 
@@ -33,11 +40,8 @@ def load_config(run_id):
         return yaml.safe_load(file)
 
 
-
-
-
 def extract_tensor_events(event_file, verbose=True):
-    #XU_RNN
+    # XU_RNN
     records = []
     losses = []
     try:
@@ -67,7 +71,6 @@ def extract_tensor_events(event_file, verbose=True):
     return records, losses
 
 
-
 def _compute_scores(activations, config):
     block_size = config["model"]["block_size"]
     num_neurons = config["model"]["num_neurons"]
@@ -81,7 +84,7 @@ def _compute_scores(activations, config):
 
     score_list = np.zeros(shape=[len(activations["v"])], dtype=np.float32)
     scale_list = np.zeros(shape=[len(activations["v"])], dtype=np.float32)
-    #orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
+    # orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
     sac_list = []
 
     for i in range(len(activations["v"])):
@@ -89,14 +92,14 @@ def _compute_scores(activations, config):
         rate_map = (rate_map - rate_map.min()) / (rate_map.max() - rate_map.min())
 
         score_60, score_90, max_60_mask, max_90_mask, sac, _ = scorer.get_scores(
-            activations["v"][i])
+            activations["v"][i]
+        )
         sac_list.append(sac)
 
         score_list[i] = score_60
         # scale_list[i] = scale
         scale_list[i] = max_60_mask[1]
         # orientation_list[i] = orientation
-
 
     scale_tensor = torch.from_numpy(scale_list)
     score_tensor = torch.from_numpy(score_list)
@@ -109,9 +112,12 @@ def _compute_scores(activations, config):
     score_tensor = torch.mean(score_tensor)
     sac_array = np.array(sac_list)
 
-    return {"sac":sac_array, "scale":scale_tensor, "score": score_tensor, "max_scale": max_scale}
-
-
+    return {
+        "sac": sac_array,
+        "scale": scale_tensor,
+        "score": score_tensor,
+        "max_scale": max_scale,
+    }
 
 
 def get_scores(run_dir, activations, config):
@@ -131,7 +137,7 @@ def get_scores(run_dir, activations, config):
 
 
 def load_activations(epochs, file_path, version="single", verbose=True, save=True):
-    #SORSCHER RNN
+    # SORSCHER RNN
     activations = []
     rate_maps = []
     state_points = []
@@ -154,14 +160,13 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
         #     activations_dir, f"g_{version}_agent_epoch_{epoch}.npy"
         # )
 
-        if (
-            os.path.exists(activations_epoch_path)
-            and os.path.exists(rate_map_epoch_path)
+        if os.path.exists(activations_epoch_path) and os.path.exists(
+            rate_map_epoch_path
         ):
             activations.append(np.load(activations_epoch_path))
             rate_maps.append(np.load(rate_map_epoch_path))
-            #positions.append(np.load(positions_epoch_path))
-            #g_s.append(np.load(gs_epoch_path))
+            # positions.append(np.load(positions_epoch_path))
+            # g_s.append(np.load(gs_epoch_path))
             if verbose:
                 print(f"Epoch {epoch} found.")
         else:
@@ -178,8 +183,8 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
                 ) = single_agent_activity.main(options, file_path, epoch=epoch)
                 activations.append(activations_single_agent)
                 rate_maps.append(rate_map_single_agent)
-                #positions.append(positions_single_agent)
-                #g_s.append(g_single_agent)
+                # positions.append(positions_single_agent)
+                # g_s.append(g_single_agent)
             elif version == "dual":
                 (
                     activations_dual_agent,
@@ -189,14 +194,14 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
                 ) = dual_agent_activity.main(options, file_path, epoch=epoch)
                 activations.append(activations_dual_agent)
                 rate_maps.append(rate_map_dual_agent)
-                #positions.append(positions_dual_agent)
-                #g_s.append(g_dual_agent)
+                # positions.append(positions_dual_agent)
+                # g_s.append(g_dual_agent)
 
             if save:
                 np.save(activations_epoch_path, activations[-1])
                 np.save(rate_map_epoch_path, rate_maps[-1])
-                #np.save(positions_epoch_path, positions[-1])
-                #np.save(gs_epoch_path, g_s[-1])
+                # np.save(positions_epoch_path, positions[-1])
+                # np.save(gs_epoch_path, g_s[-1])
 
         state_points_epoch = activations[-1].reshape(activations[-1].shape[0], -1)
         state_points.append(state_points_epoch)
@@ -212,9 +217,9 @@ def load_activations(epochs, file_path, version="single", verbose=True, save=Tru
         print(
             f"rate_maps has shape {rate_maps[0].shape}. There are {rate_maps[0].shape[1]} data points averaged over {activations[0].shape[3]} trajectories in the {rate_maps[0].shape[0]}-dimensional state space."
         )
-        #print(f"positions has shape {positions[0].shape}.")
+        # print(f"positions has shape {positions[0].shape}.")
 
-    return activations, rate_maps, state_points#, positions, g_s
+    return activations, rate_maps, state_points  # , positions, g_s
 
 
 def plot_rate_map(indices, num_plots, activations, title, seed=None):
@@ -251,9 +256,8 @@ def plot_rate_map(indices, num_plots, activations, title, seed=None):
                     axes[i * cols + j].axis("off")
 
     fig.suptitle(title, fontsize=30)
-    #plt.tight_layout()
+    # plt.tight_layout()
     plt.show()
-
 
 
 def draw_heatmap(activations, title):
@@ -295,8 +299,6 @@ def draw_heatmap(activations, title):
     return np.expand_dims(image_from_plot, axis=0)
 
 
-
-
 def _z_standardize(matrix):
     return (matrix - np.mean(matrix, axis=0)) / np.std(matrix, axis=0)
 
@@ -319,7 +321,9 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
     if sac_array is None:
         sac_array = get_scores(run_dir, activations, config)["sac"]
 
-    spatial_autocorrelation_matrix = _vectorized_spatial_autocorrelation_matrix(sac_array)
+    spatial_autocorrelation_matrix = _vectorized_spatial_autocorrelation_matrix(
+        sac_array
+    )
 
     umap_reducer_2d = umap.UMAP(n_components=2, random_state=10)
     umap_embedding = umap_reducer_2d.fit_transform(spatial_autocorrelation_matrix.T)
@@ -340,16 +344,24 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
             # col = [0, 0, 0, 1]
             continue
 
-        class_member_mask = (umap_dbscan.labels_ == k)
+        class_member_mask = umap_dbscan.labels_ == k
 
         xy = umap_embedding[class_member_mask]
         if plot:
-            axes[0].plot(xy[:, 0], xy[:, 1], "o", markerfacecolor=tuple(col), markeredgecolor="none", markersize=5, label=f"Cluster {k}")
+            axes[0].plot(
+                xy[:, 0],
+                xy[:, 1],
+                "o",
+                markerfacecolor=tuple(col),
+                markeredgecolor="none",
+                markersize=5,
+                label=f"Cluster {k}",
+            )
 
         umap_cluster_labels = umap_dbscan.fit_predict(umap_embedding)
         clusters = {}
         for i in np.unique(umap_cluster_labels):
-            #cluster = _get_data_from_cluster(activations,i, umap_cluster_labels)
+            # cluster = _get_data_from_cluster(activations,i, umap_cluster_labels)
             cluster = activations[umap_cluster_labels == i]
             clusters[i] = cluster
 
@@ -366,4 +378,3 @@ def umap_dbscan(activations, run_dir, config, sac_array=None, plot=True):
         plt.tight_layout()
         plt.show()
     return clusters, umap_cluster_labels
-

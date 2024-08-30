@@ -30,8 +30,29 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         self.classifier = RandomForestClassifier()
 
     def _generate_ref_data(self, input_data):
+        """Generate reference synthetic point clouds to train the classifier.
+
+        Parameters
+        ----------
+        input_data : array-like, shape=[num_points, encoding_dim]
+            Input data to generate the reference point clouds.
+
+        Returns
+        -------
+        ref_point_clouds : list of array-like, shape=[num_points, encoding_dim]
+            Reference point clouds.
+        ref_labels : array-like, shape=[num_samples]
+            Reference labels. 0 for null point clouds, 1 for circle, 2 for sphere, 3 for torus.
+        """
         num_points = input_data.shape[0]
         encoding_dim = input_data.shape[1]
+
+        rng = np.random.default_rng(seed=0)
+        null_point_clouds = [
+            np.array([rng.permutation(row) for row in input_data])
+            for _ in range(self.num_samples)
+        ]
+
         circle_task_points = synthetic.hypersphere(1, num_points)
         circle_point_clouds = []
         for _ in range(self.num_samples):
@@ -67,12 +88,13 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
                 poisson_multiplier=self.poisson_multiplier,
             )
             torus_point_clouds.append(torus_noisy_points)
-
-        circle_labels = np.zeros(self.num_samples)
-        sphere_labels = np.ones(self.num_samples)
-        torus_labels = 2 * np.ones(self.num_samples)
+        null_point_labels = np.zeros(self.num_samples)
+        circle_labels = np.ones(self.num_samples)
+        sphere_labels = 2 * np.ones(self.num_samples)
+        torus_labels = 3 * np.ones(self.num_samples)
         ref_labels = np.concatenate(
             [
+                null_point_labels,
                 circle_labels,
                 sphere_labels,
                 torus_labels,
@@ -80,6 +102,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         )
 
         ref_point_clouds = [
+            *null_point_clouds,
             *circle_point_clouds,
             *sphere_point_clouds,
             *torus_point_clouds,
@@ -88,10 +111,37 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         return ref_point_clouds, ref_labels
 
     def _compute_topo_features(self, diagrams):
+        """Compute topological features from persistence diagrams.
+
+        Parameters
+        ----------
+        diagrams : list of array-like, shape=[num_diagrams, num_points, 3]
+            Persistence diagrams.
+
+        Returns
+        -------
+        topo_features : array-like, shape=[num_diagrams, self.homology_dimensions]
+            Topological features, e.g. persistence entropy.
+        """
         PE = PersistenceEntropy()
         return PE.fit_transform(diagrams)
 
     def fit(self, X, y=None):
+        """Fit the classifier topological features extracted from persistence diagrams of synthetic data.
+
+        Parameters
+        ----------
+        X : array-like, shape=[num_points, encoding_dim]
+            Input data.
+        y : array-like, shape=[num_samples]
+            Labels. Ignored.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+
         ref_point_clouds, ref_labels = self._generate_ref_data(X)
         if self.reduce_dim:
             pca = PCA(n_components=10)
@@ -110,6 +160,19 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
+        """Predict the topology class of the input data.
+
+        Parameters
+        ----------
+        X : array-like, shape=[num_points, encoding_dim]
+            Input data.
+
+        Returns
+        -------
+        y_pred : array-like, shape=[num_points]
+            Predicted topology class.
+
+        """
         if self.reduce_dim:
             pca = PCA(n_components=10)
             X = pca.fit_transform(X)
@@ -120,25 +183,29 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         return self.classifier.predict(features)
 
 
-
-
-
 def compute_persistence_diagrams(
     representations,
     homology_dimensions=(0, 1, 2),
     coeff=2,
     metric="euclidean",
     weighted=False,
-    n_jobs=-1
+    n_jobs=-1,
 ):
     if weighted:
         WR = WeightedRipsPersistence(
-            metric=metric, homology_dimensions=homology_dimensions, coeff=coeff,
+            metric=metric,
+            homology_dimensions=homology_dimensions,
+            coeff=coeff,
         )
         diagrams = WR.fit_transform(representations)
     else:
         VR = VietorisRipsPersistence(
-            metric=metric, homology_dimensions=homology_dimensions, coeff=coeff, reduced_homology=False, n_jobs=n_jobs)
+            metric=metric,
+            homology_dimensions=homology_dimensions,
+            coeff=coeff,
+            reduced_homology=False,
+            n_jobs=n_jobs,
+        )
         diagrams = VR.fit_transform(representations)
     return diagrams
 
@@ -154,11 +221,14 @@ def compute_diagrams_shuffle(X, num_shuffles, seed=0, homology_dimensions=(0, 1)
         [X, *shuffled_Xs], homology_dimensions=homology_dimensions
     )
 
+
 def cohomological_toroidal_coordinates(data):
     n_landmarks = data.shape[0]
     tc = ToroidalCoords(data, n_landmarks=n_landmarks)
-    cohomology_classes = [0,1]
-    toroidal_coords = tc.get_coordinates(cocycle_idxs=cohomology_classes,standard_range=False)
+    cohomology_classes = [0, 1]
+    toroidal_coords = tc.get_coordinates(
+        cocycle_idxs=cohomology_classes, standard_range=False
+    )
     return toroidal_coords.T
 
 
@@ -167,5 +237,3 @@ def cohomological_circular_coordinates(data):
     cc = CircularCoords(data, n_landmarks=n_landmarks)
     circular_coords = cc.get_coordinates(standard_range=False)
     return circular_coords.T
-
-
