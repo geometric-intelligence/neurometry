@@ -198,7 +198,7 @@ if gamma_moving > 0 or gamma_dynamic > 0:
 ### Ray sweep hyperparameters ###
 # --> Lists of values to sweep for each hyperparameter
 # Except for lr_min and lr_max which are floats
-lr_min = [0.001,0.0001]  # 0.0001
+lr_min = [0.001, 0.0001]  # 0.0001
 lr_max = 0.1
 batch_size = [64]  # [16,32,64]
 encoder_width = [400]  # [100,400]  # , 100, 200, 300]

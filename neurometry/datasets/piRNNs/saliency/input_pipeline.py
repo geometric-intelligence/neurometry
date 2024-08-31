@@ -6,7 +6,10 @@ import numpy as np
 
 class TrainDataset:
     def __init__(
-        self, rng, config: ml_collections.ConfigDict, model_config: ml_collections.ConfigDict
+        self,
+        rng,
+        config: ml_collections.ConfigDict,
+        model_config: ml_collections.ConfigDict,
     ):
         self.config = config
         self.num_grid = model_config.num_grid
@@ -87,7 +90,7 @@ class TrainDataset:
         x_start_max, x_start_min = x_start_max[select_idx], x_start_min[select_idx]
         dx_cumsum = dx_cumsum[select_idx]
         x_start = (
-         self.rng.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
+            self.rng.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
         )
         x_start = x_start[:, None]  # [N, 1, 2]
         x_start = np.round(x_start - 0.5)
@@ -117,7 +120,7 @@ class TrainDataset:
         num_blocks = self.num_blocks
 
         theta = (
-         self.rng.random(size=(batch_size, num_blocks, 2)) * 2 * np.pi
+            self.rng.random(size=(batch_size, num_blocks, 2)) * 2 * np.pi
         )  # (batch_size, num_blocks, 2)
         dr = (
             np.sqrt(self.rng.random(size=(batch_size, num_blocks, 1)))
@@ -128,7 +131,7 @@ class TrainDataset:
         x_max = np.fmin(self.num_grid - 0.5, np.min(self.num_grid - 0.5 - dx, axis=2))
         x_min = np.fmax(-0.5, np.max(-0.5 - dx, axis=2))
         x = (
-         self.rng.random(size=(batch_size, num_blocks, 2)) * (x_max - x_min) + x_min
+            self.rng.random(size=(batch_size, num_blocks, 2)) * (x_max - x_min) + x_min
         )  # (batch_size, num_blocks, 2)
         x_plus_dx1 = x + dx[:, :, 0]
         x_plus_dx2 = x + dx[:, :, 1]
@@ -150,7 +153,6 @@ class TrainDataset:
                         dx_list.append(np.array([-i, -j]))
         dx_list = np.stack(dx_list)
         return dx_list.astype(np.float32)
-
 
     def _generate_dx_list_continous(self, max_dr):
         batch_size = self.config.batch_size
@@ -219,7 +221,7 @@ class EvalDataset:
         # uniformly wihtin the whole region.
         dx_list = self.dx_list
 
-        #breakpoint()
+        # breakpoint()
         # print(type(n_steps))
         # print(len(n_steps))
 
@@ -240,7 +242,7 @@ class EvalDataset:
         x_start_max, x_start_min = x_start_max[select_idx], x_start_min[select_idx]
         dx_cumsum = dx_cumsum[select_idx]
         x_start = (
-         self.rng.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
+            self.rng.random((n_traj, 2)) * (x_start_max - x_start_min) + x_start_min
         )
         x_start = x_start[:, None]  # [N, 1, 2]
         x_start = np.round(x_start - 0.5)

@@ -14,8 +14,9 @@ def synthetic_neural_manifold(
     points,
     encoding_dim,
     nonlinearity,
-    poisson_multiplier=1,
+    fano_factor=1,
     ref_frequency=200,
+    verbose=False,
     **kwargs,
 ):
     """Generate points on a synthetic neural manifold.
@@ -28,6 +29,10 @@ def synthetic_neural_manifold(
         Dimension of the encoded points. This is the dimension of the neural state space.
     nonlinearity : str
         Nonlinearity to apply. Must be one of 'relu', 'sigmoid', 'tanh', or 'linear'.
+    ref_frequency : float, optional
+        Reference frequency of the noisy points. Default is 200 Hz.
+    fano_factor : float, optional
+        Fano factor defined as the variance divided by the mean. Default is 1.
     **kwargs : dict
         Keyword arguments for the manifold generation.
 
@@ -42,14 +47,10 @@ def synthetic_neural_manifold(
     manifold_points = ref_frequency * apply_nonlinearity(
         encoded_points, nonlinearity, **kwargs
     )
-    try:
-        noisy_points = poisson_spikes(manifold_points, poisson_multiplier)
-    except Exception:
-        print("WARNING! Poisson spikes not generated: mean must be non-negative")
-        noisy_points = None
-
-    #noise_level = gs.sqrt(1 / (ref_frequency * poisson_multiplier))
-    #print(f"noise level: {100*noise_level:.2f}%")
+    noisy_points = gaussian_spikes(manifold_points, fano_factor)
+    if verbose:
+        noise_level = torch.sqrt(fano_factor / ref_frequency)
+        print(f"noise level: {100*noise_level:.2f}%")
 
     return noisy_points, manifold_points
 
@@ -237,19 +238,22 @@ def scaled_tanh(tensor, scales):
     return 1 + gs.tanh(scales * tensor)
 
 
-def poisson_spikes(data, multiplier=1):
-    """Generate Poisson spike trains from data.
+def gaussian_spikes(firing_rates, fano_factor=1):
+    """Generate Gaussian spike trains from data.
+    This a good approximation for the Poisson spike trains when the mean firing rate is high.
 
     Parameters
     ----------
-    data : array-like, shape=[num_points, num_neurons]
-        Points on the manifold.
-    multiplier : int
-        Multiplier for the number of spikes to generate.
+    firing_rates : array-like, shape=[num_points, num_neurons]
+        Points on the underlying manifold.
+    fano_factor : float, optional
+        Fano factor defined as the variance divided by the mean. Default is 1.
 
     Returns
     -------
     spikes : array-like, shape=[num_points, num_neurons]
-        Poisson spike trains.
+        Gaussian spike trains.
     """
-    return torch.poisson(data * multiplier) / multiplier
+    std = torch.sqrt(firing_rates * fano_factor)
+
+    return torch.normal(firing_rates, std)

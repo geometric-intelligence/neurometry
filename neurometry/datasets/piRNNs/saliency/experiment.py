@@ -1,6 +1,5 @@
 """Main training loop."""
 
-
 import input_pipeline
 import ml_collections
 import model as model
@@ -34,10 +33,15 @@ class Experiment:
 
         # initialize dataset
         logging.info("==== initialize dataset ====")
-        self.train_dataset = input_pipeline.TrainDataset(self.rng, config.data, self.model_config)
+        self.train_dataset = input_pipeline.TrainDataset(
+            self.rng, config.data, self.model_config
+        )
         self.train_iter = iter(self.train_dataset)
         eval_dataset = input_pipeline.EvalDataset(
-            self.rng, config.integration, config.data.max_dr_trans, config.model.num_grid
+            self.rng,
+            config.integration,
+            config.data.max_dr_trans,
+            config.model.num_grid,
         )
         self.eval_iter = iter(eval_dataset)
 
@@ -45,15 +49,19 @@ class Experiment:
         logging.info("==== initialize optimizer ====")
         if config.train.optimizer_type == "adam":
             self.optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, self.model.parameters()), lr=config.train.lr
+                filter(lambda p: p.requires_grad, self.model.parameters()),
+                lr=config.train.lr,
             )
         elif config.train.optimizer_type == "adam_w":
             self.optimizer = torch.optim.AdamW(
-                filter(lambda p: p.requires_grad, self.model.parameters()), lr=config.train.lr
+                filter(lambda p: p.requires_grad, self.model.parameters()),
+                lr=config.train.lr,
             )
         elif config.train.optimizer_type == "sgd":
             self.optimizer = torch.optim.SGD(
-                filter(lambda p: p.requires_grad, self.model.parameters()), lr=config.train.lr, momentum=0.9
+                filter(lambda p: p.requires_grad, self.model.parameters()),
+                lr=config.train.lr,
+                momentum=0.9,
             )
 
         if config.train.load_pretrain:
@@ -67,7 +75,6 @@ class Experiment:
             self.starting_step = ckpt["step"]
         else:
             self.starting_step = 1
-
 
     def train_and_evaluate(self):
         """Train and evaluate model.
@@ -102,12 +109,14 @@ class Experiment:
         logging.info("==== Start of training ====")
         errors = []
         with metric_writers.ensure_flushes(writer):
-            for step in range(self.starting_step, config.num_steps_train + self.starting_step):
-                #logging.info(f"Training step {step}/{config.num_steps_train + self.starting_step}")
+            for step in range(
+                self.starting_step, config.num_steps_train + self.starting_step
+            ):
+                # logging.info(f"Training step {step}/{config.num_steps_train + self.starting_step}")
                 batch_data = utils.dict_to_device(next(self.train_iter), self.device)
 
                 if 120000 > step > 10000:
-                    #lr = 0.0003
+                    # lr = 0.0003
                     lr = config.lr
                 # elif step < 2000:  # warm up
                 #     lr = config.lr / 2000 * step + 3e-6
@@ -166,7 +175,10 @@ class Experiment:
                     )
                     train_metrics = []
 
-                if step == self.starting_step or step % config.steps_per_large_logging == 0:
+                if (
+                    step == self.starting_step
+                    or step % config.steps_per_large_logging == 0
+                ):
                     # ckpt_dir = os.path.join(workdir, "ckpt")
                     # if not os.path.exists(ckpt_dir):
                     #     os.makedirs(ckpt_dir)
@@ -222,7 +234,10 @@ class Experiment:
                             step=step,
                         )
 
-                if step % config.steps_per_integration == 0 or step == self.starting_step:
+                if (
+                    step % config.steps_per_integration == 0
+                    or step == self.starting_step
+                ):
                     # perform path integration
                     with torch.no_grad():
                         eval_data = utils.dict_to_device(
@@ -263,23 +278,27 @@ class Experiment:
 
                         outputs = self.model.path_integration(**eval_data["traj"])
 
-
-                        mean_err = {key: torch.mean(value) for key, value in outputs["err"].items()}
+                        mean_err = {
+                            key: torch.mean(value)
+                            for key, value in outputs["err"].items()
+                        }
                         mean_err = utils.dict_to_numpy(mean_err)
 
-                        wandb.log({key: value for key, value in mean_err.items()}, step=step)
+                        wandb.log(
+                            {key: value for key, value in mean_err.items()}, step=step
+                        )
                         errors.append(mean_err)
 
         return errors, self.model
 
-                # if step == config.num_steps_train:
-                #     ckpt_dir = os.path.join(workdir, "ckpt")
-                #     if not os.path.exists(ckpt_dir):
-                #         os.makedirs(ckpt_dir)
-                #     self._save_checkpoint(step, ckpt_dir)
+        # if step == config.num_steps_train:
+        #     ckpt_dir = os.path.join(workdir, "ckpt")
+        #     if not os.path.exists(ckpt_dir):
+        #         os.makedirs(ckpt_dir)
+        #     self._save_checkpoint(step, ckpt_dir)
 
     def grid_scale(self):
-        #num_interval = self.model_config.num_grid
+        # num_interval = self.model_config.num_grid
         block_size = self.model_config.block_size
         num_block = self.model_config.num_neurons // self.model_config.block_size
 
@@ -288,14 +307,14 @@ class Experiment:
 
         masks_parameters = zip(starts, ends.tolist(), strict=False)
 
-        #ncol, nrow = block_size, num_block
+        # ncol, nrow = block_size, num_block
         weights = self.model.encoder.v.data.cpu().detach().numpy()
 
         scorer = GridScorer(40, ((0, 1), (0, 1)), masks_parameters)
 
         score_list = np.zeros(shape=[len(weights)], dtype=np.float32)
         scale_list = np.zeros(shape=[len(weights)], dtype=np.float32)
-        #orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
+        # orientation_list = np.zeros(shape=[len(weights)], dtype=np.float32)
         sac_list = []
         # plt.figure(figsize=(int(ncol * 1.6), int(nrow * 1.6)))
 
@@ -368,6 +387,5 @@ class Experiment:
     #     }
     #     with open(activations_filename, "wb") as f:
     #         pickle.dump(activations, f)
-
 
     #     logging.info(f"Saving activations: {activations_filename} ...")

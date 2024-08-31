@@ -26,39 +26,69 @@ pretrained_config_file = os.path.join(pretrained_run_dir, "config.txt")
 with open(pretrained_config_file) as f:
     pretrained_config = yaml.safe_load(f)
 
-pretrained_activations_file = os.path.join(pretrained_run_dir, "ckpt/activations/activations-step25000.pkl")
+pretrained_activations_file = os.path.join(
+    pretrained_run_dir, "ckpt/activations/activations-step25000.pkl"
+)
 with open(pretrained_activations_file, "rb") as f:
     pretrained_activations = pickle.load(f)
 
 scores = get_scores(pretrained_run_dir, pretrained_activations, pretrained_config)
 
 pretrained_clusters, umap_cluster_labels = umap_dbscan(
-    pretrained_activations["v"], pretrained_run_dir, pretrained_config, sac_array=None, plot=False
+    pretrained_activations["v"],
+    pretrained_run_dir,
+    pretrained_config,
+    sac_array=None,
+    plot=False,
 )
 
 neural_points_pretrained = {}
 rate_maps_pretrained = {}
 for id in np.unique(umap_cluster_labels):
     rate_maps_pretrained[id] = pretrained_activations["v"][umap_cluster_labels == id]
-    neural_points_pretrained[id] = rate_maps_pretrained[id].reshape(len(rate_maps_pretrained[id]), -1).T
+    neural_points_pretrained[id] = (
+        rate_maps_pretrained[id].reshape(len(rate_maps_pretrained[id]), -1).T
+    )
 
 
-def plot_experiment(run_name,figs_dir):
+def plot_experiment(run_name, figs_dir):
     expt_config = _load_expt_config(run_name)
     neural_points_expt, rate_maps_expt = _get_expt_activations_per_cluster(run_name)
 
-    fig_saliency_kernel = _plot_gaussian_kernel(expt_config["s_0"], location=expt_config["x_saliency"], scale=expt_config["sigma_saliency"])
+    fig_saliency_kernel = _plot_gaussian_kernel(
+        expt_config["s_0"],
+        location=expt_config["x_saliency"],
+        scale=expt_config["sigma_saliency"],
+    )
     wandb.log({"saliency_kernel": wandb.Image(fig_saliency_kernel)})
-    #save fig_saliency_kernel
-    fig_saliency_kernel.savefig(os.path.join(figs_dir, f"{run_name}_saliency_kernel.pdf"))
+    # save fig_saliency_kernel
+    fig_saliency_kernel.savefig(
+        os.path.join(figs_dir, f"{run_name}_saliency_kernel.pdf")
+    )
 
     for module in neural_points_expt:
-        fig_rate_maps_pretrained = _draw_heatmap(rate_maps_pretrained[module], f"Module {module} pretrained")
-        wandb.log({f"rate_maps_pretrained_module_{module}": wandb.Image(fig_rate_maps_pretrained)})
-        fig_rate_maps_pretrained.savefig(os.path.join(figs_dir, f"{run_name}_rate_maps_pretrained_module_{module}.pdf"))
-        fig_rate_maps_expt = _draw_heatmap(rate_maps_expt[module], f"Module {module} experiment")
+        fig_rate_maps_pretrained = _draw_heatmap(
+            rate_maps_pretrained[module], f"Module {module} pretrained"
+        )
+        wandb.log(
+            {
+                f"rate_maps_pretrained_module_{module}": wandb.Image(
+                    fig_rate_maps_pretrained
+                )
+            }
+        )
+        fig_rate_maps_pretrained.savefig(
+            os.path.join(
+                figs_dir, f"{run_name}_rate_maps_pretrained_module_{module}.pdf"
+            )
+        )
+        fig_rate_maps_expt = _draw_heatmap(
+            rate_maps_expt[module], f"Module {module} experiment"
+        )
         wandb.log({f"rate_maps_expt_module_{module}": wandb.Image(fig_rate_maps_expt)})
-        fig_rate_maps_expt.savefig(os.path.join(figs_dir, f"{run_name}_rate_maps_expt_module_{module}.pdf"))
+        fig_rate_maps_expt.savefig(
+            os.path.join(figs_dir, f"{run_name}_rate_maps_expt_module_{module}.pdf")
+        )
         fig_pca = plot_pca_projections(
             neural_points_pretrained[module],
             neural_points_expt[module],
@@ -76,14 +106,31 @@ def plot_experiment(run_name,figs_dir):
             f"Module {module} experiment",
         )
         wandb.log({f"nonlinear_projection_module_{module}": wandb.Image(fig_nonlinear)})
-        fig_nonlinear.savefig(os.path.join(figs_dir, f"{run_name}_nonlinear_projection_module_{module}.pdf"))
-        if neural_points_pretrained[module].shape[1] >= 6 and neural_points_expt[module].shape[1] >= 6:
-            pca_pretrained = PCA(n_components=min(6, neural_points_pretrained[module].shape[1]))
-            neural_points_pretrained_pca = pca_pretrained.fit_transform(neural_points_pretrained[module])
-            module_pretrained_diagrams = compute_diagrams_shuffle(neural_points_pretrained_pca, num_shuffles=10, homology_dimensions=(0,1,2))
+        fig_nonlinear.savefig(
+            os.path.join(
+                figs_dir, f"{run_name}_nonlinear_projection_module_{module}.pdf"
+            )
+        )
+        if (
+            neural_points_pretrained[module].shape[1] >= 6
+            and neural_points_expt[module].shape[1] >= 6
+        ):
+            pca_pretrained = PCA(
+                n_components=min(6, neural_points_pretrained[module].shape[1])
+            )
+            neural_points_pretrained_pca = pca_pretrained.fit_transform(
+                neural_points_pretrained[module]
+            )
+            module_pretrained_diagrams = compute_diagrams_shuffle(
+                neural_points_pretrained_pca,
+                num_shuffles=10,
+                homology_dimensions=(0, 1, 2),
+            )
             pca_expt = PCA(n_components=min(6, neural_points_expt[module].shape[1]))
             neural_points_expt_pca = pca_expt.fit_transform(neural_points_expt[module])
-            module_expt_diagrams = compute_diagrams_shuffle(neural_points_expt_pca, num_shuffles=10, homology_dimensions=(0,1,2))
+            module_expt_diagrams = compute_diagrams_shuffle(
+                neural_points_expt_pca, num_shuffles=10, homology_dimensions=(0, 1, 2)
+            )
             tda_fig = plot_all_barcodes_with_null(
                 module_pretrained_diagrams,
                 f"Module {module} pretrained",
@@ -91,8 +138,9 @@ def plot_experiment(run_name,figs_dir):
                 f"Module {module} experiment",
             )
             wandb.log({f"tda_module_{module}": wandb.Image(tda_fig)})
-            tda_fig.savefig(os.path.join(figs_dir, f"{run_name}_tda_module_{module}.pdf"))
-
+            tda_fig.savefig(
+                os.path.join(figs_dir, f"{run_name}_tda_module_{module}.pdf")
+            )
 
 
 def _get_expt_activations_per_cluster(run_name):
@@ -101,7 +149,9 @@ def _get_expt_activations_per_cluster(run_name):
     rate_maps_expt = {}
     for id in np.unique(umap_cluster_labels):
         rate_maps_expt[id] = activations[umap_cluster_labels == id]
-        neural_points_expt[id] = rate_maps_expt[id].reshape(len(rate_maps_expt[id]), -1).T
+        neural_points_expt[id] = (
+            rate_maps_expt[id].reshape(len(rate_maps_expt[id]), -1).T
+        )
     return neural_points_expt, rate_maps_expt
 
 
@@ -112,7 +162,6 @@ def _load_expt_rate_maps(run_name):
         return pickle.load(f)
 
 
-
 def _load_expt_config(run_name):
     configs_dir = default_config.configs_dir
     config_file = os.path.join(configs_dir, f"{run_name}.json")
@@ -121,11 +170,10 @@ def _load_expt_config(run_name):
         return yaml.safe_load(file)
 
 
-
 def _draw_heatmap(activations, title):
     # activations should be a 3-D tensor: [num_rate_maps, H, W]
     num_rate_maps = min(activations.shape[0], 100)
-    #H, W = activations.shape[1], activations.shape[2]
+    # H, W = activations.shape[1], activations.shape[2]
 
     # Determine the number of rows and columns for the plot grid
     ncol = int(np.ceil(np.sqrt(num_rate_maps)))
@@ -172,6 +220,7 @@ def _draw_heatmap(activations, title):
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
+
 
 def _plot_gaussian_kernel(intensity, location=0.8, scale=0.1):
     x = np.linspace(0, 1, 40)

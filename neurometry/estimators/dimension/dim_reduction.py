@@ -33,14 +33,30 @@ def plot_2d_manifold_projections(
             kde = gaussian_kde(xy)
             density = kde(xy)
             sc = ax.scatter(x, y, c=density, s=50, cmap=cmap)
-            ax.set_xlim(x_min-2, x_max+2)
-            ax.set_ylim(y_min-2, y_max+2)
+            ax.set_xlim(x_min - 2, x_max + 2)
+            ax.set_ylim(y_min - 2, y_max + 2)
             return sc
 
-        plot_density(axes[i, 0], data1_2d, cmap="Blues",x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
+        plot_density(
+            axes[i, 0],
+            data1_2d,
+            cmap="Blues",
+            x_min=x_min,
+            x_max=x_max,
+            y_min=y_min,
+            y_max=y_max,
+        )
         axes[i, 0].set_title(f"{name} - {dataset_name_1}")
 
-        plot_density(axes[i, 1], data2_2d, cmap="Reds",x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
+        plot_density(
+            axes[i, 1],
+            data2_2d,
+            cmap="Reds",
+            x_min=x_min,
+            x_max=x_max,
+            y_min=y_min,
+            y_max=y_max,
+        )
         axes[i, 1].set_title(f"{name} - {dataset_name_2}")
 
     plt.tight_layout()
@@ -93,8 +109,8 @@ def plot_pca_projections(X1, X2, dataset_name_1, dataset_name_2, K):
     for i in range(K):
         for j in range(K * 2):
             if i > j % K:
-                axes[i, j].set_xlim(x_min-1, x_max+1)
-                axes[i, j].set_ylim(y_min-1, y_max+1)
+                axes[i, j].set_xlim(x_min - 1, x_max + 1)
+                axes[i, j].set_ylim(y_min - 1, y_max + 1)
 
     fig.subplots_adjust(top=1)
     fig.suptitle(
@@ -114,5 +130,3 @@ def plot_pca_projections(X1, X2, dataset_name_1, dataset_name_2, K):
     )
 
     return fig
-
-

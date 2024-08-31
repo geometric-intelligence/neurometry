@@ -176,7 +176,9 @@ class GridScorer:
             self.get_grid_scores_for_mask(sac, rotated_sacs, mask)
             for mask, mask_params in self._masks  # pylint: disable=unused-variable
         ]
-        scores_60, scores_90, variances = map(np.asarray, zip(*scores, strict=False))  # pylint: disable=unused-variable
+        scores_60, scores_90, variances = map(
+            np.asarray, zip(*scores, strict=False)
+        )  # pylint: disable=unused-variable
         max_60_ind = np.argmax(scores_60)
         max_90_ind = np.argmax(scores_90)
 

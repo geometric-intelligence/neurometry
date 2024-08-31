@@ -16,11 +16,13 @@ import wandb
 # Initialize Ray
 ray.init()
 
+
 @ray.remote(num_gpus=1)
 def run_experiment(sweep_name, s_0, sigma_saliency, x_saliency, plot=True):
 
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(ray.get_gpu_ids()[0])  # Automatically manage GPU assignment with Ray
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(
+        ray.get_gpu_ids()[0]
+    )  # Automatically manage GPU assignment with Ray
 
     ## NEED TO ADJUST THIS CODE (and default_config) TO DO PROPER HYPERPARAMETER SWEEPS!!!!
     rng = np.random.default_rng()
@@ -105,18 +107,28 @@ def run_experiment(sweep_name, s_0, sigma_saliency, x_saliency, plot=True):
 
     main_run(sweep_config)
 
+
 def main():
     """Launch all experiments."""
-    param_combinations = list(itertools.product(default_config.s_0, default_config.sigma_saliency, default_config.x_saliency))
+    param_combinations = list(
+        itertools.product(
+            default_config.s_0, default_config.sigma_saliency, default_config.x_saliency
+        )
+    )
 
     # Create tasks
-    tasks = [(f"s_0={s_0}_sigma_saliency={sigma_saliency}_x_saliency={x_saliency}", s_0, sigma_saliency, x_saliency)
-             for s_0, sigma_saliency, x_saliency in param_combinations]
+    tasks = [
+        (
+            f"s_0={s_0}_sigma_saliency={sigma_saliency}_x_saliency={x_saliency}",
+            s_0,
+            sigma_saliency,
+            x_saliency,
+        )
+        for s_0, sigma_saliency, x_saliency in param_combinations
+    ]
 
     # Run tasks in parallel using Ray
     ray.get([run_experiment.remote(*task) for task in tasks])
-
-
 
 
 def _d(**kwargs):
@@ -211,6 +223,6 @@ def _training_plot_log(wandb_config, model):
     figs_dir = default_config.figs_dir
     eval.plot_experiment(wandb_config.run_name, figs_dir)
 
+
 if __name__ == "__main__":
     main()
-
