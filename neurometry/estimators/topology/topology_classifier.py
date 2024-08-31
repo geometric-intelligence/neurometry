@@ -189,7 +189,7 @@ class TopologyClassifier(ClassifierMixin, BaseEstimator):
         print(f"Predicted topology: {prediction_label}")
 
         return prediction
-    
+
     def plot_topo_feature_space(self):
         """Plot the topological feature space of the reference data."""
         import plotly.graph_objects as go
@@ -216,7 +216,7 @@ class TopologyClassifier(ClassifierMixin, BaseEstimator):
                     marker=dict(size=3, color=color_map[label]),
                 )
             )
-        
+
         fig.add_trace(
             go.Scatter3d(
                 x=self.features[:, 0],
