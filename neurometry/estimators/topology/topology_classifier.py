@@ -15,16 +15,16 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 import geomstats.backend as gs
 
 
-class TopologicalClassifier(ClassifierMixin, BaseEstimator):
+class TopologyClassifier(ClassifierMixin, BaseEstimator):
     def __init__(
         self,
         num_samples,
-        poisson_multiplier,
+        fano_factor,
         homology_dimensions=(0, 1, 2),
         reduce_dim=False,
     ):
         self.num_samples = num_samples
-        self.poisson_multiplier = poisson_multiplier
+        self.fano_factor = fano_factor
         self.homology_dimensions = homology_dimensions
         self.reduce_dim = reduce_dim
         self.classifier = RandomForestClassifier()
@@ -60,8 +60,8 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
                 points=circle_task_points,
                 encoding_dim=encoding_dim,
                 nonlinearity="sigmoid",
-                scales=gs.ones(encoding_dim),
-                poisson_multiplier=self.poisson_multiplier,
+                scales=5*gs.random.rand(encoding_dim),
+                fano_factor=self.fano_factor,
             )
             circle_point_clouds.append(circle_noisy_points)
 
@@ -72,8 +72,8 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
                 points=sphere_task_points,
                 encoding_dim=encoding_dim,
                 nonlinearity="sigmoid",
-                scales=gs.ones(encoding_dim),
-                poisson_multiplier=self.poisson_multiplier,
+                scales=5*gs.random.rand(encoding_dim),
+                fano_factor=self.fano_factor,
             )
             sphere_point_clouds.append(sphere_noisy_points)
 
@@ -84,8 +84,8 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
                 points=torus_task_points,
                 encoding_dim=encoding_dim,
                 nonlinearity="sigmoid",
-                scales=gs.ones(encoding_dim),
-                poisson_multiplier=self.poisson_multiplier,
+                scales=5*gs.random.rand(encoding_dim),
+                fano_factor=self.fano_factor,
             )
             torus_point_clouds.append(torus_noisy_points)
         null_point_labels = np.zeros(self.num_samples)
@@ -143,6 +143,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
         """
 
         ref_point_clouds, ref_labels = self._generate_ref_data(X)
+        self.ref_labels = ref_labels
         if self.reduce_dim:
             pca = PCA(n_components=10)
             ref_point_clouds = [
@@ -152,6 +153,7 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
             ref_point_clouds, homology_dimensions=self.homology_dimensions
         )
         ref_features = self._compute_topo_features(ref_diagrams)
+        self.ref_features = ref_features
         X_ref_train, X_ref_valid, y_ref_train, y_ref_valid = train_test_split(
             ref_features, ref_labels
         )
@@ -180,7 +182,52 @@ class TopologicalClassifier(ClassifierMixin, BaseEstimator):
             [X], homology_dimensions=self.homology_dimensions
         )
         features = self._compute_topo_features(diagram)
-        return self.classifier.predict(features)
+        self.features = features
+        prediction = self.classifier.predict(features)
+        label_map = {0: "null", 1: "circle", 2: "sphere", 3: "torus"}
+        prediction_label = label_map.get(prediction[0], "unknown")
+        print(f"Predicted topology: {prediction_label}")
+
+        return prediction
+    
+    def plot_topo_feature_space(self):
+        """Plot the topological feature space of the reference data."""
+        import plotly.graph_objects as go
+
+        color_map = {
+            0: "black",
+            1: "red",
+            2: "blue",
+            3: "green",
+        }
+        names = {0: "null", 1: "circle", 2: "sphere", 3: "torus"}
+
+        fig = go.Figure()
+
+        for label in np.unique(self.ref_labels):
+            mask = self.ref_labels == label
+            fig.add_trace(
+                go.Scatter3d(
+                    x=self.ref_features[mask, 0],
+                    y=self.ref_features[mask, 1],
+                    z=self.ref_features[mask, 2],
+                    mode="markers",
+                    name=names[label],
+                    marker=dict(size=3, color=color_map[label]),
+                )
+            )
+        
+        fig.add_trace(
+            go.Scatter3d(
+                x=self.features[:, 0],
+                y=self.features[:, 1],
+                z=self.features[:, 2],
+                mode="markers",
+                name="Input data",
+                marker=dict(size=5, color="orange"),
+            )
+        )
+        fig.show()
 
 
 def compute_persistence_diagrams(
