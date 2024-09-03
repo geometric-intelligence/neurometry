@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-from dreimac import CircularCoords, ToroidalCoords
 from gtda.diagrams import PersistenceEntropy
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -268,19 +267,3 @@ def compute_diagrams_shuffle(X, num_shuffles, seed=0, homology_dimensions=(0, 1)
         [X, *shuffled_Xs], homology_dimensions=homology_dimensions
     )
 
-
-def cohomological_toroidal_coordinates(data):
-    n_landmarks = data.shape[0]
-    tc = ToroidalCoords(data, n_landmarks=n_landmarks)
-    cohomology_classes = [0, 1]
-    toroidal_coords = tc.get_coordinates(
-        cocycle_idxs=cohomology_classes, standard_range=False
-    )
-    return toroidal_coords.T
-
-
-def cohomological_circular_coordinates(data):
-    n_landmarks = data.shape[0]
-    cc = CircularCoords(data, n_landmarks=n_landmarks)
-    circular_coords = cc.get_coordinates(standard_range=False)
-    return circular_coords.T
