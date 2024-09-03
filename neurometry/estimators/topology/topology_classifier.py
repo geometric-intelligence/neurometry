@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import torch
 from gtda.diagrams import PersistenceEntropy
 from gtda.homology import VietorisRipsPersistence, WeightedRipsPersistence
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -140,6 +141,9 @@ class TopologyClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+
+        if not isinstance(X, np.ndarray | torch.Tensor):
+            raise ValueError(f"Expected array-like input for X, but got {type(X).__name__}.")
 
         ref_point_clouds, ref_labels = self._generate_ref_data(X)
         self.ref_labels = ref_labels
