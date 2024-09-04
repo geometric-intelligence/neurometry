@@ -16,8 +16,8 @@ class BaseTopologyTest:
     num_points = 700
     encoding_dim = 10
     fano_factor = 0.1
-    num_samples = 200
-    homology_dimensions = (0, 1)
+    num_samples = 100
+    homology_dimensions = (0, 1, 2)
 
     @classmethod
     def setup_class(cls):

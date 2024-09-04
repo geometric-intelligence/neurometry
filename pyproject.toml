@@ -56,6 +56,7 @@ dependencies = [
     "geomstats @ git+https://github.com/geomstats/geomstats.git",
     "torchlens @ git+https://github.com/johnmarktaylor91/torchlens.git",
     "netrep @ git+https://github.com/ahwillia/netrep.git",
+    "nnvision @ git+https://github.com/KonstantinWilleke/nnvision.git@interview",
     "jupyter",
     "nbsphinx",
     "nbsphinx_link",
