@@ -75,7 +75,8 @@ def hypersphere(intrinsic_dim, num_points, radius=1):
     """
     unit_hypersphere = Hypersphere(dim=intrinsic_dim)
     unit_hypersphere_points = unit_hypersphere.random_point(n_samples=num_points)
-    return radius * unit_hypersphere_points
+    intrinsic_coords = unit_hypersphere.extrinsic_to_intrinsic_coords(unit_hypersphere_points)
+    return radius * unit_hypersphere_points, intrinsic_coords
 
 
 def hypertorus(intrinsic_dim, num_points, radii=None, parameterization="flat"):
@@ -107,7 +108,11 @@ def hypertorus(intrinsic_dim, num_points, radii=None, parameterization="flat"):
         ), f"radii must be a list of length {intrinsic_dim}"
         for _ in range(intrinsic_dim):
             hypertorus_points[:, _, :] = radii[_] * unit_hypertorus_points[:, _, :]
-    return gs.reshape(hypertorus_points, (num_points, intrinsic_dim * 2))
+    intrinsic_coords = torch.zeros(num_points, intrinsic_dim)
+    for i, factor in enumerate(unit_hypertorus.factors):
+        intrinsic_coords[:, i] = factor.extrinsic_to_intrinsic_coords(hypertorus_points[:, i, :]).squeeze()
+
+    return gs.reshape(hypertorus_points, (num_points, intrinsic_dim * 2)), intrinsic_coords
 
 
 def cylinder(num_points, radius=1):
@@ -126,8 +131,11 @@ def cylinder(num_points, radius=1):
     factors = [Hypersphere(dim=1), Euclidean(dim=1)]
     cylinder = ProductManifold(factors=factors)
     cylinder_points = cylinder.random_point(n_samples=num_points, bound=1)
+    intrinsic_coords = torch.zeros(num_points, 2)
+    intrinsic_coords[:, 0] = factors[0].extrinsic_to_intrinsic_coords(cylinder_points[:, :2]).squeeze()
+    intrinsic_coords[:, 1] = cylinder_points[:, 2]
     cylinder_points[:, :2] = radius * cylinder_points[:, :2]
-    return cylinder_points
+    return cylinder_points, intrinsic_coords
 
 
 def klein_bottle(num_points, size_factor=1, coords_type="bottle"):
@@ -154,10 +162,11 @@ def klein_bottle(num_points, size_factor=1, coords_type="bottle"):
         )
     unit_klein_bottle = KleinBottle()
     unit_klein_bottle_points = unit_klein_bottle.random_point(n_samples=num_points)
+    intrinsic_coords = unit_klein_bottle_points
     unit_klein_bottle_points = unit_klein_bottle.to_coords(
         unit_klein_bottle_points, coords_type
     )
-    return size_factor * unit_klein_bottle_points
+    return size_factor * unit_klein_bottle_points, intrinsic_coords
 
 
 def random_encoding_matrix(manifold_extrinsic_dim, encoding_dim):

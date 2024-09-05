@@ -53,7 +53,7 @@ class TopologyClassifier(ClassifierMixin, BaseEstimator):
             for _ in range(self.num_samples)
         ]
 
-        circle_task_points = synthetic.hypersphere(1, num_points)
+        circle_task_points, _ = synthetic.hypersphere(1, num_points)
         circle_point_clouds = []
         for _ in range(self.num_samples):
             circle_noisy_points, _ = synthetic.synthetic_neural_manifold(
@@ -65,7 +65,7 @@ class TopologyClassifier(ClassifierMixin, BaseEstimator):
             )
             circle_point_clouds.append(circle_noisy_points)
 
-        sphere_task_points = synthetic.hypersphere(2, num_points)
+        sphere_task_points, _ = synthetic.hypersphere(2, num_points)
         sphere_point_clouds = []
         for _ in range(self.num_samples):
             sphere_noisy_points, _ = synthetic.synthetic_neural_manifold(
@@ -77,7 +77,7 @@ class TopologyClassifier(ClassifierMixin, BaseEstimator):
             )
             sphere_point_clouds.append(sphere_noisy_points)
 
-        torus_task_points = synthetic.hypertorus(2, num_points)
+        torus_task_points, _ = synthetic.hypertorus(2, num_points)
         torus_point_clouds = []
         for _ in range(self.num_samples):
             torus_noisy_points, _ = synthetic.synthetic_neural_manifold(

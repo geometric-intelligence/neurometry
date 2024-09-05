@@ -27,6 +27,7 @@ neurometry/rep_metrics/benchmarks/response/*
 neurometry/rep_metrics/benchmarks/stimulus/*
 neurometry/datasets/rnn_grid_cells/Dual agent path integration disjoint PCs/*
 neurometry/datasets/rnn_grid_cells/Single agent path integration/*
+neurometry/datasets/digital_twins/weights/*
 
 # Wandb files
 *wandb/*
