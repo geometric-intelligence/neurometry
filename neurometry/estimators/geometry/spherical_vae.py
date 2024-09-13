@@ -4,7 +4,6 @@ This file gathers deep learning models related to G-manifold learning.
 """
 
 import torch
-from torch.distributions.normal import Normal
 from torch.nn import functional as F
 
 from neurometry.estimators.curvature.hyperspherical.distributions.von_mises_fisher import (
@@ -98,9 +97,8 @@ class SphericalVAE(torch.nn.Module):
 
         z_mu = self.fc_z_mu(h)
         z_kappa = F.softplus(self.fc_z_logvar(h)) + 1
-        posterior_params = z_mu, z_kappa
 
-        return posterior_params
+        return z_mu, z_kappa
 
     def reparameterize(self, posterior_params):
         """
