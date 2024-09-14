@@ -17,35 +17,29 @@ class ToroidalVAE(torch.nn.Module):
 
     Parameters
     ----------
-    data_dim : int
-        Dimension of input data.
-        Example: 40 for neural recordings of 40 units/clusters.
+    extrinsic_dim : int
+        Extrinsic dimension of neural data.
+        This is the dimension of a hyperplane in which neural activity lies within neural state space.
     latent_dim : int
-        Dimension of the latent space.
-        Example: 2.
+        Dimension of the latent space. This is the dimension of the minimal euclidean embedding of the task-relevant variables.
     """
 
     def __init__(
         self,
-        data_dim,
+        extrinsic_dim,
         latent_dim,
-        sftbeta,
-        encoder_width,
-        encoder_depth,
-        decoder_width,
-        decoder_depth,
-        posterior_type,
+        sftbeta=4.5,
+        encoder_width=400,
+        encoder_depth=2,
+        decoder_width=400,
+        decoder_depth=2,
     ):
         super().__init__()
-        self.data_dim = data_dim
+        self.extrinsic_dim = extrinsic_dim
         self.sftbeta = sftbeta
         self.latent_dim = latent_dim
-        self.posterior_type = posterior_type
 
-        # decoder_width = encoder_width
-        # decoder_depth = encoder_depth
-
-        self.encoder_fc = torch.nn.Linear(self.data_dim, encoder_width)
+        self.encoder_fc = torch.nn.Linear(self.extrinsic_dim, encoder_width)
         self.encoder_linears = torch.nn.ModuleList(
             [
                 torch.nn.Linear(encoder_width, encoder_width)
@@ -67,7 +61,7 @@ class ToroidalVAE(torch.nn.Module):
             ]
         )
 
-        self.fc_x_mu = torch.nn.Linear(decoder_width, self.data_dim)
+        self.fc_x_mu = torch.nn.Linear(decoder_width, self.extrinsic_dim)
 
     def encode(self, x):
         """Encode input into mean and log-variance.
@@ -79,7 +73,7 @@ class ToroidalVAE(torch.nn.Module):
 
         Parameters
         ----------
-        x : array-like, shape=[batch_size, data_dim]
+        x : array-like, shape=[batch_size, extrinsic_dim]
             Input data.
 
         Returns
@@ -162,7 +156,7 @@ class ToroidalVAE(torch.nn.Module):
 
         Returns
         -------
-        _ : array-like, shape=[batch_size, data_dim]
+        _ : array-like, shape=[batch_size, extrinsic_dim]
             Reconstructed data corresponding to z.
         """
 
@@ -178,12 +172,12 @@ class ToroidalVAE(torch.nn.Module):
 
         Parameters
         ----------
-        x : array-like, shape=[batch_size, data_dim]
+        x : array-like, shape=[batch_size, extrinsic_dim]
             Input data.
 
         Returns
         -------
-        _ : array-like, shape=[batch_size, data_dim]
+        _ : array-like, shape=[batch_size, extrinsic_dim]
             Reconstructed data corresponding to z.
         mu : array-like, shape=[batch_size, latent_dim]
             Mean of multivariate Gaussian in latent space.
