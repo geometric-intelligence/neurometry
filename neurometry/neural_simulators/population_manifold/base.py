@@ -56,7 +56,6 @@ class PopulationManifold(torch.nn.Module):
             Encoded points.
         """
         return states @ self.projection_matrix
-        # return gs.einsum("ij,jk->ik", states, self.projection_matrix)
     
     def _apply_nonlinearity(self, encoded_points, nonlinearity):
         """Apply a nonlinearity to the encoded points.
@@ -103,8 +102,6 @@ class PopulationManifold(torch.nn.Module):
         return torch.normal(firing_rates, std)
         
     def forward(self, states):
-        # if states.dim() == 1:
-        #     states = states.unsqueeze(0)
         encoded_points = self._encode_points(states)
         neural_response = self.ref_frequency * self._apply_nonlinearity(encoded_points, self.nonlinearity)
         noisy_response = self._gaussian_spikes(neural_response, self.fano_factor)
