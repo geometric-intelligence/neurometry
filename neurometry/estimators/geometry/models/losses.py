@@ -173,4 +173,3 @@ def moving_forward_loss(z, config):
     if len(loss) == 0:
         return torch.zeros(1).to(config.device)
     return torch.mean(loss)
-

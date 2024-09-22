@@ -212,7 +212,6 @@ class SphericalVAE(torch.nn.Module):
 
         recon_loss = torch.mean((x - x_mu).pow(2))
 
-
         return train_config.recon_weight * recon_loss + train_config.kld_weight * kld
 
     def _latent_regularization_loss(self, labels, z):
