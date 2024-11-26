@@ -55,7 +55,7 @@ nbsphinx_prolog = (
 
     <div class="admonition note">
       <p>Notebook source code:
-        <a class="reference external" href="https://github.com/geometric-intelligence/neurometry"""
+        <a class="reference external" href="https://github.com/geometric-intelligence/"""
     r"""neurometry/blob/main/{{ docname|e }}">{{ docname|e }}</a>
       </p>
     </div>
@@ -71,7 +71,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 pygments_style = None
 
 html_theme = "pydata_sphinx_theme"
-html_baseurl = "geometric-intelligence.github.io/neurometry"
+html_baseurl = "https://geometric-intelligence.github.io/neurometry/"
 htmlhelp_basename = "geometric-intelligencedoc"
 html_last_updated_fmt = "%c"
 
