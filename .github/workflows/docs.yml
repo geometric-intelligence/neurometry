@@ -44,4 +44,5 @@ jobs:
           folder: docs/_build
           token: ${{ secrets.DOCUMENTATION_KEY }}
           repository-name: geometric-intelligence/geometric-intelligence.github.io
+          target-folder: neurometry
           clean: true
