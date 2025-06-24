@@ -124,6 +124,96 @@ def plot_all_barcodes_with_null(
     return fig
 
 
+# def plot_all_barcodes(diagrams1, diagrams2, dataset_name_1, dataset_name_2, **kwargs):
+#     dims = np.unique(diagrams1[diagrams1[:, 2] > 0, 2]).astype(int)
+
+#     num_dims = len(dims)
+#     colors = plt.cm.Greens(np.linspace(0.5, 1, num_dims))
+
+#     fig, axs = plt.subplots(
+#         num_dims, 1, figsize=kwargs.get("figsize", (10, 5 * num_dims)), sharex=True
+#     )
+
+#     for i, dim in enumerate(dims):
+#         color = colors[i % len(colors)]
+
+#         ax = axs[i] if num_dims > 1 else axs
+#         diag_dim1 = diagrams1[diagrams1[:, 2] == dim]
+#         diag_dim2 = diagrams2[diagrams2[:, 2] == dim]
+#         _plot_bars_from_diagrams(
+#             ax,
+#             diag_dim1,
+#             color=color,
+#             linewidth=6,
+#             bar_offset=kwargs.get("bar_offset", 0.2),
+#         )
+#         _plot_bars_from_diagrams(
+#             ax,
+#             diag_dim2,
+#             color=color,
+#             linewidth=6,
+#             bar_offset=kwargs.get("bar_offset", 0.2),
+#         )
+#         ax.set_ylabel(f"Homology {dim}", fontsize=24)
+#         ax.set_yticks([])
+#         if i == num_dims - 1:
+#             ax.set_xlabel(kwargs.get("xlabel", "Filtration Value"), fontsize=24)
+#         if i == 0:
+#             ax.set_title(dataset_name, fontsize=30)
+
+#     plt.tight_layout()
+#     return fig
+
+def plot_all_barcodes(diagrams1, diagrams2, dataset_name_1, dataset_name_2, **kwargs):
+    dims = np.unique(diagrams1[diagrams1[:, 2] > 0, 2]).astype(int)
+
+    num_dims = len(dims)
+    colors = plt.cm.Greens(np.linspace(0.5, 1, num_dims))
+
+    fig, axs = plt.subplots(
+        num_dims, 2, figsize=kwargs.get("figsize", (20, 5 * num_dims)), sharex=True
+    )
+
+    for i, dim in enumerate(dims):
+        color = colors[i % len(colors)]
+
+        # Plot diagrams1
+        ax1 = axs[i, 0] if num_dims > 1 else axs[0]
+        diag_dim1 = diagrams1[diagrams1[:, 2] == dim]
+        _plot_bars_from_diagrams(
+            ax1,
+            diag_dim1,
+            color=color,
+            linewidth=6,
+            bar_offset=kwargs.get("bar_offset", 0.2),
+        )
+        ax1.set_ylabel(f"Homology {dim}", fontsize=24)
+        ax1.set_yticks([])
+        if i == num_dims - 1:
+            ax1.set_xlabel(kwargs.get("xlabel", "Filtration Value"), fontsize=24)
+        if i == 0:
+            ax1.set_title(dataset_name_1, fontsize=30)
+
+        # Plot diagrams2
+        ax2 = axs[i, 1] if num_dims > 1 else axs[1]
+        diag_dim2 = diagrams2[diagrams2[:, 2] == dim]
+        _plot_bars_from_diagrams(
+            ax2,
+            diag_dim2,
+            color=color,
+            linewidth=6,
+            bar_offset=kwargs.get("bar_offset", 0.2),
+        )
+        ax2.set_yticks([])
+        if i == num_dims - 1:
+            ax2.set_xlabel(kwargs.get("xlabel", "Filtration Value"), fontsize=24)
+        if i == 0:
+            ax2.set_title(dataset_name_2, fontsize=30)
+
+    plt.tight_layout()
+    return fig
+
+
 def plot_activity_on_torus(
     neural_activations, toroidal_coords, neuron_id, neuron_id2=None
 ):
