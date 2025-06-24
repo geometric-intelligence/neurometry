@@ -287,7 +287,7 @@ def draw_heatmap(activations, title):
     fig.canvas.draw()
     image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     image_from_plot = image_from_plot.reshape(
-        fig.canvas.get_width_height()[::-1] + (3,)
+        *fig.canvas.get_width_height()[::-1], 3
     )
 
     fig.suptitle(title, fontsize=20, fontweight="bold", verticalalignment="top")

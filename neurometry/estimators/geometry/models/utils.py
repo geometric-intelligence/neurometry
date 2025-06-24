@@ -122,7 +122,7 @@ def load(config):
         dataset_torch = dataset
     # dataset_torch = dataset_torch - torch.mean(dataset_torch, dim=0)
 
-    train_num = int(round(0.7 * len(dataset)))  # 70% training
+    train_num = round(0.7 * len(dataset))  # 70% training
     indices = np.arange(len(dataset))
 
     train_indices = np.arange(train_num)

@@ -34,7 +34,7 @@ def circle_mask(size, radius, in_val=1.0, out_val=0.0):
     y = y.repeat(size[1], 1)
     z = np.sqrt(x**2 + y**2)
     z = np.less_equal(z, radius)
-    vfunc = np.vectorize(lambda b: b and in_val or out_val)
+    vfunc = np.vectorize(lambda b: (b and in_val) or out_val)
     return vfunc(z)
 
 
