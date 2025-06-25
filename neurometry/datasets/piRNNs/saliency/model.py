@@ -358,7 +358,7 @@ class Decoder(nn.Module):
         ]  # [1, resolution, resolution, num_neurons]
         ru = r * u  # [num_traj, resolution, resolution, num_neurons]
         heatmap = ru.sum(dim=-1)
-        heatmap_modules = ru.reshape(ru.shape[:3] + (-1, config.block_size)).sum(dim=-1)
+        heatmap_modules = ru.reshape(*ru.shape[:3], -1, config.block_size).sum(dim=-1)
 
         # compute the threshold based on quantile
         heatmap_reshape = heatmap.reshape((heatmap.shape[0], -1))

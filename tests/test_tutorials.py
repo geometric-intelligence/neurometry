@@ -7,7 +7,9 @@ import pytest
 
 
 def _exec_tutorial(path):
-    file_name = tempfile.NamedTemporaryFile(suffix=".ipynb").name
+    with tempfile.NamedTemporaryFile(suffix=".ipynb", delete=False) as temp_file:
+        file_name = temp_file.name
+
     args = [
         "jupyter",
         "nbconvert",
